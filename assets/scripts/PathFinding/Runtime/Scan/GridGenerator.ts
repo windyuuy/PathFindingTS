@@ -1,5 +1,5 @@
 import { Mat4, PhysicsRayResult, Quat, Vec2, Vec3 } from "cc";
-import { NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
+import { InspectorGridMode, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { GraphCollision } from "./Base";
 import { Float } from "../Basic/Float";
 import { GraphTransform } from "./GraphTransform";
@@ -33,9 +33,16 @@ export class GridGraph {
 	public penaltyAngleFactor: number = 100;
 
 	public cutCorners: boolean = true;
+	public uniformEdgeCosts: boolean = false;
 
 	public neighbours: NumNeighbours = NumNeighbours.Eight
 	public readonly LayerCount: number = 1;
+	public inspectorGridMode: InspectorGridMode = InspectorGridMode.Grid;
+
+	static readonly standardIsometric: number = 90 - Math.atan(1 / Math.sqrt(2)) * Float.Rad2Deg;
+	get standardIsometric(): number {
+		return GridGraph.standardIsometric
+	}
 
 	protected get useRaycastNormal(): boolean {
 		return Math.abs(90 - this.maxSlope) > Float.Epsilon;
@@ -71,6 +78,31 @@ export class GridGraph {
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 
 		this.collision.Initialize(options, this.transform, this.nodeSize)
+
+		this.inspectorGridMode = options.inspectorGridMode
+		var newMode = this.inspectorGridMode
+		switch (newMode) {
+			case InspectorGridMode.Grid:
+				this.isometricAngle = 0;
+				this.aspectRatio = 1;
+				this.uniformEdgeCosts = false;
+				if (this.neighbours == NumNeighbours.Six) this.neighbours = NumNeighbours.Eight;
+				break;
+			case InspectorGridMode.Hexagonal:
+				this.isometricAngle = this.standardIsometric;
+				this.aspectRatio = 1;
+				this.uniformEdgeCosts = true;
+				this.neighbours = NumNeighbours.Six;
+				break;
+			case InspectorGridMode.IsometricGrid:
+				this.uniformEdgeCosts = false;
+				if (this.neighbours == NumNeighbours.Six) this.neighbours = NumNeighbours.Eight;
+				this.isometricAngle = this.standardIsometric;
+				break;
+			case InspectorGridMode.Advanced:
+			default:
+				break;
+		}
 	}
 
 	/// <summary>

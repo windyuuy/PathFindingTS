@@ -4,6 +4,16 @@ import { LayerMask } from "../Runtime/Basic/LayerMask";
 const { ccclass, property } = _decorator;
 
 /**
+ * 图类型
+ */
+export enum InspectorGridMode {
+	Grid = 0,
+	IsometricGrid = 1,
+	Hexagonal = 2,
+	Advanced = 3,
+}
+
+/**
  * 连通类型
  */
 export enum NumNeighbours {
@@ -15,6 +25,10 @@ export enum NumNeighbours {
 	 * 八向
 	 */
 	Eight = 1,
+	/**
+	 * 六向
+	 */
+	Six = 2,
 }
 
 export enum ColliderType {
@@ -48,6 +62,12 @@ export enum Heuristic {
 
 @ccclass('PathFinderOptions')
 export class PathFinderOptions {
+	@property({
+		displayName: "图类型",
+		type: Enum(InspectorGridMode),
+	})
+	inspectorGridMode: InspectorGridMode = InspectorGridMode.Grid
+
 	@property({
 		displayName: "网格宽度",
 	})
