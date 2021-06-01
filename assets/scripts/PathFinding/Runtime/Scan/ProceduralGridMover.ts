@@ -4,14 +4,17 @@ import { Transform } from "../Basic/Transform";
 import { AstarPath } from "./AstarPath";
 import { AstarWorkItem } from "./AstarWorkItem";
 import { GridGraph } from "./GridGenerator";
+import { Int3 } from "./Int3";
 import { GridNode } from "./GridNode";
 import { IntRect } from "./IntRect";
+import { Int2 } from "./Int2";
 
 export class ProceduralGridMover {
 
 	public Init(options: PathFinderOptions) {
 		this.graph = new GridGraph();
 		this.graph.Init(options)
+		Int3
 	}
 
 	public scan() {
@@ -70,7 +73,7 @@ export class ProceduralGridMover {
 		}
 
 		// Number of nodes to offset in each direction
-		var offset = new Vec2(-Math.round(dir.x), -Math.round(dir.z));
+		var offset = new Int2(-Math.round(dir.x), -Math.round(dir.z));
 
 		// Move the center (this is in world units, so we need to convert it back from graph space)
 		this.graph.center.add(this.graph.transform.TransformVector(dir));

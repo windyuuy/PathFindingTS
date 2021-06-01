@@ -4,10 +4,7 @@ import { GraphCollision } from "./Base";
 import { Float } from "./Float";
 import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";
-
-export class Int3 extends Vec3 {
-	public static Precision: number = 1
-}
+import { Int3 } from "./Int3";
 
 export class GridGraph {
 	public nodes: GridNode[] = [];
@@ -19,9 +16,9 @@ export class GridGraph {
 
 	public aspectRatio: number = 1;
 
-	public transform!: GraphTransform;
+	public transform: GraphTransform = new GraphTransform(Mat4.identity(new Mat4()));
 
-	public collision!: GraphCollision;
+	public collision: GraphCollision = new GraphCollision();
 
 	public initialPenalty: number = 0;
 
@@ -63,10 +60,8 @@ export class GridGraph {
 		this.maxClimb = options.maxClimb
 		this.maxSlope = options.maxSlope
 
-		this.transform = new GraphTransform(Mat4.identity(new Mat4()));
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 
-		this.collision = new GraphCollision()
 		this.collision.Initialize(options, this.transform, this.nodeSize)
 	}
 
@@ -76,7 +71,7 @@ export class GridGraph {
 	/// if it is at the specified height above the base of the graph.
 	/// </summary>
 	public GraphPointToWorld(x: number, z: number, height: number): Int3 {
-		return this.transform.Transform(new Vec3(x + 0.5, height, z + 0.5));
+		return Int3.fromVec3(this.transform.Transform(new Vec3(x + 0.5, height, z + 0.5)))
 	}
 
 	public RecalculateCell(x: number, z: number, resetPenalties: boolean = true, resetTags: boolean = true) {
@@ -95,8 +90,8 @@ export class GridGraph {
 
 		// Calculate the actual position using physics raycasting (if enabled)
 		// walkable will be set to false if no ground was found (unless that setting has been disabled)
-		var position: Vec3 = this.collision.CheckHeight(node.position, out);
-		node.position = position;
+		var position: Vec3 = this.collision.CheckHeight(node.position.asVec3(), out);
+		node.position = Int3.fromVec3(position);
 
 		if (resetPenalties) {
 			node.Penalty = this.initialPenalty;
@@ -134,7 +129,7 @@ export class GridGraph {
 
 		// If the walkable flag has already been set to false, there is no point in checking for it again
 		// Check for obstacles
-		node.Walkable = out.walkable && this.collision.Check(node.position);
+		node.Walkable = out.walkable && this.collision.Check(node.position.asVec3());
 
 		// Store walkability before erosion is applied. Used for graph updates
 		node.WalkableErosion = node.Walkable;
@@ -163,8 +158,8 @@ export class GridGraph {
 			// This code is hot when scanning so it does have an impact.
 			return Math.abs(node1.position.y - node2.position.y) <= this.maxClimb * Int3.Precision;
 		} else {
-			var p1 = node1.position;
-			var p2 = node2.position;
+			var p1 = node1.position.asVec3();
+			var p2 = node2.position.asVec3();
 			var up = this.transform.WorldUpAtGraphPosition(p1);
 			return Math.abs(Vec3.dot(up, p1) - Vec3.dot(up, p2)) <= this.maxClimb;
 		}

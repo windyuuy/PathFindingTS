@@ -1,8 +1,9 @@
 import { Vec3 } from "cc";
 import { Connection } from "./Connection";
+import { Int3 } from "./Int3";
 
 export class GridNode {
-	position: Vec3 = new Vec3()
+	position: Int3 = new Int3()
 
 	Penalty: number = 0
 	Tag: number = 0
