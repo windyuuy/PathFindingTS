@@ -1,7 +1,7 @@
 import { Mat4, PhysicsRayResult, Quat, Vec2, Vec3 } from "cc";
 import { NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { GraphCollision } from "./Base";
-import { Float } from "./Float";
+import { Float } from "../Basic/Float";
 import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";
 import { Int3 } from "./Int3";

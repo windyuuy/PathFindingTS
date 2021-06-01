@@ -3,9 +3,9 @@ import { Vec3 } from "cc";
 
 export class Int3 {
 	/**
-			 * @en x component.
-			 * @zh x 分量。
-			 */
+	 * @en x component.
+	 * @zh x 分量。
+	 */
 	x: number = 0;
 	/**
 	 * @en y component.
