@@ -1,4 +1,5 @@
 import { Vec2, Vec3 } from "cc";
+import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { Transform } from "../Basic/Transform";
 import { AstarPath } from "./AstarPath";
 import { AstarWorkItem } from "./AstarWorkItem";
@@ -8,7 +9,16 @@ import { IntRect } from "./IntRect";
 
 export class ProceduralGridMover {
 
-	updatingGraph: boolean = false
+	public Init(options: PathFinderOptions) {
+		this.graph = new GridGraph();
+		this.graph.Init(options)
+	}
+
+	public scan() {
+		this.UpdateGraph();
+	}
+
+	protected updatingGraph: boolean = false
 
 	public UpdateGraph(): void {
 		if (this.updatingGraph) {
@@ -38,12 +48,15 @@ export class ProceduralGridMover {
 	}
 
 	public target!: Transform;
+	public get targetPosition(): Vec3 {
+		return this.graph.center
+	}
 	buffer: GridNode[] = [];
 
 	public UpdateGraphCoroutine() {
 		// Find the direction that we want to move the graph in.
 		// Calcuculate this in graph space (where a distance of one is the size of one node)
-		var dir = this.PointToGraphSpace(this.target.position).subtract(this.PointToGraphSpace(this.graph.center));
+		var dir = this.PointToGraphSpace(this.targetPosition).subtract(this.PointToGraphSpace(this.graph.center));
 
 		// Snap to a whole number of nodes
 		dir.x = Math.round(dir.x);

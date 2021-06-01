@@ -80,6 +80,7 @@ export class PathFinderOptions {
 		displayName: "最大爬升高度"
 	})
 	maxClimb: number = 0.25
+
 	@property({
 		displayName: "最大爬升角度",
 		range: [0, 90, 1],

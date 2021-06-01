@@ -79,6 +79,28 @@ export class GraphCollision {
 	/// See: GraphCollision.finalRaycastRadius
 	/// </summary>
 	public Initialize(options: PathFinderOptions, transform: GraphTransform, scale: number) {
+		this.width = options.width
+		this.height = options.height
+		this.center = options.center
+		this.rotation = options.rotation
+		this.nodeSize = options.nodeSize
+		this.neighbours = options.neighbours
+		this.maxClimb = options.maxClimb
+		this.maxSlope = options.maxSlope
+		this.use2D = options.use2D
+		this.collisionTesting = options.collisionTesting
+		this.colliderType = options.colliderType
+		this.obstacleLayerMask = options.obstacleLayerMask
+		this.heightTesting = options.heightTesting
+		this.rayLength = options.rayLength
+		this.mask = options.mask
+		this.diameter = options.diameter
+		this.thickRaycastDiameter = options.thickRaycastDiameter
+		this.maxNearestNodeDistance = options.maxNearestNodeDistance
+		this.heuristic = options.heuristic
+		this.heuristicScale = options.heuristicScale
+
+
 		var _up = transform.Transform(Vector3.UP);
 		var _down = transform.Transform(Vector3.ZERO);
 		this.up = _up.clone().subtract(_down).normalize()
@@ -91,7 +113,7 @@ export class GraphCollision {
 	/// Returns if the position is obstructed.
 	/// If <see cref="collisionCheck"/> is false, this will always return true.\n
 	/// </summary>
-	public Check(position: Vec3, isTarget: boolean = false): boolean {
+	public Check(position: Vec3): boolean {
 		if (!this.collisionCheck) {
 			return true;
 		}

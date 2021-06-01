@@ -46,9 +46,28 @@ export class GridGraph {
 
 	public center: Vec3 = Vec3.ZERO
 
+	unclampedSize: Vec2 = new Vec2(10, 10)
+	nodeSize: number = 1
+	size: Vec2 = new Vec2(0, 0);
+	isometricAngle: number = 0
+	rotation!: Vec3
+
 	public Init(options: PathFinderOptions) {
 		this.width = options.width
 		this.depth = options.height
+		this.nodeSize = options.nodeSize
+
+		this.center = options.center
+		this.rotation = options.rotation
+		this.neighbours = options.neighbours
+		this.maxClimb = options.maxClimb
+		this.maxSlope = options.maxSlope
+
+		this.transform = new GraphTransform(Mat4.identity(new Mat4()));
+		this.SetDimensions(this.width, this.depth, this.nodeSize)
+
+		this.collision = new GraphCollision()
+		this.collision.Initialize(options, this.transform, this.nodeSize)
 	}
 
 	/// <summary>
@@ -260,10 +279,6 @@ export class GridGraph {
 		}
 	}
 
-
-	unclampedSize: Vec2 = new Vec2(10, 10)
-	nodeSize: number = 1
-	size: Vec2 = new Vec2(0, 0);
 	public SetDimensions(width: number, depth: number, nodeSize: number) {
 		this.unclampedSize = new Vec2(width, depth).multiplyScalar(nodeSize);
 		this.nodeSize = nodeSize;
@@ -305,9 +320,6 @@ export class GridGraph {
 		this.CalculateDimensions(this);
 		this.transform = this.CalculateTransform();
 	}
-
-	isometricAngle: number = 0
-	rotation!: Vec3
 
 	/// <summary>
 	/// Returns a new transform which transforms graph space to world space.
