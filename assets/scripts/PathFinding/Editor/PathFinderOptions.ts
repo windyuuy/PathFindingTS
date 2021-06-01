@@ -83,7 +83,7 @@ export class PathFinderOptions {
 
 	@property({
 		displayName: "最大爬升角度",
-		range: [0, 90, 1],
+		range: [0, 90, 0.1],
 		slide: true,
 	})
 	maxSlope: number = 90
@@ -125,6 +125,16 @@ export class PathFinderOptions {
 	})
 	mask: number = Layers.makeMaskInclude([])
 
+	@property({
+		displayName: "使用粗射线检测",
+	})
+	thickRaycast: boolean = false
+
+	@property({
+		displayName: "没有平台时不可行走",
+	})
+	unwalkableWhenNoGround: boolean = true
+
 	@property
 	diameter: number = 0.1
 
@@ -141,6 +151,27 @@ export class PathFinderOptions {
 
 	@property
 	heuristicScale: number = 1
+
+	@property
+	penaltyAngle: boolean = false
+
+	@property
+	penaltyAngleFactor: number = 100
+	@property({
+		slide: true,
+		range: [0.1, 10, 0.01]
+	})
+	penaltyAnglePower: number = 1
+
+	@property
+	penaltyPosition: boolean = false
+	@property
+	penaltyPositionFactor: number = 0
+	@property
+	penaltyPositionOffset: number = 1
+
+	@property
+	initialPenalty: number = 0
 
 	public static start() {
 		LayerMask.UpdateLayer(PathFinderOptions, "mask", "bitmask");

@@ -28,7 +28,7 @@ export class GridGraph {
 
 	public maxClimb: number = 0
 	public maxSlope: number = 90;
-	public penaltyAngle: number = 0
+	public penaltyAngle: boolean = false
 	public penaltyAnglePower: number = 1;
 	public penaltyAngleFactor: number = 100;
 
@@ -59,6 +59,14 @@ export class GridGraph {
 		this.neighbours = options.neighbours
 		this.maxClimb = options.maxClimb
 		this.maxSlope = options.maxSlope
+
+		this.penaltyAngle = options.penaltyAngle;
+		this.penaltyAngleFactor = options.penaltyAngleFactor
+		this.penaltyAnglePower = options.penaltyAnglePower
+		this.penaltyPosition = options.penaltyPosition
+		this.penaltyPositionFactor = options.penaltyPositionFactor
+		this.penaltyPositionOffset = options.penaltyPositionOffset
+		this.initialPenalty = options.initialPenalty
 
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 

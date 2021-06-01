@@ -99,6 +99,8 @@ export class GraphCollision {
 		this.maxNearestNodeDistance = options.maxNearestNodeDistance
 		this.heuristic = options.heuristic
 		this.heuristicScale = options.heuristicScale
+		this.thickRaycast = options.thickRaycast
+		this.unwalkableWhenNoGround = options.unwalkableWhenNoGround
 
 
 		var _up = transform.Transform(Vector3.UP);

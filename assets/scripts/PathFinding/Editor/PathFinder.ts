@@ -8,9 +8,9 @@ const { ccclass, property } = _decorator;
 export class PathFinder extends Component {
 
     @property({
-        type: PathFinderOptions,
+        type: [PathFinderOptions],
     })
-    options: PathFinderOptions = new PathFinderOptions();
+    graph: PathFinderOptions[] = [new PathFinderOptions()]
 
     start() {
         PathFinderOptions.start();
