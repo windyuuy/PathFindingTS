@@ -10,7 +10,7 @@ export class PathFinder extends Component {
     @property({
         type: [PathFinderOptions],
     })
-    graph: PathFinderOptions[] = [new PathFinderOptions()]
+    graphs: PathFinderOptions[] = [new PathFinderOptions()]
 
     start() {
         PathFinderOptions.start();

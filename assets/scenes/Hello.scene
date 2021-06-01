@@ -422,9 +422,11 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "options": {
-      "__id__": 16
-    },
+    "graphs": [
+      {
+        "__id__": 16
+      }
+    ],
     "_id": "8etchAkLJLU7/x5F2s7GqN"
   },
   {
@@ -454,11 +456,20 @@
     "heightTesting": true,
     "rayLength": 100,
     "mask": 0,
+    "thickRaycast": false,
+    "unwalkableWhenNoGround": true,
     "diameter": 0.1,
     "thickRaycastDiameter": 1,
     "maxNearestNodeDistance": 100,
     "heuristic": 2,
-    "heuristicScale": 1
+    "heuristicScale": 1,
+    "penaltyAngle": false,
+    "penaltyAngleFactor": 100,
+    "penaltyAnglePower": 1,
+    "penaltyPosition": false,
+    "penaltyPositionFactor": 0,
+    "penaltyPositionOffset": 1,
+    "initialPenalty": 0
   },
   {
     "__type__": "cc.SceneGlobals",
