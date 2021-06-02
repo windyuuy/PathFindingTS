@@ -60,6 +60,8 @@ export enum Heuristic {
 	None
 }
 
+LayerMask.addLayer("Obstacle", 1)
+
 @ccclass('PathFinderOptions')
 export class PathFinderOptions {
 	@property({
@@ -127,7 +129,7 @@ export class PathFinderOptions {
 		type: BitMask(Layers.BitMask),
 		displayName: "障碍物层级",
 	})
-	obstacleLayerMask: number = Layers.makeMaskInclude([])
+	obstacleLayerMask: number = Layers.Enum.ALL
 
 	@property({
 		displayName: "启用高度测试"
@@ -143,7 +145,7 @@ export class PathFinderOptions {
 		type: BitMask(Layers.BitMask),
 		displayName: "障碍物层级",
 	})
-	mask: number = Layers.makeMaskInclude([])
+	mask: number = Layers.Enum.ALL
 
 	@property({
 		displayName: "使用粗射线检测",

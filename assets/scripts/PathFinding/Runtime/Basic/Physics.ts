@@ -28,7 +28,9 @@ export class Physics {
 
 	public static Raycast(origin: Vec3, direction: Vec3, outs: { hitInfo: RaycastHit }, maxDistance: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
 		var ray = new geometry.Ray();
-		geometry.Ray.fromPoints(ray, origin, direction);
+		// geometry.Ray.fromPoints(ray, origin, direction);
+		ray.o = origin
+		ray.d = direction
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, queryTriggerInteraction != QueryTriggerInteraction.Ignore)
 		if (ret) {
 			var result = PhysicsSystem.instance.raycastResults[0];
@@ -58,7 +60,7 @@ export class Physics {
 		// 	}
 		// }
 		// return results.length > 0;
-		return true;
+		return false;
 
 	}
 

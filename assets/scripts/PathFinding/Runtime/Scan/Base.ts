@@ -106,7 +106,7 @@ export class GraphCollision {
 		var _up = transform.Transform(Vector3.UP);
 		var _down = transform.Transform(Vector3.ZERO);
 		this.up = _up.clone().subtract(_down).normalize()
-		this.upheight = this.up.multiplyScalar(this.height)
+		this.upheight = this.up.clone().multiplyScalar(this.height)
 		this.finalRadius = options.diameter * scale * 0.5;
 		this.finalRaycastRadius = options.thickRaycastDiameter * scale * 0.5;
 	}
@@ -170,7 +170,9 @@ export class GraphCollision {
 		} else {
 			// Cast a ray from above downwards to try to find the ground
 
-			var ret2 = Physics.Raycast(position.add(this.up.clone().multiplyScalar(this.fromHeight)), this.up.negative(), out, this.fromHeight + 0.005, this.heightMask, QueryTriggerInteraction.Ignore);
+			var origin = position.clone().add(this.up.clone().multiplyScalar(this.fromHeight))
+			var up = this.up.clone().negative()
+			var ret2 = Physics.Raycast(origin, up, out, this.fromHeight + 0.005, this.heightMask, QueryTriggerInteraction.Ignore);
 			if (ret2) {
 				return out.hitInfo.hitPoint;
 			}

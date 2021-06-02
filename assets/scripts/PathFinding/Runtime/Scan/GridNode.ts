@@ -3,6 +3,11 @@ import { Connection } from "./Connection";
 import { Int3 } from "./Int3";
 
 export class GridNode {
+	protected static _indexAcc = 0
+	public static genIndex() {
+		return this._indexAcc++;
+	}
+
 	position: Int3 = new Int3()
 
 	Penalty: number = 0
@@ -11,7 +16,20 @@ export class GridNode {
 	Walkable: boolean = false
 	WalkableErosion: boolean = false
 
-	NodeInGridIndex: number = -1
+	protected static NodeInGridIndexMask = 0xFFFFFF;
+	protected get NodeInGridIndexMask() {
+		return GridNode.NodeInGridIndexMask
+	}
+
+	public GraphIndex: number = 0
+
+	nodeInGridIndex: number = -1
+	public get NodeInGridIndex() {
+		return this.nodeInGridIndex & this.NodeInGridIndexMask;
+	}
+	public set NodeInGridIndex(value: number) {
+		this.nodeInGridIndex = (this.nodeInGridIndex & ~this.NodeInGridIndexMask) | value;
+	}
 
 	public ResetConnectionsInternal() {
 		// unchecked

@@ -21,7 +21,7 @@ export class GraphTransform {
 
 	up!: Vec3;
 	public WorldUpAtGraphPosition(point: Vec3): Vec3 {
-		return this.up;
+		return this.up.clone();
 	}
 
 	public InverseTransform(point: Vec3): Vec3 {

@@ -38,7 +38,7 @@ export class ProceduralGridMover {
 		// and then do it over several frames
 		// (hence the IEnumerator coroutine)
 		// to avoid too large FPS drops
-		var ie = this.UpdateGraphCoroutine();
+		var ie = this.UpdateGraphCoroutine(true);
 		// await ie
 	}
 
@@ -56,7 +56,7 @@ export class ProceduralGridMover {
 	}
 	buffer: GridNode[] = [];
 
-	public UpdateGraphCoroutine() {
+	public UpdateGraphCoroutine(force: boolean = false) {
 		// Find the direction that we want to move the graph in.
 		// Calcuculate this in graph space (where a distance of one is the size of one node)
 		var dir = this.PointToGraphSpace(this.targetPosition).subtract(this.PointToGraphSpace(this.graph.center));
@@ -67,7 +67,7 @@ export class ProceduralGridMover {
 		dir.y = 0;
 
 		// Nothing do to
-		if (dir.equals(Vec3.ZERO)) {
+		if ((!force) && dir.equals(Vec3.ZERO)) {
 			// yield break;
 			return;
 		}
@@ -89,15 +89,17 @@ export class ProceduralGridMover {
 
 		// Create a temporary buffer required for the calculations
 		if (this.buffer == null || this.buffer.length != width * depth) {
+			this.buffer = []
+			this.buffer.length = width * depth
 			// this.buffer = new GridNode[width * depth];
-			for (var i = 0; i < width * depth; i++) {
-				this.buffer[i] = new GridNode();
-			}
+			// for (var i = 0; i < width * depth; i++) {
+			// 	this.buffer[i] = new GridNode();
+			// }
 		}
 
 		// Check if we have moved less than a whole graph width all directions
 		// If we have moved more than this we can just as well recalculate the whole graph
-		if (Math.abs(offset.x) <= width && Math.abs(offset.y) <= depth) {
+		if ((!force) && Math.abs(offset.x) <= width && Math.abs(offset.y) <= depth) {
 			var recalculateRect: IntRect = new IntRect(0, 0, offset.x, offset.y);
 
 			// If offset.x < 0, adjust the rect

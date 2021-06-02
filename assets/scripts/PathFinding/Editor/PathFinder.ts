@@ -1,16 +1,31 @@
 
 import { _decorator, Component, Node } from 'cc';
+import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { AstarPath } from "../Runtime/Scan/AstarPath";
+import { ProceduralGridMover } from "../Runtime/Scan/ProceduralGridMover";
 import { PathFinderOptions } from "./PathFinderOptions";
 const { ccclass, property } = _decorator;
 
 @ccclass('PathFinder')
-@_decorator.executeInEditMode
+// @_decorator.executeInEditMode
 export class PathFinder extends Component {
 
     @property({
         type: [PathFinderOptions],
     })
     graphs: PathFinderOptions[] = [new PathFinderOptions()]
+    // get graphs(): PathFinderOptions[] {
+    //     // return AstarPath.active.graphs;
+    //     return this._graphs;
+    // }
+    // set graphs(value: PathFinderOptions[]) {
+    //     AstarPath.active.graphs = value;
+    //     this._graphs = value;
+    // }
+
+    get pathHandler() {
+        return AstarPath.active
+    }
 
     start() {
         PathFinderOptions.start();
@@ -19,7 +34,19 @@ export class PathFinder extends Component {
     update(deltaTime: number) {
         // [4]
         PathFinderOptions.update();
-
+    }
+    /**
+     * 初始化
+     */
+    init() {
+        AstarPath.active.graphs = this.graphs;
+        AstarPath.active.init()
+    }
+    /**
+     * 扫描地图
+     */
+    scanGraph() {
+        AstarPath.active.scanGraph()
     }
 }
 

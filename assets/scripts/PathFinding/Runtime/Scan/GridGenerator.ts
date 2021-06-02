@@ -103,6 +103,79 @@ export class GridGraph {
 			default:
 				break;
 		}
+
+		for (var i = 0; i < this.width * this.depth; i++) {
+			var gridNode = new GridNode()
+			gridNode.NodeInGridIndex = GridNode.genIndex()
+			this.nodes.push(gridNode);
+		}
+
+		this.SetUpOffsetsAndCosts()
+	}
+
+	public SetUpOffsetsAndCosts() {
+		//First 4 are for the four directly adjacent nodes the last 4 are for the diagonals
+		var width = this.width
+		var nodeSize = this.nodeSize
+		var neighbourOffsets = this.neighbourOffsets
+		var neighbourCosts = this.neighbourCosts
+		var neighbourXOffsets = this.neighbourXOffsets
+		var neighbourZOffsets = this.neighbourZOffsets
+
+		neighbourOffsets[0] = -width;
+		neighbourOffsets[1] = 1;
+		neighbourOffsets[2] = width;
+		neighbourOffsets[3] = -1;
+		neighbourOffsets[4] = -width + 1;
+		neighbourOffsets[5] = width + 1;
+		neighbourOffsets[6] = width - 1;
+		neighbourOffsets[7] = -width - 1;
+
+		var straightCost = Math.round(nodeSize * Int3.Precision);
+
+		// Diagonals normally cost sqrt(2) (approx 1.41) times more
+		var diagonalCost = this.uniformEdgeCosts ? straightCost : Math.round(nodeSize * Math.sqrt(2) * Int3.Precision);
+
+		neighbourCosts[0] = straightCost;
+		neighbourCosts[1] = straightCost;
+		neighbourCosts[2] = straightCost;
+		neighbourCosts[3] = straightCost;
+		neighbourCosts[4] = diagonalCost;
+		neighbourCosts[5] = diagonalCost;
+		neighbourCosts[6] = diagonalCost;
+		neighbourCosts[7] = diagonalCost;
+
+		/*         Z
+		 *         |
+		 *         |
+		 *
+		 *      6  2  5
+		 *       \ | /
+		 * --  3 - X - 1  ----- X
+		 *       / | \
+		 *      7  0  4
+		 *
+		 *         |
+		 *         |
+		 */
+
+		neighbourXOffsets[0] = 0;
+		neighbourXOffsets[1] = 1;
+		neighbourXOffsets[2] = 0;
+		neighbourXOffsets[3] = -1;
+		neighbourXOffsets[4] = 1;
+		neighbourXOffsets[5] = 1;
+		neighbourXOffsets[6] = -1;
+		neighbourXOffsets[7] = -1;
+
+		neighbourZOffsets[0] = -1;
+		neighbourZOffsets[1] = 0;
+		neighbourZOffsets[2] = 1;
+		neighbourZOffsets[3] = 0;
+		neighbourZOffsets[4] = -1;
+		neighbourZOffsets[5] = 1;
+		neighbourZOffsets[6] = 1;
+		neighbourZOffsets[7] = -1;
 	}
 
 	/// <summary>
@@ -179,6 +252,7 @@ export class GridGraph {
 	public readonly neighbourYOffsets: number[] = [0, 0, 0, 0, 0, 0, 0, 0,]
 	public readonly neighbourZOffsets: number[] = [0, 0, 0, 0, 0, 0, 0, 0,]
 	public readonly neighbourOffsets: number[] = [0, 0, 0, 0, 0, 0, 0, 0,]
+	public readonly neighbourCosts: number[] = [0, 0, 0, 0, 0, 0, 0, 0,]
 	public static readonly hexagonNeighbourIndices: number[] = [0, 1, 5, 2, 3, 7];
 	public get hexagonNeighbourIndices() {
 		return GridGraph.hexagonNeighbourIndices;
