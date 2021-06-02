@@ -14,7 +14,6 @@ export class ProceduralGridMover {
 	public Init(options: PathFinderOptions) {
 		this.graph = new GridGraph();
 		this.graph.Init(options)
-		Int3
 	}
 
 	public scan() {

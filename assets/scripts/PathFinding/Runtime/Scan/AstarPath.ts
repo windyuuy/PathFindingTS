@@ -1,5 +1,6 @@
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AstarWorkItem } from "./AstarWorkItem";
+import { GridGraph } from "./GridGenerator";
 import { ProceduralGridMover } from "./ProceduralGridMover";
 import { WorkItemProcessor } from "./WorkItemProcessor";
 
@@ -11,7 +12,9 @@ export class AstarPath {
 		this.workItems.AddWorkItem(item);
 	}
 
-	graphs: PathFinderOptions[] = [new PathFinderOptions()]
+	options: PathFinderOptions[] = []
+
+	graphs: GridGraph[] = []
 
 	gridMovers: ProceduralGridMover[] = []
 	/**
@@ -19,7 +22,7 @@ export class AstarPath {
 	 */
 	init() {
 		var gridMovers = this.gridMovers
-		for (var graph of this.graphs) {
+		for (var graph of this.options) {
 			var gridMover = new ProceduralGridMover();
 			gridMover.Init(graph);
 			gridMovers.push(gridMover);

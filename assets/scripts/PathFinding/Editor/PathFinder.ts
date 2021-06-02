@@ -13,7 +13,7 @@ export class PathFinder extends Component {
     @property({
         type: [PathFinderOptions],
     })
-    graphs: PathFinderOptions[] = [new PathFinderOptions()]
+    options: PathFinderOptions[] = [new PathFinderOptions()]
     // get graphs(): PathFinderOptions[] {
     //     // return AstarPath.active.graphs;
     //     return this._graphs;
@@ -39,7 +39,7 @@ export class PathFinder extends Component {
      * 初始化
      */
     init() {
-        AstarPath.active.graphs = this.graphs;
+        AstarPath.active.options = this.options;
         AstarPath.active.init()
     }
     /**

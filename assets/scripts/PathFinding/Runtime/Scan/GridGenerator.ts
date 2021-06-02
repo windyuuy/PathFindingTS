@@ -5,8 +5,21 @@ import { Float } from "../Basic/Float";
 import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";
 import { Int3 } from "./Int3";
+import { AstarPath } from "./AstarPath";
 
 export class GridGraph {
+
+	constructor() {
+		this._index = GridGraph._indexAcc++
+		AstarPath.active.graphs.push(this);
+	}
+
+	protected static _indexAcc = 0
+	protected _index = -1
+	protected get index(): number {
+		return this._index
+	}
+
 	public nodes: GridNode[] = [];
 
 	public width: number = 0;
@@ -402,8 +415,8 @@ export class GridGraph {
 		newSize.y *= Math.sign(newSize.y);
 
 		// Clamp the nodeSize so that the graph is never larger than 1024*1024
-		out.nodeSize = Math.max(out.nodeSize, newSize.x / 1024);
-		out.nodeSize = Math.max(out.nodeSize, newSize.y / 1024);
+		out.nodeSize = Math.max(this.nodeSize, newSize.x / 1024);
+		out.nodeSize = Math.max(this.nodeSize, newSize.y / 1024);
 
 		// Prevent the graph to become smaller than a single node
 		newSize.x = newSize.x < out.nodeSize ? out.nodeSize : newSize.x;
@@ -449,10 +462,12 @@ export class GridGraph {
 
 		// Generate a matrix which shrinks the graph along one of the diagonals
 		// corresponding to the isometricAngle
-		var isometricMatrix = new Mat4()
 		var sharedQuat = new Quat();
-		Mat4.fromRTS(isometricMatrix, Quat.fromEuler(sharedQuat, 0, 45, 0), Vec3.ZERO, Vec3.ONE);
 		var sharedMat4 = new Mat4()
+		var sharedVec = new Vec3()
+
+		var isometricMatrix = new Mat4()
+		Mat4.fromRTS(isometricMatrix, Quat.fromEuler(sharedQuat, 0, 45, 0), Vec3.ZERO, Vec3.ONE);
 		Mat4.identity(sharedMat4);
 		Mat4.scale(sharedMat4, sharedMat4, new Vec3(Math.cos(Float.Deg2Rad * this.isometricAngle), 1, 1));
 		Mat4.multiply(isometricMatrix, sharedMat4, isometricMatrix);
@@ -462,16 +477,16 @@ export class GridGraph {
 		// Generate a matrix for the bounds of the graph
 		// This moves a point to the correct offset in the world and the correct rotation and the aspect ratio and isometric angle is taken into account
 		// The unit is still world units however
-		var boundsMatrix = Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, new Vec3(this.aspectRatio, 1, 1));
+		var boundsMatrix = new Mat4();
+		Mat4.fromRTS(boundsMatrix, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, new Vec3(this.aspectRatio, 1, 1));
 		Mat4.multiply(isometricMatrix, boundsMatrix, isometricMatrix);
 
 		// Generate a matrix where Vector3.zero is the corner of the graph instead of the center
 		// The unit is nodes here (so (0.5,0,0.5) is the position of the first node and (1.5,0,0.5) is the position of the second node)
 		// 0.5 is added since this is the node center, not its corner. In graph space a node has a size of 1
-		var sharedVec = new Vec3()
 		sharedVec = new Vec3(out.width * out.nodeSize, 0, out.depth * out.nodeSize)
 		sharedVec.negative().multiplyScalar(0.5)
-		var m = Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), new Vec3(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
+		Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), new Vec3(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
 		var m = new Mat4()
 		Mat4.multiply(m, sharedMat4, isometricMatrix);
 
