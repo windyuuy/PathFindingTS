@@ -1,0 +1,14 @@
+{
+  "ver": "4.0.22",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "f0c2cd5c-d999-42d0-9a3e-3de2338796f0",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "importAsPlugin": false,
+    "moduleId": "project:///assets/scripts/libs/AStar/finders/astar-finder.js",
+    "importerSettings": 7,
+    "simulateGlobals": []
+  }
+}

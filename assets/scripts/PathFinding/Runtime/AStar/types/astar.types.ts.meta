@@ -1,0 +1,14 @@
+{
+  "ver": "4.0.22",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "dc76df12-5884-4c7b-bcd5-025d45044e2c",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "importAsPlugin": false,
+    "moduleId": "project:///assets/scripts/libs/AStar/types/astar.types.js",
+    "importerSettings": 7,
+    "simulateGlobals": []
+  }
+}

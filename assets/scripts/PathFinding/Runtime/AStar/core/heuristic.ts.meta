@@ -1,0 +1,14 @@
+{
+  "ver": "4.0.22",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "5cc7248b-9aee-4f51-b5a4-8e6561ed860b",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "importAsPlugin": false,
+    "moduleId": "project:///assets/scripts/libs/AStar/core/heuristic.js",
+    "importerSettings": 7,
+    "simulateGlobals": []
+  }
+}
