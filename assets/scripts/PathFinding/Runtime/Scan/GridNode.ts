@@ -1,8 +1,15 @@
 import { Vec3 } from "cc";
+import { Float } from "../Basic/Float";
 import { AstarPath } from "./AstarPath";
 import { Connection } from "./Connection";
 import { GridGraph } from "./GridGenerator";
 import { Int3 } from "./Int3";
+
+type GraphNode = GridNode
+type Vector3 = Vec3
+const Vector3 = Vec3
+type int = number
+type float = number
 
 export class GridNode {
 	protected static _indexAcc = 0
@@ -17,6 +24,29 @@ export class GridNode {
 
 	Walkable: boolean = false
 	WalkableErosion: boolean = false
+
+	protected static hashCodeAcc: number = 1
+	protected hashCode: number = 0;
+	public GetHashCode(): number {
+		if (this.hashCode <= 0) {
+			this.hashCode = GridNode.hashCodeAcc++;
+		}
+		return this.hashCode
+	}
+
+	static get _gridGraphs() {
+		return AstarPath.active.graphs;
+	}
+	get _gridGraphs() {
+		return GridNode._gridGraphs
+	}
+
+	public static GetGridGraph(graphIndex: number): GridGraph {
+		return this._gridGraphs[graphIndex];
+	}
+	public GetGridGraph(graphIndex: number): GridGraph {
+		return GridNode.GetGridGraph(graphIndex)
+	}
 
 	protected static NodeInGridIndexMask = 0xFFFFFF;
 	protected get NodeInGridIndexMask() {
@@ -83,21 +113,25 @@ export class GridNode {
 		return (this.gridFlags >> dir & this.GridFlagsConnectionBit0) != 0;
 	}
 
-	/// <summary>
-	/// True if the node has a connection in the specified direction.
-	/// Deprecated: Use HasConnectionInDirection
-	/// </summary>
-	/**
-	 * @deprecated Use HasConnectionInDirection
-	 */
-	public GetConnectionInternal(dir: number): boolean {
-		return this.HasConnectionInDirection(dir);
-	}
+	// /// <summary>
+	// /// True if the node has a connection in the specified direction.
+	// /// Deprecated: Use HasConnectionInDirection
+	// /// </summary>
+	// /**
+	//  * @deprecated Use HasConnectionInDirection
+	//  */
+	// public GetConnectionInternal(dir: number): boolean {
+	// 	return this.HasConnectionInDirection(dir);
+	// }
 
-	public ResetConnectionsInternal() {
-		// unchecked
+	public SetConnectionInternal(dir: number, value: boolean) {
+		// Set bit number #dir to 1 or 0 depending on #value
+		// unchecked 
 		{
-			this.gridFlags = (this.gridFlags & ~this.GridFlagsConnectionMask);
+			this.gridFlags = (
+				this.gridFlags & ~(1 << this.GridFlagsConnectionOffset << dir)
+				| (value ? 1 : 0) << this.GridFlagsConnectionOffset << dir
+			);
 		}
 		// AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 	}
@@ -117,39 +151,26 @@ export class GridNode {
 		// AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 	}
 
-	public SetConnectionInternal(dir: number, value: boolean) {
-		// Set bit number #dir to 1 or 0 depending on #value
-		// unchecked 
+	public ResetConnectionsInternal() {
+		// unchecked
 		{
-			this.gridFlags = (
-				this.gridFlags & ~(1 << this.GridFlagsConnectionOffset << dir)
-				| (value ? 1 : 0) << this.GridFlagsConnectionOffset << dir
-			);
+			this.gridFlags = (this.gridFlags & ~this.GridFlagsConnectionMask);
 		}
 		// AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 	}
 
-	protected static hashCodeAcc: number = 1
-	protected hashCode: number = 0;
-	public GetHashCode(): number {
-		if (this.hashCode <= 0) {
-			this.hashCode = GridNode.hashCodeAcc++;
+	/// <summary>
+	/// Work in progress for a feature that required info about which nodes were at the border of the graph.
+	/// Note: This property is not functional at the moment.
+	/// </summary>
+	public get EdgeNode(): boolean {
+		return (this.gridFlags & this.GridFlagsEdgeNodeMask) != 0;
+	}
+	public set EdgeNode(value: boolean) {
+		// unchecked 
+		{
+			this.gridFlags = (this.gridFlags & ~this.GridFlagsEdgeNodeMask | (value ? this.GridFlagsEdgeNodeMask : 0));
 		}
-		return this.hashCode
-	}
-
-	static get _gridGraphs() {
-		return AstarPath.active.graphs;
-	}
-	get _gridGraphs() {
-		return GridNode._gridGraphs
-	}
-
-	public static GetGridGraph(graphIndex: number): GridGraph {
-		return this._gridGraphs[graphIndex];
-	}
-	public GetGridGraph(graphIndex: number): GridGraph {
-		return GridNode.GetGridGraph(graphIndex)
 	}
 
 	public GetNeighbourAlongDirection(direction: number): GridNode | null {
@@ -175,6 +196,46 @@ export class GridNode {
 
 		this.ResetConnectionsInternal();
 
+		// #if!ASTAR_GRID_NO_CUSTOM_CONNECTIONS
+		// 		base.ClearConnections(alsoReverse);
+		// #endif
+	}
+
+	public GetConnections(action: (graphNode: GraphNode) => void) {
+		var gg: GridGraph = this.GetGridGraph(this.GraphIndex);
+
+		var neighbourOffsets: number[] = gg.neighbourOffsets;
+		var nodes: GridNode[] = gg.nodes;
+
+		for (var i = 0; i < 8; i++) {
+			if (this.HasConnectionInDirection(i)) {
+				var other: GridNode = nodes[this.NodeInGridIndex + neighbourOffsets[i]];
+				if (other != null) action(other);
+			}
+		}
+
+		// #if!ASTAR_GRID_NO_CUSTOM_CONNECTIONS
+		// 	base.GetConnections(action);
+		// #endif
+	}
+
+	public ClosestPointOnNode(p: Vector3): Vector3 {
+		var gg = this.GetGridGraph(this.GraphIndex);
+
+		// Convert to graph space
+		p = gg.transform.InverseTransform(p);
+
+		// Calculate graph position of this node
+		var x: int = this.NodeInGridIndex % gg.width;
+		var z: int = this.NodeInGridIndex / gg.width;
+
+		// Handle the y coordinate separately
+		var y: float = gg.transform.InverseTransform(this.position.asVec3()).y;
+
+		var closestInGraphSpace = new Vector3(Float.Clamp(p.x, x, x + 1), y, Float.Clamp(p.z, z, z + 1));
+
+		// Convert to world space
+		return gg.transform.Transform(closestInGraphSpace);
 	}
 
 }
