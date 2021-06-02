@@ -34,10 +34,10 @@ export class GridNode {
 		return this.hashCode
 	}
 
-	static get _gridGraphs() {
+	protected static get _gridGraphs() {
 		return AstarPath.active.graphs;
 	}
-	get _gridGraphs() {
+	protected get _gridGraphs() {
 		return GridNode._gridGraphs
 	}
 
