@@ -1,4 +1,5 @@
 import { Vec3 } from "cc";
+import { ANode } from "../AStar/AStarLib/core/node";
 import { Float } from "../Basic/Float";
 import { AstarPath } from "./AstarPath";
 import { Connection } from "./Connection";
@@ -11,7 +12,14 @@ const Vector3 = Vec3
 type int = number
 type float = number
 
-export class GridNode {
+export class GridNode extends ANode {
+	constructor(x: number, y: number) {
+		super({
+			id: 0,
+			ipos: { x, y },
+		})
+	}
+
 	protected static _indexAcc = 0
 	public static genIndex() {
 		return this._indexAcc++;

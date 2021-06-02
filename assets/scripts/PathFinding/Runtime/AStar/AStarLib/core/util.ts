@@ -1,4 +1,4 @@
-import { Node } from './node';
+import { ANode } from './node';
 
 /**
  * Backtrace from end node through parents and return the path.
@@ -6,14 +6,14 @@ import { Node } from './node';
  * @param includeStartingNode
  */
 export function backtrace(
-  node: Node,
+  node: ANode,
   includeStartNode: boolean,
   includeEndNode: boolean
 ): number[][] {
   // Init empty path
   const path: number[][] = [];
 
-  let currentNode: Node;
+  let currentNode: ANode | undefined;
   if (includeEndNode) {
     // Attach the end node to be the current node
     currentNode = node;
@@ -22,14 +22,14 @@ export function backtrace(
   }
 
   // Loop as long the current node has a parent
-  while (currentNode.getParent()) {
-    path.push([currentNode.position.x, currentNode.position.y]);
+  while (currentNode != undefined && currentNode.getParent()) {
+    path.push([currentNode.ipos.x, currentNode.ipos.y]);
     currentNode = currentNode.getParent();
   }
 
   // If true we will also include the starting node
-  if (includeStartNode) {
-    path.push([currentNode.position.x, currentNode.position.y]);
+  if (currentNode != undefined && includeStartNode) {
+    path.push([currentNode.ipos.x, currentNode.ipos.y]);
   }
 
   return path.reverse();

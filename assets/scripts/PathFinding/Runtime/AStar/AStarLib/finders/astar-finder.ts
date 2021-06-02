@@ -4,30 +4,34 @@ import { backtrace } from '../core/util';
 import { calculateHeuristic } from '../core/heuristic';
 import { Grid } from '../core/grid';
 import {
-  IAStarFinderConstructor,
+  IAStarFinderConstructorFromGraph,
+  IAStarFinderConstructorFromMatrix,
   IPoint
 } from '../interfaces/astar.interfaces';
-import { Node } from '../core/node';
+import { ANode } from '../core/node';
 import { Heuristic } from '../types/astar.types';
 
 export class AStarFinder {
   // Grid
-  private grid: Grid;
+  private grid!: Grid;
 
   // Lists
-  private closedList: Node[];
-  private openList: Node[];
+  private closedList!: ANode[];
+  private openList!: ANode[];
 
   // Pathway variables
-  readonly diagonalAllowed: boolean;
-  private heuristic: Heuristic;
-  readonly includeStartNode: boolean;
-  readonly includeEndNode: boolean;
-  private weight: number;
+  // readonly 
+  diagonalAllowed!: boolean;
+  private heuristic!: Heuristic;
+  // readonly
+  includeStartNode!: boolean;
+  // readonly
+  includeEndNode!: boolean;
+  private weight!: number;
 
-  constructor(aParams: IAStarFinderConstructor) {
+  loadFromMatrix(aParams: IAStarFinderConstructorFromMatrix) {
     // Create grid
-    this.grid = new Grid({
+    this.grid = new Grid().loadFromMatrix({
       width: aParams.grid.width,
       height: aParams.grid.height,
       matrix: aParams.grid.matrix || undefined,
@@ -55,6 +59,43 @@ export class AStarFinder {
 
     // Set weight
     this.weight = aParams.weight || 1;
+
+    return this
+  }
+
+  loadFromGraph(aParams: IAStarFinderConstructorFromGraph) {
+    // Create grid
+    this.grid = new Grid().loadFromGraph({
+      width: aParams.grid.width,
+      height: aParams.grid.height,
+      // TODO: xcx
+      nodes: aParams.grid.nodes,
+      densityOfObstacles: aParams.grid.densityOfObstacles || 0
+    });
+
+    // Init lists
+    this.closedList = [];
+    this.openList = [];
+
+    // Set diagonal boolean
+    this.diagonalAllowed =
+      aParams.diagonalAllowed !== undefined ? aParams.diagonalAllowed : true;
+
+    // Set heuristic function
+    this.heuristic = aParams.heuristic ? aParams.heuristic : 'Manhattan';
+
+    // Set if start node included
+    this.includeStartNode =
+      aParams.includeStartNode !== undefined ? aParams.includeStartNode : true;
+
+    // Set if end node included
+    this.includeEndNode =
+      aParams.includeEndNode !== undefined ? aParams.includeEndNode : true;
+
+    // Set weight
+    this.weight = aParams.weight || 1;
+
+    return this
   }
 
   public findPath(startPosition: IPoint, endPosition: IPoint): number[][] {
@@ -100,8 +141,8 @@ export class AStarFinder {
           node.setHValue(
             calculateHeuristic(
               this.heuristic,
-              node.position,
-              endNode.position,
+              node.ipos,
+              endNode.ipos,
               this.weight
             )
           );
@@ -136,7 +177,7 @@ export class AStarFinder {
 
       // Get neighbors
       const neighbors = this.grid.getSurroundingNodes(
-        currentNode.position,
+        currentNode.ipos,
         this.diagonalAllowed
       );
 
@@ -152,8 +193,8 @@ export class AStarFinder {
         // Calculate the g value of the neightbor
         const nextGValue =
           currentNode.getGValue() +
-          (neightbor.position.x !== currentNode.position.x ||
-            neightbor.position.y! == currentNode.position.y
+          (neightbor.ipos.x !== currentNode.ipos.x ||
+            neightbor.ipos.y! == currentNode.ipos.y
             ? this.weight
             : this.weight * 1.41421);
 
@@ -199,7 +240,7 @@ export class AStarFinder {
   /**
    * Get a copy/clone of the grid.
    */
-  public getGridClone(): Node[][] {
+  public getGridClone(): ANode[][] {
     return this.grid.clone();
   }
 

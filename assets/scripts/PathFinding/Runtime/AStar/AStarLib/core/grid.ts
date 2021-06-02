@@ -1,16 +1,19 @@
-import { Node } from './node';
-import { IGridConstructor, IPoint } from '../interfaces/astar.interfaces';
+import { ANode } from './node';
+import { IGridConstructorFromGraph, IGridConstructorFromMatrix, IPoint } from '../interfaces/astar.interfaces';
 
 export class Grid {
   // General properties
-  readonly width: number;
-  readonly height: number;
-  readonly numberOfFields: number;
+  // readonly
+  width!: number;
+  // readonly
+  height!: number;
+  // readonly
+  numberOfFields!: number;
 
   // The node grid
-  private gridNodes: Node[][];
+  private gridNodes!: ANode[][];
 
-  constructor(aParams: IGridConstructor) {
+  loadFromMatrix(aParams: IGridConstructorFromMatrix) {
     // Set the general properties
     if (aParams.width && aParams.height) {
       this.width = aParams.width;
@@ -23,12 +26,14 @@ export class Grid {
     }
 
     // Create and generate the matrix
-    this.gridNodes = this.buildGridWithNodes(
+    this.gridNodes = this.buildGridWithNodesFromMatrix(
       aParams.matrix || undefined,
       this.width,
       this.height,
       aParams.densityOfObstacles || 0
     );
+
+    return this;
   }
 
   /**
@@ -38,22 +43,22 @@ export class Grid {
    * @param height [grid height]
    * @param densityOfObstacles [density of non walkable fields]
    */
-  private buildGridWithNodes(
-    matrix: number[][],
+  private buildGridWithNodesFromMatrix(
+    matrix: number[][] | undefined,
     width: number,
     height: number,
-    densityOfObstacles?: number
-  ): Node[][] {
-    const newGrid: Node[][] = [];
+    densityOfObstacles: number
+  ): ANode[][] {
+    const newGrid: ANode[][] = [];
     let id: number = 0;
 
     // Generate an empty matrix
     for (let y = 0; y < height; y++) {
       newGrid[y] = [];
       for (let x = 0; x < width; x++) {
-        newGrid[y][x] = new Node({
+        newGrid[y][x] = new ANode({
           id: id,
-          position: { x: x, y: y }
+          ipos: { x: x, y: y }
         });
 
         id++;
@@ -96,11 +101,74 @@ export class Grid {
     return newGrid;
   }
 
+  loadFromGraph(aParams: IGridConstructorFromGraph) {
+    // Set the general properties
+    this.width = aParams.width;
+    this.height = aParams.height;
+    this.numberOfFields = this.width * this.height;
+
+    // Create and generate the matrix
+    this.gridNodes = this.buildGridWithNodesFromGraph(
+      aParams.nodes,
+      this.width,
+      this.height,
+      aParams.densityOfObstacles || 0
+    );
+
+    return this;
+  }
+
+  /**
+   * Build grid, fill it with nodes and return it.
+   * @param nodes [ 0 or 1: 0 = walkable; 1 = not walkable ]
+   * @param width [grid width]
+   * @param height [grid height]
+   * @param densityOfObstacles [density of non walkable fields]
+   */
+  private buildGridWithNodesFromGraph(
+    nodes: ANode[],
+    width: number,
+    height: number,
+    densityOfObstacles: number
+  ): ANode[][] {
+    const newGrid: ANode[][] = [];
+    let id: number = 0;
+
+    // Generate an empty matrix
+    for (let y = 0; y < height; y++) {
+      var pz = y * width;
+      newGrid[y] = [];
+      for (let x = 0; x < width; x++) {
+        var index = pz + x
+        var node = nodes[index].clone()
+        newGrid[y][x] = node
+
+        id++;
+      }
+    }
+
+    /**
+     * In case we have a matrix loaded.
+     * Load up the informations of the matrix.
+     */
+    // for (let y = 0; y < height; y++) {
+    //   for (let x = 0; x < width; x++) {
+    //     if (nodes[y][x]) {
+    //       newGrid[y][x].setIsWalkable(false);
+    //     } else {
+    //       newGrid[y][x].setIsWalkable(true);
+    //     }
+    //   }
+    // }
+
+    return newGrid;
+  }
+
   /**
    * Return a specific node.
    * @param position [position on the grid]
    */
-  public getNodeAt(position: IPoint): Node {
+  public getNodeAt(position: IPoint): ANode {
     return this.gridNodes[position.y][position.x];
   }
 
@@ -134,8 +202,8 @@ export class Grid {
   public getSurroundingNodes(
     currentPosition: IPoint,
     diagnonalMovementAllowed: boolean
-  ): Node[] {
-    const surroundingNodes: Node[] = [];
+  ): ANode[] {
+    const surroundingNodes: ANode[] = [];
 
     for (var y = currentPosition.y - 1; y <= currentPosition.y + 1; y++) {
       for (var x = currentPosition.x - 1; x <= currentPosition.x + 1; x++) {
@@ -161,7 +229,7 @@ export class Grid {
     return surroundingNodes;
   }
 
-  public setGrid(newGrid: Node[][]): void {
+  public setGrid(newGrid: ANode[][]): void {
     this.gridNodes = newGrid;
   }
 
@@ -182,23 +250,23 @@ export class Grid {
   /**
    * Get all the nodes of the grid.
    */
-  public getGridNodes(): Node[][] {
+  public getGridNodes(): ANode[][] {
     return this.gridNodes;
   }
 
   /**
    * Get a clone of the grid
    */
-  public clone(): Node[][] {
-    const cloneGrid: Node[][] = [];
+  public clone(): ANode[][] {
+    const cloneGrid: ANode[][] = [];
     let id: number = 0;
 
     for (let y = 0; y < this.height; y++) {
       cloneGrid[y] = [];
       for (let x = 0; x < this.width; x++) {
-        cloneGrid[y][x] = new Node({
+        cloneGrid[y][x] = new ANode({
           id: id,
-          position: { x: x, y: y },
+          ipos: { x: x, y: y },
           walkable: this.gridNodes[y][x].getIsWalkable()
         });
 

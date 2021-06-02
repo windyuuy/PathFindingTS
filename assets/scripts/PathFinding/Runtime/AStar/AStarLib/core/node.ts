@@ -1,20 +1,20 @@
 import { INodeConstructor, IPoint } from '../interfaces/astar.interfaces';
 
-export class Node {
+export class ANode {
   readonly id: number;
-  readonly position: IPoint;
+  readonly ipos: IPoint;
 
   private fValue: number;
   private gValue: number;
   private hValue: number;
-  private parentNode: Node;
+  private parentNode: ANode | undefined;
   private isOnClosedList: boolean;
   private isOnOpenList: boolean;
   private isWalkable: boolean;
 
   constructor(aParams: INodeConstructor) {
     this.id = aParams.id;
-    this.position = aParams.position;
+    this.ipos = aParams.ipos;
 
     this.hValue = 0;
     this.gValue = 0;
@@ -23,6 +23,18 @@ export class Node {
     this.isOnClosedList = false;
     this.isOnOpenList = false;
     this.isWalkable = aParams.walkable || true;
+  }
+
+  clone(): ANode {
+    var node = new ANode(this)
+    node.fValue = this.fValue
+    node.gValue = this.gValue
+    node.hValue = this.hValue
+    node.parentNode = this.parentNode
+    node.isOnClosedList = this.isOnClosedList
+    node.isOnOpenList = this.isOnOpenList
+    node.isWalkable = this.isWalkable
+    return node
   }
 
   /**
@@ -73,7 +85,7 @@ export class Node {
     return this.hValue;
   }
 
-  public getParent(): Node {
+  public getParent(): ANode | undefined {
     return this.parentNode;
   }
 
@@ -92,7 +104,7 @@ export class Node {
   /**
    * Setter functions
    */
-  public setParent(parent: Node): void {
+  public setParent(parent?: ANode): void {
     this.parentNode = parent;
   }
 

@@ -1,5 +1,5 @@
 import { Mat4, PhysicsRayResult, Quat, Vec2, Vec3 } from "cc";
-import { InspectorGridMode, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
+import { Heuristic, InspectorGridMode, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { GraphCollision } from "./Base";
 import { Float } from "../Basic/Float";
 import { GraphTransform } from "./GraphTransform";
@@ -69,6 +69,12 @@ export class GridGraph {
 	isometricAngle: number = 0
 	rotation!: Vec3
 
+	heuristic: Heuristic = Heuristic.Euclidean
+
+	public toIndex(x: number, y: number): number {
+		return this.width * y + x
+	}
+
 	public Init(options: PathFinderOptions) {
 		this.width = options.width
 		this.depth = options.height
@@ -87,6 +93,7 @@ export class GridGraph {
 		this.penaltyPositionFactor = options.penaltyPositionFactor
 		this.penaltyPositionOffset = options.penaltyPositionOffset
 		this.initialPenalty = options.initialPenalty
+		this.heuristic = options.heuristic
 
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 
@@ -117,10 +124,13 @@ export class GridGraph {
 				break;
 		}
 
-		for (var i = 0; i < this.width * this.depth; i++) {
-			var gridNode = new GridNode()
-			gridNode.NodeInGridIndex = GridNode.genIndex()
-			this.nodes.push(gridNode);
+		// for (var i = 0; i < this.width * this.depth; i++) {
+		for (var i = 0; i < this.width; i++) {
+			for (var j = 0; j < this.depth; j++) {
+				var gridNode = new GridNode(i, j)
+				gridNode.NodeInGridIndex = GridNode.genIndex()
+				this.nodes.push(gridNode);
+			}
 		}
 
 		this.SetUpOffsetsAndCosts()
