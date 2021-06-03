@@ -59,7 +59,7 @@ export class GraphSeeker {
 			return result
 		}
 
-		var paths = this.graphFinder.findPath({
+		var result1 = this.graphFinder.findPath({
 			x: startNode.ipos.x,
 			y: startNode.ipos.y,
 		}, {
@@ -68,9 +68,9 @@ export class GraphSeeker {
 		})
 
 		var result = new SeekResult()
-		result.isOk = true
+		result.isOk = result1.ok
 		var grid = this.graphFinder.getGrid()
-		for (var pn of paths) {
+		for (var pn of result1.paths) {
 			// var index = pn[1] * this.graph.width + pn[0]
 			// var index = this.graph.toIndex(pn[0], pn[1])
 			// var node = this.graph.nodes[index]

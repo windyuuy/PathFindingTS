@@ -362,7 +362,7 @@ export class Grid {
 			startx += movx
 		} else if (amovx < 0) {
 			// mov y
-			for (var y = 1; y <= amovx; y++) {
+			for (var y = 1; y <= -amovx; y++) {
 				movx += signy
 				var node = this.getNodeAt({ x: startx, y: starty + y * signy })
 				node.setParent(startNode)

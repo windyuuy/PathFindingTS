@@ -549,7 +549,9 @@ export class GridGraph {
 		}
 		for (var i = 0; i < 8; i++) {
 			var other: GridNode = nodes[index + neighbourOffsets[i]];
-			nearList.push(other)
+			if (other != null) {
+				nearList.push(other)
+			}
 		}
 
 		var offset = end.clone().subtract(position).normalize()

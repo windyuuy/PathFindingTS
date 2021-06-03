@@ -11,6 +11,11 @@ import {
 import { ANode } from '../core/node';
 import { Heuristic } from '../types/astar.types';
 
+export class FindPathResult {
+  paths: number[][] = []
+  ok: boolean = false
+}
+
 export class AStarFinder {
   // Grid
   private grid!: Grid;
@@ -99,7 +104,9 @@ export class AStarFinder {
     return this
   }
 
-  public findPath(startPosition: IPoint, endPosition: IPoint): number[][] {
+  public findPath(startPosition: IPoint, endPosition: IPoint): FindPathResult {
+    var result = new FindPathResult();
+
     // Reset lists
     this.closedList = [];
     this.openList = [];
@@ -108,7 +115,19 @@ export class AStarFinder {
     this.grid.resetGrid();
 
     const startNode = this.grid.getNodeAt(startPosition);
-    const endNode = this.grid.getNodeAt(endPosition);
+    const endNode0 = this.grid.getNodeAt(endPosition);
+    var endNode = endNode0
+    if (!endNode.isWalkable) {
+      endNode = this.grid.findClosestWalkableNode(endNode0, startNode)!
+      if (endNode == null) {
+        this.grid.seekDirectTo(startNode, endNode0)
+        result.paths = backtrace(endNode0, this.includeStartNode, this.includeEndNode);
+        result.ok = true
+        return result
+      } else {
+        this.grid.seekDirectTo(endNode, endNode0)
+      }
+    }
 
     // Break if start and/or end position is/are not walkable
     if (!this.walkThroughAnyway) {
@@ -117,7 +136,7 @@ export class AStarFinder {
         !this.grid.isWalkableAt(startPosition)
       ) {
         // Path could not be created because the start and/or end position is/are not walkable.
-        return [];
+        return result;
       }
     }
 
@@ -161,11 +180,7 @@ export class AStarFinder {
       // Get node with lowest f value
       const currentNode = lang.helper.ArrayHelper.min(this.openList, (o) => {
         return o.getFValue();
-      });
-
-      if (currentNode == null) {
-        throw new Error("nothing to handle")
-      }
+      })!;
 
       // Move current node from open list to closed list
       currentNode.setIsOnOpenList(false);
@@ -178,7 +193,9 @@ export class AStarFinder {
 
       // End of path is reached
       if (currentNode === endNode) {
-        return backtrace(endNode, this.includeStartNode, this.includeEndNode);
+        result.ok = true;
+        result.paths = backtrace(endNode0, this.includeStartNode, this.includeEndNode);
+        return result;
       }
 
       // Get neighbors
@@ -234,7 +251,7 @@ export class AStarFinder {
       }
     }
     // Path could not be created
-    return [];
+    return result;
   }
 
   /**

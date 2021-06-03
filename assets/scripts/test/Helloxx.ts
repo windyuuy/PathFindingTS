@@ -20,7 +20,9 @@ export class Helloxx extends Component {
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
-            seek.startPath(this.node.position, new Vec3(10, 0, 10), (path) => {
+            // var pos = this.node.position
+            var pos = new Vec3(30, 0, 3)
+            seek.startPath(pos, new Vec3(-10, 0, -10), (path) => {
                 console.log("result:", path.isOk, path.vectorPath);
             });
         })()
