@@ -49,14 +49,9 @@ export class PathFinder extends Component {
      */
     scanGraph() {
         AstarPath.active.scanGraph()
+        AstarPath.active.drawDebug()
     }
 
-    /**
-     * 绘制地图调试信息
-     */
-    drawDebug() {
-
-    }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Mat4, PhysicsRayResult, Quat, Vec2, Vec3 } from "cc";
+import { instantiate, Mat4, PhysicsRayResult, Quat, resources, Vec2, Vec3 } from "cc";
 import { Heuristic, InspectorGridMode, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { GraphCollision } from "./Base";
 import { Float } from "../Basic/Float";
@@ -8,6 +8,7 @@ import { Int3 } from "./Int3";
 import { AstarPath } from "./AstarPath";
 import { ANode } from "../AStar/AStarLib/core/node";
 import { Vector } from "../Basic/Vector";
+import * as cc from "cc"
 
 export class GridGraph {
 
@@ -588,6 +589,33 @@ export class GridGraph {
 		}
 
 		return nearNode
+	}
+
+
+	get graphicRoot() {
+		return AstarPath.active.graphicRoot
+	}
+
+	drawNode(gridNode: GridNode) {
+		var pos = gridNode.position.asVec3()
+		resources.load<cc.Prefab>("PathFinding/Res/GridHint/GridHint", (err, prefab) => {
+			var node = cc.instantiate(prefab) as cc.Node
+			node.position = pos.clone().add(this.up)
+			node.parent = this.graphicRoot
+
+			node.getChildByName("CubeGreen")!.active = gridNode.Walkable
+			node.getChildByName("CubeRed")!.active = !gridNode.Walkable
+		})
+	}
+
+	/**
+	 * 绘制地图调试信息
+	 */
+	public drawGraph() {
+		// 遍历节点绘制节点
+		for (var node of this.nodes) {
+			this.drawNode(node)
+		}
 	}
 
 }

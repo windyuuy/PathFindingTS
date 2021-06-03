@@ -35,7 +35,8 @@ export class Helloxx extends Component {
                 // new TestCase(new Vec3(4, 0, 4), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(4, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 15)),
             ]
             for (var c of poses) {
                 var result = seek.startPath(c.start, c.end, (path) => {

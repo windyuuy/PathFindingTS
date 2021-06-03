@@ -47,4 +47,14 @@ export class AstarPath {
 
 		this.seeker.UpdateGraph(this.graphs)
 	}
+
+	/**
+	 * 绘制地图调试信息
+	 */
+	drawDebug() {
+		for (var graph of this.graphs) {
+			graph.drawGraph()
+		}
+	}
+
 }
