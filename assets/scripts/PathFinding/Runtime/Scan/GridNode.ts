@@ -13,9 +13,9 @@ type int = number
 type float = number
 
 export class GridNode extends ANode {
-	constructor(x: number, y: number) {
+	constructor(id: number, x: number, y: number) {
 		super({
-			id: 0,
+			id: id,
 			ipos: { x, y },
 		})
 	}
@@ -258,7 +258,7 @@ export class GridNode extends ANode {
 	}
 
 	clone(): GridNode {
-		var node = new GridNode(this.ipos.x, this.ipos.y)
+		var node = new GridNode(this.id, this.ipos.x, this.ipos.y)
 		this.mergeTo(node)
 		return node
 	}

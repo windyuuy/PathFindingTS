@@ -131,7 +131,7 @@ export class GridGraph {
 		// for (var i = 0; i < this.width * this.depth; i++) {
 		for (var i = 0; i < this.width; i++) {
 			for (var j = 0; j < this.depth; j++) {
-				var gridNode = new GridNode(j, i)
+				var gridNode = new GridNode(i * this.width + j, j, i)
 				gridNode.NodeInGridIndex = GridNode.genIndex()
 				this.nodes.push(gridNode);
 			}

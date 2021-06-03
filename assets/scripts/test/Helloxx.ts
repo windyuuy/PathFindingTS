@@ -4,6 +4,7 @@ import { PathFinder } from "../PathFinding/Editor/PathFinder";
 import { Seeker } from "../PathFinding/Runtime/AStar/Seeker";
 import { LayerMask } from "../PathFinding/Runtime/Basic/LayerMask";
 import { WaitForSeconds } from "../PathFinding/Runtime/Basic/WaitForSeconds";
+import { TestCase } from "./TestCase";
 const { ccclass, property } = _decorator;
 
 @ccclass('Helloxx')
@@ -20,11 +21,30 @@ export class Helloxx extends Component {
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
-            // var pos = this.node.position
-            var pos = new Vec3(30, 0, 3)
-            seek.startPath(pos, new Vec3(-10, 0, -10), (path) => {
-                console.log("result:", path.isOk, path.vectorPath);
-            });
+            var poses = [
+                new TestCase(new Vec3(0, 0, 0), new Vec3(0, 0, 0)),
+                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 10)),
+                new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, 10)),
+                new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, -10)),
+                new TestCase(new Vec3(10, 0, 10), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(-10, 0, -10), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(40, 0, 4), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(4, 0, 4), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(4, 0, 40), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
+                new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
+            ]
+            for (var c of poses) {
+                var result = seek.startPath(c.start, c.end, (path) => {
+                    console.log("result:", path.isOk, path.vectorPath);
+                })!;
+                c.paths = result.vectorPath
+                if (!c.check()) {
+                    console.error("unmatched result")
+                }
+            }
         })()
         console.log("start")
     }

@@ -49,6 +49,13 @@ export class GraphSeeker {
 
 	public StartPath(start: Vector3, end: Vector3): SeekResult {
 
+		if (start.equals(end)) {
+			var result = new SeekResult()
+			result.isOk = true
+			result.vectorPath = [start.clone()]
+			return result
+		}
+
 		var startNode = this.graph.GetNearestNode(start, end)
 		var endNode = this.graph.GetNearestNode(end, start)
 
