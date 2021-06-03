@@ -1,6 +1,7 @@
 
-import { _decorator, Component, Node, find } from 'cc';
+import { _decorator, Component, Node, find, Vec3 } from 'cc';
 import { PathFinder } from "../PathFinding/Editor/PathFinder";
+import { Seeker } from "../PathFinding/Runtime/AStar/Seeker";
 import { LayerMask } from "../PathFinding/Runtime/Basic/LayerMask";
 import { WaitForSeconds } from "../PathFinding/Runtime/Basic/WaitForSeconds";
 const { ccclass, property } = _decorator;
@@ -17,6 +18,11 @@ export class Helloxx extends Component {
             console.log("scanGraph")
             pathFinder.scanGraph()
             console.log("scanGraph done")
+
+            var seek = this.addComponent(Seeker)!
+            seek.startPath(this.node.position, new Vec3(10, 0, 10), (path) => {
+                console.log("result:", path.isOk, path.vectorPath);
+            });
         })()
         console.log("start")
     }

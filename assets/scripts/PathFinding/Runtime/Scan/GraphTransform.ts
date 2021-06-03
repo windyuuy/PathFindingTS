@@ -5,7 +5,7 @@ export class GraphTransform {
 
 	constructor(m: Mat4) {
 		this.matrix = m;
-		Mat4.invert(this.inverseMatrix, this.inverseMatrix)
+		Mat4.invert(this.inverseMatrix, this.matrix)
 
 		// var upM = new Mat4()
 		// var up = Vec3.UP.clone().transformMat4(m)

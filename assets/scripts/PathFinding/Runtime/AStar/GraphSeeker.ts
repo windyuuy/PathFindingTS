@@ -48,12 +48,23 @@ export class GraphSeeker {
 	}
 
 	public StartPath(start: Vector3, end: Vector3): SeekResult {
+
+		var startNode = this.graph.GetNearestNode(start)
+		var endNode = this.graph.GetNearestNode(end)
+
+		if (startNode == null || endNode == null) {
+			var result = new SeekResult()
+			result.isOk = false
+			result.vectorPath = []
+			return result
+		}
+
 		var paths = this.graphFinder.findPath({
-			x: start.x,
-			y: start.z,
+			x: startNode.ipos.x,
+			y: startNode.ipos.y,
 		}, {
-			x: end.x,
-			y: end.y,
+			x: endNode.ipos.x,
+			y: endNode.ipos.y,
 		})
 
 		var result = new SeekResult()

@@ -6,6 +6,8 @@ import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";
 import { Int3 } from "./Int3";
 import { AstarPath } from "./AstarPath";
+import { ANode } from "../AStar/AStarLib/core/node";
+import { Vector } from "../Basic/Vector";
 
 export class GridGraph {
 
@@ -210,6 +212,13 @@ export class GridGraph {
 	/// </summary>
 	public GraphPointToWorld(x: number, z: number, height: number): Int3 {
 		return Int3.fromVec3(this.transform.Transform(new Vec3(x + 0.5, height, z + 0.5)))
+	}
+
+	public WorldPointToGraph(position: Vec3): Vec3 {
+		var gpos = this.transform.InverseTransform(position)
+		gpos.x -= 0.5
+		gpos.z -= 0.5
+		return gpos
 	}
 
 	public RecalculateCell(x: number, z: number, resetPenalties: boolean = true, resetTags: boolean = true) {
@@ -505,6 +514,61 @@ export class GridGraph {
 		// Set the matrix of the graph
 		// This will also set inverseMatrix
 		return new GraphTransform(m);
+	}
+
+	// TODO: 需要结合终点改进索引顺序
+	public findClosestWalkableNode(position: Vec3): GridNode | null {
+		var minDistSQ = null;
+		var nearNode: GridNode | null = null
+		for (var node of this.nodes) {
+			if (node.getIsWalkable()) {
+				// var dist = start.idistance(node)
+				var dist = Vector.distanceSQ(position, node.position.asVec3())
+				if (minDistSQ == null || minDistSQ > dist) {
+					minDistSQ = dist
+					nearNode = node
+				}
+			}
+		}
+		return nearNode
+	}
+
+	public GetNearestNode(position: Vec3): GridNode | null {
+		var gpos = this.WorldPointToGraph(position)
+		var index = gpos.z * this.width + gpos.x
+
+		var neighbourOffsets: number[] = this.neighbourOffsets;
+		var nodes: GridNode[] = this.nodes;
+
+		var nearList: GridNode[] = []
+		var node = nodes[index]
+		if (node != null) {
+			nearList.push(node)
+		}
+		node.position.asVec3().clone().subtract(position).lengthSqr()
+		for (var i = 0; i < 8; i++) {
+			var other: GridNode = nodes[index + neighbourOffsets[i]];
+			nearList.push(other)
+		}
+
+		var minDistSq!: number
+		var nearNode: GridNode | null = null
+		for (var node of nearList) {
+			if (nearNode == null) {
+				nearNode = node
+				minDistSq = Vector.distanceSQ(node.position.asVec3(), position)
+			}
+			var dist = Vector.distanceSQ(node.position.asVec3(), position)
+			if (dist < minDistSq) {
+				nearNode = node
+			}
+		}
+
+		if (nearNode == null) {
+			nearNode = this.findClosestWalkableNode(position)
+		}
+
+		return nearNode
 	}
 
 }

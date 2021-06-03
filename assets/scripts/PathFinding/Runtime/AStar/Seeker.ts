@@ -11,7 +11,7 @@ type Vector3 = Vec3
 @ccclass('Seeker')
 // @_decorator.executeInEditMode
 export class Seeker extends Component {
-	public StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
+	public startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
 		return AstarPath.active.seeker.StartPath(start, end, call)
 	}
 }
