@@ -35,7 +35,7 @@ export class GraphSeeker {
 				width: graph.width,
 				height: graph.depth,
 			},
-			diagonalAllowed: false,
+			diagonalAllowed: true,
 			heuristic: heuristic as any,
 			includeStartNode: true,
 			includeEndNode: true,
@@ -49,8 +49,8 @@ export class GraphSeeker {
 
 	public StartPath(start: Vector3, end: Vector3): SeekResult {
 
-		var startNode = this.graph.GetNearestNode(start)
-		var endNode = this.graph.GetNearestNode(end)
+		var startNode = this.graph.GetNearestNode(start, end)
+		var endNode = this.graph.GetNearestNode(end, start)
 
 		if (startNode == null || endNode == null) {
 			var result = new SeekResult()
@@ -69,12 +69,24 @@ export class GraphSeeker {
 
 		var result = new SeekResult()
 		result.isOk = true
-		result.vectorPath.length = 0
+		var grid = this.graphFinder.getGrid()
 		for (var pn of paths) {
 			// var index = pn[1] * this.graph.width + pn[0]
-			var index = this.graph.toIndex(pn[0], pn[1])
-			var node = this.graph.nodes[index]
-			result.vectorPath.push(node.position.asVec3())
+			// var index = this.graph.toIndex(pn[0], pn[1])
+			// var node = this.graph.nodes[index]
+			var node = grid.getNodeAt({ x: pn[0], y: pn[1] })
+			result.nodes.push(node)
+			result.vectorPathRaw.push(node.position.asVec3())
+		}
+		result.vectorPath = result.vectorPathRaw.slice()
+		// 处理起点终点不在网格中心的细节
+		if (result.vectorPath.length > 0) {
+			if (!result.vectorPath[0].equals(start)) {
+				result.vectorPath.unshift(start)
+			}
+			if (!result.vectorPath[result.vectorPath.length - 1].equals(end)) {
+				result.vectorPath.push(end)
+			}
 		}
 
 		return result

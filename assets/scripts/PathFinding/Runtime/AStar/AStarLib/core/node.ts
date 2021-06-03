@@ -2,7 +2,14 @@ import { Int3 } from "../../../Scan/Int3";
 import { INodeConstructor, IPoint } from '../interfaces/astar.interfaces';
 
 export class ANode {
-  readonly id: number;
+  private _id!: number;
+  public get id(): number {
+    return this._id;
+  }
+  public set id(value: number) {
+    this._id = value;
+  }
+
   readonly ipos: IPoint;
 
   private fValue: number;
@@ -11,12 +18,18 @@ export class ANode {
   private parentNode: ANode | undefined;
   private isOnClosedList: boolean;
   private isOnOpenList: boolean;
-  private isWalkable: boolean;
+  private _isWalkable!: boolean;
+  public get isWalkable(): boolean {
+    return this._isWalkable;
+  }
+  public set isWalkable(value: boolean) {
+    this._isWalkable = value;
+  }
 
   position!: Int3
 
   constructor(aParams: INodeConstructor) {
-    this.id = aParams.id;
+    this._id = aParams.id;
     this.ipos = aParams.ipos;
 
     this.hValue = 0;
@@ -25,11 +38,10 @@ export class ANode {
     this.parentNode = undefined;
     this.isOnClosedList = false;
     this.isOnOpenList = false;
-    this.isWalkable = aParams.walkable || true;
+    this.isWalkable = aParams.walkable || false;
   }
 
-  clone(): ANode {
-    var node = new ANode(this)
+  mergeTo(node: ANode) {
     node.fValue = this.fValue
     node.gValue = this.gValue
     node.hValue = this.hValue
@@ -37,6 +49,10 @@ export class ANode {
     node.isOnClosedList = this.isOnClosedList
     node.isOnOpenList = this.isOnOpenList
     node.isWalkable = this.isWalkable
+  }
+  clone(): ANode {
+    var node = new ANode(this)
+    this.mergeTo(node)
     return node
   }
 

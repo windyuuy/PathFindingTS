@@ -246,4 +246,39 @@ export class GridNode extends ANode {
 		return gg.transform.Transform(closestInGraphSpace);
 	}
 
+	get id() {
+		return this.NodeInGridIndex
+	}
+
+	public get isWalkable(): boolean {
+		return this.Walkable;
+	}
+	public set isWalkable(value: boolean) {
+		this.Walkable = value;
+	}
+
+	clone(): GridNode {
+		var node = new GridNode(this.ipos.x, this.ipos.y)
+		this.mergeTo(node)
+		return node
+	}
+
+	mergeTo(node: GridNode) {
+		super.mergeTo(node)
+		node.position = this.position.clone()
+		node.GraphIndex = this.GraphIndex
+		node.nodeInGridIndex = this.nodeInGridIndex
+		node.gridFlags = this.gridFlags
+
+
+		node.Penalty = this.Penalty
+		node.Tag = this.Tag
+
+		node.Walkable = this.Walkable
+		node.WalkableErosion = this.WalkableErosion
+		node.hashCode = this.hashCode
+
+		return node
+	}
+
 }

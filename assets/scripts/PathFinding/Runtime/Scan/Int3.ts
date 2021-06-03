@@ -51,4 +51,12 @@ export class Int3 {
 	public get costMagnitude(): number {
 		return Math.round(this.magnitude);
 	}
+
+	public clone() {
+		var vec = new Int3()
+		vec.x = this.x
+		vec.y = this.y
+		vec.z = this.z
+		return vec
+	}
 }

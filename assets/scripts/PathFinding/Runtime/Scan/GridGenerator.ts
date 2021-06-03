@@ -131,7 +131,7 @@ export class GridGraph {
 		// for (var i = 0; i < this.width * this.depth; i++) {
 		for (var i = 0; i < this.width; i++) {
 			for (var j = 0; j < this.depth; j++) {
-				var gridNode = new GridNode(i, j)
+				var gridNode = new GridNode(j, i)
 				gridNode.NodeInGridIndex = GridNode.genIndex()
 				this.nodes.push(gridNode);
 			}
@@ -218,6 +218,8 @@ export class GridGraph {
 		var gpos = this.transform.InverseTransform(position)
 		gpos.x -= 0.5
 		gpos.z -= 0.5
+		gpos.x = Math.floor(gpos.x)
+		gpos.z = Math.floor(gpos.z)
 		return gpos
 	}
 
@@ -533,7 +535,7 @@ export class GridGraph {
 		return nearNode
 	}
 
-	public GetNearestNode(position: Vec3): GridNode | null {
+	public GetNearestNode(position: Vec3, end: Vec3): GridNode | null {
 		var gpos = this.WorldPointToGraph(position)
 		var index = gpos.z * this.width + gpos.x
 
@@ -545,22 +547,33 @@ export class GridGraph {
 		if (node != null) {
 			nearList.push(node)
 		}
-		node.position.asVec3().clone().subtract(position).lengthSqr()
 		for (var i = 0; i < 8; i++) {
 			var other: GridNode = nodes[index + neighbourOffsets[i]];
 			nearList.push(other)
 		}
 
+		var offset = end.clone().subtract(position).normalize()
+		var offsetStart = new Vec3()
+		var calcTh = (start: Vec3, end2: Vec3) => {
+			offsetStart.x = end2.x - start.x
+			offsetStart.y = end2.y - start.y
+			offsetStart.z = end2.z - start.z
+			offsetStart.normalize()
+			var th = offset.dot(offsetStart)
+			return th
+		}
+
 		var minDistSq!: number
 		var nearNode: GridNode | null = null
+		var nearTh = -10
 		for (var node of nearList) {
-			if (nearNode == null) {
+			var targetPos = node.position.asVec3()
+			var dist = Vector.distanceSQ(targetPos, position)
+			var th: number | null = null
+			if (nearNode == null || dist < minDistSq || (node.Walkable && !nearNode.Walkable) || (node.Walkable == nearNode.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
 				nearNode = node
-				minDistSq = Vector.distanceSQ(node.position.asVec3(), position)
-			}
-			var dist = Vector.distanceSQ(node.position.asVec3(), position)
-			if (dist < minDistSq) {
-				nearNode = node
+				minDistSq = dist
+				nearTh = th != null ? th : calcTh(position, targetPos)
 			}
 		}
 

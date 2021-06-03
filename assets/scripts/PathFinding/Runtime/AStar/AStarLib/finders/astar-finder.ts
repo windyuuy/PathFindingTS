@@ -29,6 +29,8 @@ export class AStarFinder {
   includeEndNode!: boolean;
   private weight!: number;
 
+  private walkThroughAnyway: boolean = true
+
   loadFromMatrix(aParams: IAStarFinderConstructorFromMatrix) {
     // Create grid
     this.grid = new Grid().loadFromMatrix({
@@ -109,12 +111,14 @@ export class AStarFinder {
     const endNode = this.grid.getNodeAt(endPosition);
 
     // Break if start and/or end position is/are not walkable
-    if (
-      !this.grid.isWalkableAt(endPosition) ||
-      !this.grid.isWalkableAt(startPosition)
-    ) {
-      // Path could not be created because the start and/or end position is/are not walkable.
-      return [];
+    if (!this.walkThroughAnyway) {
+      if (
+        !this.grid.isWalkableAt(endPosition) ||
+        !this.grid.isWalkableAt(startPosition)
+      ) {
+        // Path could not be created because the start and/or end position is/are not walkable.
+        return [];
+      }
     }
 
     // Push start node into open list
