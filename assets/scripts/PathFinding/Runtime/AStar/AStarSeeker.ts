@@ -12,10 +12,6 @@ export type OnPathDelegate = (path: SeekResult) => void
 export class AStarSeeker {
 	graphSeekers: GraphSeeker[] = []
 
-	Init() {
-
-	}
-
 	UpdateGraph(graphs: GridGraph[]) {
 		this.graphSeekers.length = 0
 

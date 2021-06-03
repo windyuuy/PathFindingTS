@@ -193,6 +193,28 @@ export class Grid {
     );
   }
 
+  connectionToDirectionMap: number[] = [
+    7, 0, 4, 3, 8, 1, 6, 2, 5,
+  ]
+  private connectionToDirection(pos: IPoint): number {
+    var index = 4 + pos.x + pos.y * 3
+    // 3+x: 2,3,4 -> 6,7,8
+    // 0+x: -1,0,1 -> 3,4,5
+    // -3+x: -4,-3,-2 -> 0,1,2
+    var direction = this.connectionToDirectionMap[index]
+    if (direction > 7) {
+      console.error("invalid direction")
+    }
+    return direction
+  }
+
+  private hasConnectionToNode(pos1: IPoint, pos2: IPoint): boolean {
+    var direction = this.connectionToDirection({ x: pos2.x - pos1.x, y: pos2.y - pos1.y })
+    var node1 = this.gridNodes[pos1.y][pos1.x]
+    var isConnected = node1.HasConnectionInDirection(direction)
+    return isConnected
+  }
+
   /**
    * Get surrounding nodes.
    * @param currentXPos [x-position on the grid]
@@ -207,14 +229,18 @@ export class Grid {
 
     for (var y = currentPosition.y - 1; y <= currentPosition.y + 1; y++) {
       for (var x = currentPosition.x - 1; x <= currentPosition.x + 1; x++) {
-        if (this.isOnTheGrid({ x, y })) {
+        var target = { x, y }
+        if (this.isOnTheGrid(target)) {
           // TODO: 增加通路判断
-          if (this.isWalkableAt({ x, y })) {
-            if (diagnonalMovementAllowed) {
-              surroundingNodes.push(this.getNodeAt({ x, y }));
-            } else {
-              if (x == currentPosition.x || y == currentPosition.y) {
-                surroundingNodes.push(this.getNodeAt({ x, y }));
+          if (this.isWalkableAt(target)) {
+            // 判断是否有通路
+            if (this.hasConnectionToNode(currentPosition, target)) {
+              if (diagnonalMovementAllowed) {
+                surroundingNodes.push(this.getNodeAt(target));
+              } else {
+                if (x == currentPosition.x || y == currentPosition.y) {
+                  surroundingNodes.push(this.getNodeAt(target));
+                }
               }
             }
           } else {
@@ -275,4 +301,58 @@ export class Grid {
     }
     return cloneGrid;
   }
+
+  // TODO: 需要结合终点改进索引顺序
+  public findClosestWalkableNode(start: ANode, endNode: ANode): ANode | null {
+    var minDist = null;
+    var nearNode: ANode | null = null
+    for (var x = 0; x < this.width; x++) {
+      for (var y = 0; y < this.height; y++) {
+        var node = this.getNodeAt({ x, y })
+        if (node.getIsWalkable()) {
+          var dist = start.idistance(node)
+          if (minDist == null || minDist > dist) {
+            minDist = dist
+            nearNode = node
+          }
+        }
+      }
+    }
+    return nearNode
+  }
+
+  public seekDirectTo(start: ANode, target: ANode) {
+    var dx = target.ipos.x - start.ipos.x
+    var dy = target.ipos.y - start.ipos.y
+    var startx = start.ipos.x
+    var starty = start.ipos.y
+    var signx = Math.sign(dx)
+    var signy = Math.sign(dy)
+    var movx = Math.abs(dx) - Math.abs(dy)
+    var startNode = start
+    if (movx > 0) {
+      // mov x
+      for (var x = 0; x < movx; x++) {
+        dx += signx
+        var node = this.getNodeAt({ x: startx + x * signx, y: starty })
+        node.setParent(startNode)
+        startNode = node
+      }
+    } else if (movx < 0) {
+      // mov y
+      for (var y = 0; y < movx; y++) {
+        dy += signy
+        var node = this.getNodeAt({ x: startx, y: starty + y * signy })
+        node.setParent(startNode)
+        startNode = node
+      }
+    }
+
+    for (var x = startNode.ipos.x + 1; x <= target.ipos.x; x++) {
+      var node = this.getNodeAt({ x, y: x })
+      node.setParent(startNode)
+      startNode = node
+    }
+  }
+
 }

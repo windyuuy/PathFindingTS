@@ -24,6 +24,11 @@ export interface IAStarFinderConstructorFromGraph {
   weight?: number;
   includeStartNode?: boolean;
   includeEndNode?: boolean;
+  // TODO: 支持更多选项
+  /**
+   * 是否允许经过障碍物的对角线
+   */
+  diagnoalAlongCornerAllowed?: boolean
 }
 
 export interface IGridConstructorFromGraph {

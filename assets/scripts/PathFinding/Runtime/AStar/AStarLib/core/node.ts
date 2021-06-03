@@ -1,3 +1,4 @@
+import { Int3 } from "../../../Scan/Int3";
 import { INodeConstructor, IPoint } from '../interfaces/astar.interfaces';
 
 export class ANode {
@@ -11,6 +12,8 @@ export class ANode {
   private isOnClosedList: boolean;
   private isOnOpenList: boolean;
   private isWalkable: boolean;
+
+  position!: Int3
 
   constructor(aParams: INodeConstructor) {
     this.id = aParams.id;
@@ -119,4 +122,17 @@ export class ANode {
   public setIsWalkable(isWalkable: boolean): void {
     this.isWalkable = isWalkable;
   }
+
+  public HasConnectionInDirection(dir: number): boolean {
+    throw new Error("not implement")
+  }
+
+  public idistance(target: ANode): number {
+    var ix = this.ipos.x - target.ipos.x
+    var iy = this.ipos.y - target.ipos.y
+    var idist = ix * ix + iy * iy
+    idist = Math.floor(Math.sqrt(idist))
+    return idist
+  }
+
 }

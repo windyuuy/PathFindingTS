@@ -68,7 +68,6 @@ export class AStarFinder {
     this.grid = new Grid().loadFromGraph({
       width: aParams.grid.width,
       height: aParams.grid.height,
-      // TODO: xcx
       nodes: aParams.grid.nodes,
       densityOfObstacles: aParams.grid.densityOfObstacles || 0
     });
@@ -141,9 +140,12 @@ export class AStarFinder {
           node.setHValue(
             calculateHeuristic(
               this.heuristic,
-              node.ipos,
-              endNode.ipos,
-              this.weight
+              // node.ipos,
+              // endNode.ipos,
+              node,
+              endNode,
+              this,
+              this.grid,
             )
           );
         }
@@ -180,6 +182,16 @@ export class AStarFinder {
         currentNode.ipos,
         this.diagonalAllowed
       );
+
+      // TODO: 处理孤岛
+      if (neighbors.length == 0 && this.openList.length == 0) {
+        var nearNode = this.grid.findClosestWalkableNode(currentNode, endNode)
+        if (nearNode != null) {
+          this.grid.seekDirectTo(currentNode, nearNode)
+          this.openList.push(nearNode)
+          continue
+        }
+      }
 
       // Loop through all the neighbors
       for (let i in neighbors) {
@@ -235,6 +247,9 @@ export class AStarFinder {
    */
   public setWeight(newWeight: number): void {
     this.weight = newWeight;
+  }
+  public getWeight(): number {
+    return this.weight
   }
 
   /**

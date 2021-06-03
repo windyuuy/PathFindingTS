@@ -246,7 +246,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "graphs": [
+    "options": [
       {
         "__id__": 9
       }

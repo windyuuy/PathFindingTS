@@ -39,6 +39,7 @@ export class GraphSeeker {
 			heuristic: heuristic as any,
 			includeStartNode: true,
 			includeEndNode: true,
+			weight: graph.heuristicScale,
 		})
 
 		this.graphFinder = graphFinder

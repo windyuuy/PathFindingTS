@@ -70,6 +70,7 @@ export class GridGraph {
 	rotation!: Vec3
 
 	heuristic: Heuristic = Heuristic.Euclidean
+	heuristicScale: number = 1
 
 	public toIndex(x: number, y: number): number {
 		return this.width * y + x
@@ -94,6 +95,7 @@ export class GridGraph {
 		this.penaltyPositionOffset = options.penaltyPositionOffset
 		this.initialPenalty = options.initialPenalty
 		this.heuristic = options.heuristic
+		this.heuristicScale = options.heuristicScale
 
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 

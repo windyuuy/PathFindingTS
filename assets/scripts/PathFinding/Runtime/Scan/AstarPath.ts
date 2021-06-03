@@ -1,4 +1,5 @@
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
+import { AStarSeeker } from "../AStar/AStarSeeker";
 import { AstarWorkItem } from "./AstarWorkItem";
 import { GridGraph } from "./GridGenerator";
 import { ProceduralGridMover } from "./ProceduralGridMover";
@@ -17,6 +18,9 @@ export class AstarPath {
 	graphs: GridGraph[] = []
 
 	gridMovers: ProceduralGridMover[] = []
+
+	seeker: AStarSeeker = new AStarSeeker()
+
 	/**
 	 * 初始化
 	 */
@@ -36,5 +40,7 @@ export class AstarPath {
 		for (var gridMover of gridMovers) {
 			gridMover.scan();
 		}
+
+		this.seeker.UpdateGraph(this.graphs)
 	}
 }
