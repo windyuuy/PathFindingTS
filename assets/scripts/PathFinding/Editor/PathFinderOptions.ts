@@ -195,6 +195,11 @@ export class PathFinderOptions {
 	@property
 	initialPenalty: number = 0
 
+	@property({
+		displayName: "启用调试绘图",
+	})
+	enableGraphicDrawer: boolean = false
+
 	public static start() {
 		LayerMask.UpdateLayer(PathFinderOptions, "mask", "bitmask");
 	}

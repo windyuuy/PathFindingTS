@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, Node, Graphics, resources, Prefab } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
 import { AstarPath } from "../Runtime/Scan/AstarPath";
 import { ProceduralGridMover } from "../Runtime/Scan/ProceduralGridMover";
@@ -41,6 +41,8 @@ export class PathFinder extends Component {
     init() {
         AstarPath.active.options = this.options;
         AstarPath.active.init()
+        AstarPath.active.graphic = this.addComponent(Graphics)
+        AstarPath.active.graphicRoot = this.node
     }
     /**
      * 扫描地图

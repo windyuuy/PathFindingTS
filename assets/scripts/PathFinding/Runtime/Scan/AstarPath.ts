@@ -1,3 +1,4 @@
+import { Graphics, Node } from "cc";
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AStarSeeker } from "../AStar/AStarSeeker";
 import { AstarWorkItem } from "./AstarWorkItem";
@@ -20,6 +21,9 @@ export class AstarPath {
 	gridMovers: ProceduralGridMover[] = []
 
 	seeker: AStarSeeker = new AStarSeeker()
+
+	graphic: Graphics | null = null
+	graphicRoot: Node | null = null
 
 	/**
 	 * 初始化

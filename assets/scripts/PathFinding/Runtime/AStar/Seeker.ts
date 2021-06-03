@@ -11,7 +11,21 @@ type Vector3 = Vec3
 @ccclass('Seeker')
 // @_decorator.executeInEditMode
 export class Seeker extends Component {
+	@property({
+		displayName: "绘制寻路线段",
+	})
+	needDrawDebug: boolean = false
+
+	@property({
+		displayName: "绘制线宽度",
+	})
+	lineWidth: number = 0.1
+
 	public startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
-		return AstarPath.active.seeker.StartPath(start, end, call)
+		var result = AstarPath.active.seeker.StartPath(start, end, call)
+		if (this.needDrawDebug) {
+			result?.drawDebug(this.lineWidth)
+		}
+		return result
 	}
 }

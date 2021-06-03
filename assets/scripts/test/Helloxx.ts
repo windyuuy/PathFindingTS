@@ -21,19 +21,20 @@ export class Helloxx extends Component {
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
+            seek.needDrawDebug = true
             var poses = [
-                new TestCase(new Vec3(0, 0, 0), new Vec3(0, 0, 0)),
-                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 10)),
-                new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, 10)),
-                new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, -10)),
-                new TestCase(new Vec3(10, 0, 10), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(-10, 0, -10), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(40, 0, 4), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(4, 0, 4), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(4, 0, 40), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(0, 0, 0)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 10)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, 10)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, -10)),
+                // new TestCase(new Vec3(10, 0, 10), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(-10, 0, -10), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(40, 0, 4), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(4, 0, 4), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(4, 0, 40), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
                 new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
             ]
             for (var c of poses) {
