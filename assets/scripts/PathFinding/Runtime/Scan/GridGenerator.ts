@@ -78,6 +78,10 @@ export class GridGraph {
 		return this.width * y + x
 	}
 
+	public get up(): Vec3 {
+		return this.collision.up
+	}
+
 	public Init(options: PathFinderOptions) {
 		this.width = options.width
 		this.depth = options.height

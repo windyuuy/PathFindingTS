@@ -1,5 +1,6 @@
 import * as cc from "cc";
 import { AstarPath } from "../Scan/AstarPath";
+import { GridGraph } from "../Scan/GridGenerator";
 import { ANode } from "./AStarLib/core/node";
 
 type Vector3 = cc.Vec3
@@ -12,6 +13,7 @@ export class SeekResult {
 	public vectorPath: Vector3[] = []
 	public vectorPathRaw: Vector3[] = []
 	public nodes: ANode[] = []
+	public graph!: GridGraph
 
 	get graphic() {
 		return AstarPath.active.graphic
@@ -21,9 +23,9 @@ export class SeekResult {
 		return AstarPath.active.graphicRoot
 	}
 
-	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number) {
-		start.y = 0
-		end.y = 0
+	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number, up: cc.Vec3) {
+		// start.y = 0
+		// end.y = 0
 		var scale = lineWidth
 		cc.resources.load<cc.Prefab>("PathFinding/Res/PathHint/PathHint", (err, shapePrefab) => {
 			var axis = end.clone().subtract(start)
@@ -48,7 +50,7 @@ export class SeekResult {
 			headMark.setScale(scale, scale, scale)
 			headMark.active = index == 0
 
-			var center = start.clone().add(end).multiplyScalar(0.5)
+			var center = start.clone().add(end).multiplyScalar(0.5).add(up.clone().multiplyScalar(0.001))
 			node.position = center
 
 			var rot = new cc.Quat()
@@ -64,12 +66,13 @@ export class SeekResult {
 		})
 	}
 
-	drawDebug(lineWidth: number) {
+	drawDebug(lineWidth: number, up: cc.Vec3) {
+		var up = this.graph.up
 		if (this.vectorPath.length >= 2) {
 			var first = this.vectorPath[0]
 			for (var i = 1; i < this.vectorPath.length; i++) {
 				var next = this.vectorPath[i]
-				this.setCylinder(i - 1, first.clone(), next.clone(), lineWidth)
+				this.setCylinder(i - 1, first.clone(), next.clone(), lineWidth, up)
 				first = next
 			}
 		}

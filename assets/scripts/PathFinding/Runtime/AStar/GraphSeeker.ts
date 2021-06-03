@@ -84,6 +84,7 @@ export class GraphSeeker {
 			var node = grid.getNodeAt({ x: pn[0], y: pn[1] })
 			result.nodes.push(node)
 			result.vectorPathRaw.push(node.position.asVec3())
+			result.graph = this.graph
 		}
 		result.vectorPath = result.vectorPathRaw.slice()
 		// 处理起点终点不在网格中心的细节
