@@ -12,7 +12,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Cube",
+    "_name": "PathHint",
     "_objFlags": 0,
     "_parent": null,
     "_children": [
