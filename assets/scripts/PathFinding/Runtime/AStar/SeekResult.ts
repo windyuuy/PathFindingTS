@@ -25,7 +25,7 @@ export class SeekResult {
 		start.y = 0
 		end.y = 0
 		var scale = lineWidth
-		cc.resources.load<cc.Prefab>("Res/Cube", (err, shapePrefab) => {
+		cc.resources.load<cc.Prefab>("PathFinding/Res/Cube", (err, shapePrefab) => {
 			var axis = end.clone().subtract(start)
 
 			var node = cc.instantiate(shapePrefab) as cc.Node
