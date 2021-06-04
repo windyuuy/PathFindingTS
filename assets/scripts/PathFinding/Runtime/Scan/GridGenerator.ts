@@ -608,7 +608,9 @@ export class GridGraph {
 		var drawBatchId = this.drawBatchId
 
 		var pos = gridNode.position.asVec3()
-		var upOffset = options.upOffset
+		var upOffsetN = options.upOffset
+		var upOffset = up.clone()
+		upOffset.multiplyScalar(upOffsetN)
 		MyNodePool.load("GridHint", (node) => {
 			if (drawBatchId != this.drawBatchId) {
 				MyNodePool.put(node)
@@ -619,8 +621,8 @@ export class GridGraph {
 			this.graphNodes.push(node)
 
 			var nodePos = pos.clone()
-			if (upOffset != 0) {
-				nodePos.add(up.clone().multiplyScalar(upOffset))
+			if (upOffsetN != 0) {
+				nodePos.add(upOffset)
 			}
 			node.position = nodePos
 			node.parent = this.graphicRoot
@@ -643,12 +645,20 @@ export class GridGraph {
 		}
 
 		this.drawBatchId++
-		// 遍历节点绘制节点
-		var up = this.up.clone()
-		var options = this.debugDrawOptions
-		for (var node of this.nodes) {
-			this.drawNode(node, up, options)
-		}
+
+		var drawBatchId = this.drawBatchId
+		MyNodePool.loadPrefab("GridHint", () => {
+			if (drawBatchId != this.drawBatchId) {
+				return
+			}
+
+			// 遍历节点绘制节点
+			var up = this.up.clone()
+			var options = this.debugDrawOptions
+			for (var node of this.nodes) {
+				this.drawNode(node, up, options)
+			}
+		})
 	}
 
 	public clearDebug() {

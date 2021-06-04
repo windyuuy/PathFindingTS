@@ -1066,13 +1066,21 @@ var gcc;
             }
             CCNodePoolMap.prototype.getOrCreateNodeWithPrefabUrl = function (prefabId, prefabUrl, call) {
                 var _this = this;
-                cc.resources.load(prefabUrl, function (err, prefab) {
-                    if (err) {
-                        call(null, err);
-                    }
-                    var node = _this.getOrCreateNodeWithPrefab(prefabId, prefab);
+                var pool = this.getResPool(prefabId);
+                if (pool.length > 0) {
+                    var node = pool.pop();
+                    node.emit("ecs:reuse");
                     call(node, null);
-                });
+                }
+                else {
+                    cc.resources.load(prefabUrl, function (err, prefab) {
+                        if (err) {
+                            call(null, err);
+                        }
+                        var node = _this.getOrCreateNodeWithPrefab(prefabId, prefab);
+                        call(node, null);
+                    });
+                }
             };
             CCNodePoolMap.prototype.getOrCreateNodeWithPrefab = function (prefabId, prefab) {
                 var pool = this.getResPool(prefabId);
