@@ -8,7 +8,7 @@ import { Int3 } from "./Int3";
 import { GridNode } from "./GridNode";
 import { IntRect } from "./IntRect";
 import { Int2 } from "./Int2";
-import { WaitForSeconds } from "../Basic/WaitForSeconds";
+import { WaitNull, WaitForSeconds } from "../Basic/WaitForSeconds";
 
 export class ProceduralGridMover {
 
@@ -69,6 +69,14 @@ export class ProceduralGridMover {
 		return this.graph.center
 	}
 	buffer: GridNode[] = [];
+
+	protected WaitStep(waitDuration: number) {
+		if (waitDuration == 0) {
+			return WaitNull()
+		} else {
+			return WaitForSeconds(waitDuration)
+		}
+	}
 
 	public async UpdateGraphCoroutine(force: boolean = false, asyncly: boolean = false) {
 		var waitDuration = this.graph.asyncInterval
@@ -152,7 +160,7 @@ export class ProceduralGridMover {
 				}
 
 				if (asyncly) {
-					await WaitForSeconds(waitDuration)
+					await this.WaitStep(waitDuration)
 				}
 				// yield return null;
 
@@ -191,7 +199,7 @@ export class ProceduralGridMover {
 				}
 
 				if (asyncly) {
-					await WaitForSeconds(waitDuration)
+					await this.WaitStep(waitDuration)
 				}
 				// yield return null;
 			}
@@ -227,7 +235,7 @@ export class ProceduralGridMover {
 					counter = 0;
 
 					if (asyncly) {
-						await WaitForSeconds(waitDuration)
+						await this.WaitStep(waitDuration)
 					}
 					// yield return null;
 				}
@@ -253,14 +261,14 @@ export class ProceduralGridMover {
 					counter = 0;
 
 					if (asyncly) {
-						await WaitForSeconds(waitDuration)
+						await this.WaitStep(waitDuration)
 					}
 					// yield return null;
 				}
 			}
 
 			if (asyncly) {
-				await WaitForSeconds(waitDuration)
+				await this.WaitStep(waitDuration)
 			}
 			// yield return null;
 
@@ -289,7 +297,7 @@ export class ProceduralGridMover {
 					counter = 0;
 
 					if (asyncly) {
-						await WaitForSeconds(waitDuration)
+						await this.WaitStep(waitDuration)
 					}
 					// yield return null;
 				}
@@ -305,7 +313,7 @@ export class ProceduralGridMover {
 					counter = 0;
 
 					if (asyncly) {
-						await WaitForSeconds(waitDuration)
+						await this.WaitStep(waitDuration)
 					}
 					// yield return null;
 				}

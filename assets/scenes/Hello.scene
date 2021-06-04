@@ -341,7 +341,7 @@
     "penaltyPositionFactor": 0,
     "penaltyPositionOffset": 1,
     "initialPenalty": 0,
-    "asyncInterval": 0.001,
+    "asyncInterval": 0,
     "debugDrawOptions": {
       "__id__": 11
     }

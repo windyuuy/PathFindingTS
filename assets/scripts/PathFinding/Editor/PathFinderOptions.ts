@@ -224,7 +224,7 @@ export class PathFinderOptions {
 	@property({
 		displayName: "异步休憩间隔",
 	})
-	asyncInterval: number = 0.001;
+	asyncInterval: number = 0;
 
 	@property({
 		displayName: "调试绘图选项",
