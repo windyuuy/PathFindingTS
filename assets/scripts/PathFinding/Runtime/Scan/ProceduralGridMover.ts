@@ -8,6 +8,7 @@ import { Int3 } from "./Int3";
 import { GridNode } from "./GridNode";
 import { IntRect } from "./IntRect";
 import { Int2 } from "./Int2";
+import { WaitForSeconds } from "../Basic/WaitForSeconds";
 
 export class ProceduralGridMover {
 
@@ -20,15 +21,28 @@ export class ProceduralGridMover {
 		this.UpdateGraph();
 	}
 
+	public async scanAsync() {
+		await this.UpdateGraphAsync();
+	}
+
 	protected updatingGraph: boolean = false
 
 	public UpdateGraph(): void {
+		if (this.updatingGraph) {
+			return;
+		}
+		this.updatingGraph = true;
+
+		this.UpdateGraphCoroutine(true);
+		this.updatingGraph = false;
+	}
+
+	public async UpdateGraphAsync() {
 		if (this.updatingGraph) {
 			// We are already updating the graph
 			// so ignore this call
 			return;
 		}
-
 		this.updatingGraph = true;
 
 		// Start a work item for updating the graph
@@ -37,8 +51,9 @@ export class ProceduralGridMover {
 		// and then do it over several frames
 		// (hence the IEnumerator coroutine)
 		// to avoid too large FPS drops
-		var ie = this.UpdateGraphCoroutine(true);
-		// await ie
+		await this.UpdateGraphCoroutine(true, true);
+
+		this.updatingGraph = false;
 	}
 
 	graph!: GridGraph;
@@ -55,7 +70,9 @@ export class ProceduralGridMover {
 	}
 	buffer: GridNode[] = [];
 
-	public UpdateGraphCoroutine(force: boolean = false) {
+	public async UpdateGraphCoroutine(force: boolean = false, asyncly: boolean = false) {
+		var waitDuration = this.graph.asyncInterval
+
 		// Find the direction that we want to move the graph in.
 		// Calcuculate this in graph space (where a distance of one is the size of one node)
 		var dir = this.PointToGraphSpace(this.targetPosition).subtract(this.PointToGraphSpace(this.graph.center));
@@ -68,7 +85,7 @@ export class ProceduralGridMover {
 		// Nothing do to
 		if ((!force) && dir.equals(Vec3.ZERO)) {
 			// yield break;
-			return;
+			return
 		}
 
 		// Number of nodes to offset in each direction
@@ -134,6 +151,9 @@ export class ProceduralGridMover {
 					}
 				}
 
+				if (asyncly) {
+					await WaitForSeconds(waitDuration)
+				}
 				// yield return null;
 
 				// Copy the nodes back to the graph
@@ -170,6 +190,9 @@ export class ProceduralGridMover {
 					}
 				}
 
+				if (asyncly) {
+					await WaitForSeconds(waitDuration)
+				}
 				// yield return null;
 			}
 
@@ -202,6 +225,10 @@ export class ProceduralGridMover {
 
 				if (counter > yieldEvery) {
 					counter = 0;
+
+					if (asyncly) {
+						await WaitForSeconds(waitDuration)
+					}
 					// yield return null;
 				}
 			}
@@ -224,10 +251,17 @@ export class ProceduralGridMover {
 
 				if (counter > yieldEvery) {
 					counter = 0;
+
+					if (asyncly) {
+						await WaitForSeconds(waitDuration)
+					}
 					// yield return null;
 				}
 			}
 
+			if (asyncly) {
+				await WaitForSeconds(waitDuration)
+			}
 			// yield return null;
 
 			// Calculate all connections for the nodes along the boundary
@@ -253,6 +287,10 @@ export class ProceduralGridMover {
 				counter += width;
 				if (counter > yieldEvery) {
 					counter = 0;
+
+					if (asyncly) {
+						await WaitForSeconds(waitDuration)
+					}
 					// yield return null;
 				}
 			}
@@ -265,6 +303,10 @@ export class ProceduralGridMover {
 				counter += width;
 				if (counter > yieldEvery) {
 					counter = 0;
+
+					if (asyncly) {
+						await WaitForSeconds(waitDuration)
+					}
 					// yield return null;
 				}
 			}

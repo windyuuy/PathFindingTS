@@ -68,6 +68,14 @@ export class PathFinder extends Component {
         AstarPath.active.drawDebug()
     }
 
+    /**
+     * 扫描地图
+     */
+    async scanGraphAsync() {
+        await AstarPath.active.scanGraphAsync()
+        AstarPath.active.drawDebug()
+    }
+
 }
 
 /**

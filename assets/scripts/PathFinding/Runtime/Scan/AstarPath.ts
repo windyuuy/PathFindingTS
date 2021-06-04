@@ -49,6 +49,22 @@ export class AstarPath {
 	}
 
 	/**
+	 * 扫描地图
+	 */
+	async scanGraphAsync() {
+		var gridMovers = this.gridMovers
+		var waitList: Promise<void>[] = []
+		for (var gridMover of gridMovers) {
+			var waitor = gridMover.scanAsync();
+			waitList.push(waitor)
+		}
+
+		await Promise.all(waitList)
+
+		this.seeker.UpdateGraph(this.graphs)
+	}
+
+	/**
 	 * 绘制地图调试信息
 	 */
 	drawDebug() {

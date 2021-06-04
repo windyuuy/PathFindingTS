@@ -12,6 +12,10 @@ export type OnPathDelegate = (path: SeekResult) => void
 export class AStarSeeker {
 	graphSeekers: GraphSeeker[] = []
 
+	/**
+	 * 更新A*寻路器网格数据
+	 * @param graphs 
+	 */
 	UpdateGraph(graphs: GridGraph[]) {
 		this.graphSeekers.length = 0
 

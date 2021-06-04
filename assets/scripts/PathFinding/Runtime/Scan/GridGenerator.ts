@@ -57,6 +57,8 @@ export class GridGraph {
 	public readonly LayerCount: number = 1;
 	public inspectorGridMode: InspectorGridMode = InspectorGridMode.Grid;
 
+	public asyncInterval: number = 0
+
 	public debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	static readonly standardIsometric: number = 90 - Math.atan(1 / Math.sqrt(2)) * Float.Rad2Deg;
@@ -107,6 +109,8 @@ export class GridGraph {
 		this.initialPenalty = options.initialPenalty
 		this.heuristic = options.heuristic
 		this.heuristicScale = options.heuristicScale
+
+		this.asyncInterval = options.asyncInterval
 
 		this.debugDrawOptions = options.debugDrawOptions
 

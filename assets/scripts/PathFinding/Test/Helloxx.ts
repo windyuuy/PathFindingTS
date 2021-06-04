@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, find, Vec3 } from 'cc';
+import { _decorator, Component, Node, find, Vec3, path } from 'cc';
 import { PathFinder } from "../Editor/PathFinder";
 import { Seeker } from "../Runtime/AStar/Seeker";
 import { LayerMask } from "../Runtime/Basic/LayerMask";
@@ -17,7 +17,8 @@ export class Helloxx extends Component {
             console.log("init")
             pathFinder.init()
             console.log("scanGraph")
-            pathFinder.scanGraph()
+            // pathFinder.scanGraph()
+            await pathFinder.scanGraphAsync()
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
