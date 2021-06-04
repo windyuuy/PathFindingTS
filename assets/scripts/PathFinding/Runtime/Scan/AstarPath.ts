@@ -48,10 +48,18 @@ export class AstarPath {
 		this.seeker.UpdateGraph(this.graphs)
 	}
 
+	protected scanGraphAsyncTask?: Promise<any>
+	public get awaitScanGraphTask() {
+		return this.scanGraphAsyncTask
+	}
 	/**
 	 * 扫描地图
 	 */
 	async scanGraphAsync() {
+		if (this.scanGraphAsyncTask != null) {
+			return
+		}
+
 		var gridMovers = this.gridMovers
 		var waitList: Promise<void>[] = []
 		for (var gridMover of gridMovers) {
@@ -59,9 +67,16 @@ export class AstarPath {
 			waitList.push(waitor)
 		}
 
-		await Promise.all(waitList)
+		var task1 = Promise.all(waitList)
+		var task2 = (async () => {
+			await task1
+			this.seeker.UpdateGraph(this.graphs)
+			this.scanGraphAsyncTask = undefined
+		})()
 
-		this.seeker.UpdateGraph(this.graphs)
+		this.scanGraphAsyncTask = task2
+		await task2
+
 	}
 
 	/**

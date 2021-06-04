@@ -25,10 +25,9 @@ export class AStarSeeker {
 		}
 	}
 
-	public StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
-		var result: SeekResult | undefined = undefined
+	public StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult {
 		for (var seek of this.graphSeekers) {
-			result = seek.StartPath(start, end)
+			let result = seek.StartPath(start, end)
 			if (result.isOk) {
 				if (call != null) {
 					call(result)
@@ -37,6 +36,7 @@ export class AStarSeeker {
 			}
 		}
 
+		var result: SeekResult = new SeekResult()
 		return result
 	}
 }

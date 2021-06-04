@@ -1,6 +1,7 @@
 
 import { _decorator, Component, Node, Graphics, resources, Prefab, NodePool, PrivateNode } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
 import { MyNodePool } from "../Runtime/Basic/NodePool/MyNodePool";
 import { AstarPath } from "../Runtime/Scan/AstarPath";
 import { ProceduralGridMover } from "../Runtime/Scan/ProceduralGridMover";
@@ -31,8 +32,10 @@ export class PathFinder extends Component {
     start() {
         PathFinderOptions.start();
 
-        MyNodePool.registerPrefabUrl("PathHint", "PathFinding/Res/PathHint/PathHint")
-        MyNodePool.registerPrefabUrl("GridHint", "PathFinding/Res/GridHint/GridHint")
+        if (!IS_CC_EDITOR) {
+            MyNodePool.registerPrefabUrl("PathHint", "PathFinding/Res/PathHint/PathHint")
+            MyNodePool.registerPrefabUrl("GridHint", "PathFinding/Res/GridHint/GridHint")
+        }
     }
 
     update(deltaTime: number) {

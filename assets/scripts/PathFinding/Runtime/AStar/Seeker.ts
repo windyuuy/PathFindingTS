@@ -23,7 +23,12 @@ export class Seeker extends Component {
 
 	result?: SeekResult
 
-	public startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
+	public async startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): Promise<SeekResult> {
+		var task = AstarPath.active.awaitScanGraphTask
+		if (task != null) {
+			await task
+		}
+
 		if (this.result != null) {
 			this.result.clearDebug()
 		}

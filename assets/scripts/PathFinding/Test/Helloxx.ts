@@ -18,7 +18,8 @@ export class Helloxx extends Component {
             pathFinder.init()
             console.log("scanGraph")
             // pathFinder.scanGraph()
-            await pathFinder.scanGraphAsync()
+            // await pathFinder.scanGraphAsync()
+            pathFinder.scanGraphAsync()
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
@@ -41,12 +42,16 @@ export class Helloxx extends Component {
                 new TestCase(new Vec3(4, 0, 4), new Vec3(10, 0, 15)),
             ]
             for (var c of poses) {
-                var result = seek.startPath(c.start, c.end, (path) => {
+                var result = await seek.startPath(c.start, c.end, (path) => {
                     console.log("result:", path.isOk, path.vectorPath);
-                })!;
-                c.paths = result.vectorPath
-                if (!c.check()) {
-                    console.error("unmatched result")
+                });
+                if (result.isOk) {
+                    c.paths = result!.vectorPath
+                    if (!c.check()) {
+                        console.error("unmatched result")
+                    }
+                } else {
+                    throw new Error("find path failed")
                 }
             }
         })()
