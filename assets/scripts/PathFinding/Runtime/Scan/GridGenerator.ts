@@ -625,8 +625,8 @@ export class GridGraph {
 			node.position = nodePos
 			node.parent = this.graphicRoot
 
-			node.getChildByName("CubeGreen")!.active = gridNode.Walkable
-			node.getChildByName("CubeRed")!.active = !gridNode.Walkable
+			node.getChildByName("CubeGreen")!.active = !gridNode.Walkable
+			node.getChildByName("CubeRed")!.active = gridNode.Walkable
 		})
 	}
 
