@@ -1,7 +1,7 @@
 import { Graphics, Node } from "cc";
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AStarSeeker } from "../AStar/AStarSeeker";
-import { AstarWorkItem } from "./AstarWorkItem";
+import { AstarWorkItem, TWorkItemInit, TWorkItemUpdater } from "./AstarWorkItem";
 import { GridGraph } from "./GridGenerator";
 import { ProceduralGridMover } from "./ProceduralGridMover";
 import { WorkItemProcessor } from "./WorkItemProcessor";
@@ -10,8 +10,11 @@ export class AstarPath {
 	public static readonly active: AstarPath = new AstarPath();
 	readonly workItems: WorkItemProcessor = new WorkItemProcessor();
 
-	public AddWorkItem(item: AstarWorkItem) {
+	protected _AddWorkItem(item: AstarWorkItem) {
 		this.workItems.AddWorkItem(item);
+	}
+	public AddWorkItem(init?: TWorkItemInit, update?: TWorkItemUpdater) {
+		this._AddWorkItem(new AstarWorkItem(init, update))
 	}
 
 	options: PathFinderOptions[] = []
@@ -46,11 +49,23 @@ export class AstarPath {
 		}
 
 		this.seeker.UpdateGraph(this.graphs)
+
+		this.onWorkDone()
 	}
 
+	protected onWorkDone() {
+		this.workDoneCount++
+
+		this.workItems.ProcessWorkItemsDone()
+	}
+
+	protected workDoneCount = 0
 	protected scanGraphAsyncTask?: Promise<any>
 	public get awaitScanGraphTask() {
 		return this.scanGraphAsyncTask
+	}
+	public get isWorkDone() {
+		return this.workDoneCount > 0 && this.scanGraphAsyncTask == null
 	}
 	/**
 	 * 扫描地图
@@ -72,6 +87,8 @@ export class AstarPath {
 			await task1
 			this.seeker.UpdateGraph(this.graphs)
 			this.scanGraphAsyncTask = undefined
+
+			this.onWorkDone()
 		})()
 
 		this.scanGraphAsyncTask = task2

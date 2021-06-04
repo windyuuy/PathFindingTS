@@ -1,10 +1,13 @@
-import { WorkItemProcessor } from "./WorkItemProcessor"
+import { IWorkItemContext, WorkItemProcessor } from "./WorkItemProcessor"
 
 export type TWorkItemUpdater = (a: WorkItemProcessor, b: boolean, c: boolean) => void
+export type TWorkItemInit = (a: IWorkItemContext) => void
 export class AstarWorkItem {
-	public update!: TWorkItemUpdater
+	public updateWithContext?: TWorkItemUpdater
+	public initWithContext?: TWorkItemInit
 
-	constructor(update: TWorkItemUpdater) {
-		this.update = update
+	constructor(init?: TWorkItemInit, update?: TWorkItemUpdater) {
+		this.initWithContext = init
+		this.updateWithContext = update
 	}
 }

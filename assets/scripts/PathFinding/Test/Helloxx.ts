@@ -4,6 +4,7 @@ import { PathFinder } from "../Editor/PathFinder";
 import { Seeker } from "../Runtime/AStar/Seeker";
 import { LayerMask } from "../Runtime/Basic/LayerMask";
 import { WaitForSeconds } from "../Runtime/Basic/WaitForSeconds";
+import { AstarPath } from "../Runtime/Scan/AstarPath";
 import { TestCase } from "./TestCase";
 const { ccclass, property } = _decorator;
 
@@ -20,6 +21,9 @@ export class Helloxx extends Component {
             // pathFinder.scanGraph()
             // await pathFinder.scanGraphAsync()
             pathFinder.scanGraphAsync()
+            AstarPath.active.AddWorkItem(() => {
+                console.log("work item done")
+            })
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
