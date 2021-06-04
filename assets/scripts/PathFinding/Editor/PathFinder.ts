@@ -8,7 +8,7 @@ import { PathFinderOptions } from "./PathFinderOptions";
 const { ccclass, property } = _decorator;
 
 @ccclass('PathFinder')
-// @_decorator.executeInEditMode
+@_decorator.executeInEditMode
 export class PathFinder extends Component {
 
     @property({
