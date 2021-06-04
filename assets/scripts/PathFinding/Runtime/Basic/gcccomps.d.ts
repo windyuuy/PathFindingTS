@@ -175,6 +175,7 @@ declare namespace gcc.resloader {
     }
     type LoadPrefabFunc = () => ResLoadNotifier<cc.Prefab>;
     type PrefabSource = string | ResLoadNotifier<cc.Prefab>;
+    type CCPrefabLoadLisenter = IResLoadListener<cc.Prefab>;
     /**
      * 预制体动态加载工具
      */
@@ -185,10 +186,9 @@ declare namespace gcc.resloader {
         getNotifier(uri: string): ResLoadNotifier<any>;
         existNotifier(uri: string): boolean;
         addNotifier(uri: string, notifier: ResLoadNotifier<any>): void;
-        loadPrefab(url: string): IResLoadListener<cc.Prefab>;
+        loadPrefab(url: string): CCPrefabLoadLisenter;
     }
     const resLoader: ResLoader;
-    type CCPrefabLoadLisenter = resloader.IResLoadListener<cc.Prefab>;
 }
 declare namespace gcc.respool {
     interface IAsset {
@@ -235,9 +235,10 @@ declare namespace gcc.respool {
      * cocos节点池
      */
     class CCNodePoolMap extends ResPoolMap<cc.Node> {
+        loadPrefabRaw(prefabUrl: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
         getOrCreateNodeWithPrefabUrl(prefabId: string, prefabUrl: string, call: (node: cc.Node, err: Error) => void): void;
         getOrCreateNodeWithPrefab(prefabId: string, prefab: cc.Prefab): cc.Node;
-        getOrCreateNodeDynamicly(prefabId: string, prefabLoadListener: resloader.CCPrefabLoadLisenter, call: (node: cc.Node) => void): void;
+        getOrCreateNodeDynamicly(prefabId: string, prefabLoadListener: resloader.CCPrefabLoadLisenter, call: (node: cc.Node, err?: Error) => void): void;
         putNodeToCull(prefabId: string, node: cc.Node): void;
         putNodeToRemove(prefabId: string, node: cc.Node): void;
         clear(): void;
@@ -257,10 +258,10 @@ declare namespace gcc.respool {
         protected prefabLoaderMap: {
             [key: string]: resloader.CCPrefabLoadLisenter;
         };
+        protected loadAndSavePrefab(prefabId: string, prefabUrl: string, call?: (prefab: cc.Prefab, err?: Error) => void): void;
         registerPrefabUrl(prefabId: string, prefabUrl: string): void;
         registerPrefab(prefabId: string, prefab: cc.Prefab): void;
         registerPrefabLoader(prefabId: string, prefabLoadListener: resloader.CCPrefabLoadLisenter): void;
-        loadPrefabRaw(prefabUrl: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
         loadPrefab(prefabId: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
         getNode(prefabId: string): cc.Node;
         loadNode(prefabId: string, call: (node: cc.Node, err?: Error) => void): void;

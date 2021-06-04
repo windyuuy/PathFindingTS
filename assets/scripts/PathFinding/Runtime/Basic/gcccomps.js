@@ -924,7 +924,7 @@ var gcc;
                 var existNotifier = this.existNotifier(url);
                 var notifier = this.getNotifier(url);
                 if (!existNotifier) {
-                    cc && cc["loader"] && cc["loader"].loadRes(url, cc["Prefab"], function (err, asset) {
+                    var onLoaded = function (err, asset) {
                         var isLoaded = (err == null && asset != null);
                         if (isLoaded) {
                             notifier.notifyOnLoad(asset);
@@ -934,7 +934,16 @@ var gcc;
                             console.error("load res failed, url:" + url + ", err:", err);
                             notifier.notifyOnError(err);
                         }
-                    });
+                    };
+                    if (cc && cc["resources"] && cc["resources"].load) {
+                        cc && cc["resources"] && cc["resources"].load(url, cc["Prefab"], onLoaded);
+                    }
+                    else if (cc && cc["loader"] && cc["loader"].loadRes) {
+                        cc && cc["loader"] && cc["loader"].loadRes(url, cc["Prefab"], onLoaded);
+                    }
+                    else {
+                        throw new Error("ccloader not implemented");
+                    }
                 }
                 return notifier;
             };
@@ -1064,6 +1073,24 @@ var gcc;
             function CCNodePoolMap() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            CCNodePoolMap.prototype.loadPrefabRaw = function (prefabUrl, call) {
+                // cc.resources.load<cc.Prefab>(prefabUrl, (err, prefab: cc.Prefab) => {
+                // 	call(prefab, err)
+                // })
+                var loader = gcc.resloader.resLoader.loadPrefab(prefabUrl);
+                loader.onLoad(function (prefab) {
+                    if (call != null) {
+                        call(prefab);
+                        call = null;
+                    }
+                });
+                loader.onError(function (err) {
+                    if (call != null) {
+                        call(null, err);
+                        call = null;
+                    }
+                });
+            };
             CCNodePoolMap.prototype.getOrCreateNodeWithPrefabUrl = function (prefabId, prefabUrl, call) {
                 var _this = this;
                 var pool = this.getResPool(prefabId);
@@ -1073,12 +1100,14 @@ var gcc;
                     call(node, null);
                 }
                 else {
-                    cc.resources.load(prefabUrl, function (err, prefab) {
-                        if (err) {
+                    this.loadPrefabRaw(prefabUrl, function (prefab, err) {
+                        if (err != null) {
                             call(null, err);
+                            return;
                         }
                         var node = _this.getOrCreateNodeWithPrefab(prefabId, prefab);
                         call(node, null);
+                        return;
                     });
                 }
             };
@@ -1107,9 +1136,17 @@ var gcc;
                 }
                 else {
                     prefabLoadListener.onLoad(function (prefab) {
-                        var node = respool.ccNodePreloader.instantiate(prefab);
-                        node.emit("ecs:reuse");
-                        call(node);
+                        if (call != null) {
+                            var node = respool.ccNodePreloader.instantiate(prefab);
+                            node.emit("ecs:reuse");
+                            call(node);
+                        }
+                    });
+                    prefabLoadListener.onError(function (err) {
+                        if (call != null) {
+                            call(null, err);
+                            call = null;
+                        }
                     });
                 }
             };
@@ -1168,30 +1205,36 @@ var gcc;
                 _this.prefabLoaderMap = {};
                 return _this;
             }
-            CCEasyNodePoolMap.prototype.registerPrefabUrl = function (prefabId, prefabUrl) {
+            CCEasyNodePoolMap.prototype.loadAndSavePrefab = function (prefabId, prefabUrl, call) {
                 var _this = this;
-                this.prefabUrlMap[prefabId] = prefabUrl;
                 if (this.prefabMap[prefabId] == null) {
-                    cc.resources.load(prefabId, function (err, prefab) {
+                    this.loadPrefabRaw(prefabUrl, function (prefab, err) {
                         if (err != null) {
+                            if (call != null) {
+                                call(prefab, err);
+                            }
                             return;
                         }
-                        if (_this.prefabMap[prefabId] == null) {
-                            _this.prefabMap[prefabId] = prefab;
+                        if (prefab != null) {
+                            if (_this.prefabMap[prefabId] == null) {
+                                _this.prefabMap[prefabId] = prefab;
+                            }
+                        }
+                        if (call != null) {
+                            call(prefab, err);
                         }
                     });
                 }
+            };
+            CCEasyNodePoolMap.prototype.registerPrefabUrl = function (prefabId, prefabUrl) {
+                this.prefabUrlMap[prefabId] = prefabUrl;
+                this.loadAndSavePrefab(prefabId, prefabUrl);
             };
             CCEasyNodePoolMap.prototype.registerPrefab = function (prefabId, prefab) {
                 this.prefabMap[prefabId] = prefab;
             };
             CCEasyNodePoolMap.prototype.registerPrefabLoader = function (prefabId, prefabLoadListener) {
                 this.prefabLoaderMap[prefabId] = prefabLoadListener;
-            };
-            CCEasyNodePoolMap.prototype.loadPrefabRaw = function (prefabUrl, call) {
-                cc.resources.load(prefabUrl, function (err, prefab) {
-                    call(prefab, err);
-                });
             };
             CCEasyNodePoolMap.prototype.loadPrefab = function (prefabId, call) {
                 var prefab = this.prefabMap[prefabId];
@@ -1202,13 +1245,22 @@ var gcc;
                 var prefabLoader = this.prefabLoaderMap[prefabId];
                 if (prefabLoader != null) {
                     prefabLoader.onLoad(function (prefab) {
-                        call(prefab, null);
+                        if (call != null) {
+                            call(prefab, null);
+                            call = null;
+                        }
+                    });
+                    prefabLoader.onError(function (err) {
+                        if (call != null) {
+                            call(null, err);
+                            call = null;
+                        }
                     });
                     return;
                 }
                 var prefabUrl = this.prefabUrlMap[prefabId];
                 if (prefabUrl != null) {
-                    this.loadPrefabRaw(prefabUrl, call);
+                    this.loadAndSavePrefab(prefabId, prefabUrl, call);
                     return;
                 }
                 call(null, new Error("invalid prefabId"));
@@ -1219,6 +1271,7 @@ var gcc;
                 return node;
             };
             CCEasyNodePoolMap.prototype.loadNode = function (prefabId, call) {
+                var _this = this;
                 var prefab = this.prefabMap[prefabId];
                 if (prefab != null) {
                     var node = this.getOrCreateNodeWithPrefab(prefabId, prefab);
@@ -1232,7 +1285,16 @@ var gcc;
                 }
                 var prefabUrl = this.prefabUrlMap[prefabId];
                 if (prefabUrl != null) {
-                    this.getOrCreateNodeWithPrefabUrl(prefabId, prefabUrl, call);
+                    // this.getOrCreateNodeWithPrefabUrl(prefabId, prefabUrl, (node)=>{})
+                    this.loadAndSavePrefab(prefabId, prefabUrl, function (prefab, err) {
+                        if (err != null) {
+                            call(null, err);
+                            return;
+                        }
+                        var node = _this.getOrCreateNodeWithPrefab(prefabId, prefab);
+                        call(node);
+                        return;
+                    });
                     return;
                 }
                 call(null, new Error("no res found"));
@@ -1440,6 +1502,7 @@ var gcc;
                             _this.nodePoolMap.registerPrefabUrl(prefabId, prefabId);
                         }
                         call(node, err);
+                        return;
                     });
                 });
             };

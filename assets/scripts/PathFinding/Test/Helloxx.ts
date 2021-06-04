@@ -18,10 +18,6 @@ export class Helloxx extends Component {
             pathFinder.init()
             console.log("scanGraph")
             pathFinder.scanGraph()
-
-            await WaitForSeconds(10);
-            this.node.position = new Vec3(1, 0, -2)
-            pathFinder.scanGraph()
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
