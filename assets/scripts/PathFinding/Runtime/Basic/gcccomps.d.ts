@@ -122,6 +122,7 @@ declare namespace gcc.box2d.tools {
     }
     const nodeUIDTool: CCNodeUIDTool;
 }
+declare const ConeCollider: any, SimplexCollider: any, AudioSource: typeof cc.AudioSource, Camera: typeof cc.Camera, Light: typeof cc.Light, MeshRenderer: typeof cc.MeshRenderer, SkinnedMeshRenderer: typeof cc.SkinnedMeshRenderer, SkinnedMeshBatchRenderer: any, SkinnedMeshUnit: any, DirectionalLight: any, SphereLight: any, SpotLight: any, Animation: typeof cc.Animation, AnimationComponent: any, SkeletalAnimation: any, Billboard: any, Line: any, ParticleSystem: typeof cc.ParticleSystem, Collider: typeof cc.Collider, BoxCollider: typeof cc.BoxCollider, SphereCollider: any, CapsuleCollider: any, MeshCollider: any, CylinderCollider: any, RigidBody: typeof cc.RigidBody, PhysicsMaterial: typeof cc.PhysicsMaterial, Canvas: typeof cc.Canvas, UIRenderable: any, UITransform: typeof cc.UITransform, Button: typeof cc.Button, EditBox: typeof cc.EditBox, Layout: typeof cc.Layout, Mask: typeof cc.Mask, ProgressBar: typeof cc.ProgressBar, RichText: typeof cc.RichText, ScrollBar: any, ScrollView: typeof cc.ScrollView, Slider: typeof cc.Slider, Sprite: typeof cc.Sprite, Toggle: typeof cc.Toggle, ToggleContainer: typeof cc.ToggleContainer, UIMeshRenderer: any, Widget: typeof cc.Widget, LabelOutline: typeof cc.LabelOutline, Graphics: typeof cc.Graphics, PageView: typeof cc.PageView, PageViewIndicator: typeof cc.PageViewIndicator, UIStaticBatch: any, UIOpacity: any, SafeArea: typeof cc.SafeArea, UICoordinateTracker: any, BlockInputEvents: typeof cc.BlockInputEvents, Label: typeof cc.Label;
 declare namespace gcc.prefab {
     class ChildrenLoader extends cc.Component {
         childrenPrefabs: cc.Prefab[];
@@ -238,6 +239,7 @@ declare namespace gcc.respool {
         getOrCreateNodeWithPrefab(prefabId: string, prefab: cc.Prefab): cc.Node;
         getOrCreateNodeDynamicly(prefabId: string, prefabLoadListener: resloader.CCPrefabLoadLisenter, call: (node: cc.Node) => void): void;
         putNodeToCull(prefabId: string, node: cc.Node): void;
+        putNodeToRemove(prefabId: string, node: cc.Node): void;
         clear(): void;
     }
 }
@@ -258,9 +260,11 @@ declare namespace gcc.respool {
         registerPrefabUrl(prefabId: string, prefabUrl: string): void;
         registerPrefab(prefabId: string, prefab: cc.Prefab): void;
         registerPrefabLoader(prefabId: string, prefabLoadListener: resloader.CCPrefabLoadLisenter): void;
+        loadPrefabRaw(prefabUrl: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
+        loadPrefab(prefabId: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
         getNode(prefabId: string): cc.Node;
         loadNode(prefabId: string, call: (node: cc.Node, err?: Error) => void): void;
-        putNode(node: cc.Node): void;
+        putNode(node: cc.Node, remove?: boolean): void;
     }
 }
 declare namespace gcc.respool {
@@ -287,6 +291,16 @@ declare namespace gcc.respool {
         put(node: cc.Node): void;
     }
     const ccNodePreloader: CCNodePreloader;
+}
+declare namespace gcc.respool {
+    class MyNodePool {
+        private static nodePoolMap;
+        static registerPrefabUrl(prefabId: string, prefabUrl: string): void;
+        static put(node: cc.Node): void;
+        static get(prefabId: string): cc.Node;
+        static load(prefabId: string, call: (node: cc.Node, err?: Error) => void): void;
+        static loadPrefab(prefabId: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
+    }
 }
 declare namespace gcc.transform {
     const Vec3: typeof cc.Vec3;

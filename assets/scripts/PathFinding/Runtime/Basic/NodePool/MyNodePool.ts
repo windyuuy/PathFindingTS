@@ -36,6 +36,17 @@ export class MyNodePool {
 		})
 	}
 
+	static loadPrefab(prefabId: string, call: (prefab: cc.Prefab, err?: Error) => void) {
+		this.nodePoolMap.loadPrefab(prefabId, (prefab, err) => {
+			if (prefab != null) {
+				call(prefab, err)
+				return
+			}
+
+			this.nodePoolMap.loadPrefab(prefabId, call)
+		})
+	}
+
 	static registerPrefabUrl(prefabId: string, prefabUrl: string) {
 		this.nodePoolMap.registerPrefabUrl(prefabId, prefabUrl)
 	}

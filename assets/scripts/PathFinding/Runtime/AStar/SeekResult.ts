@@ -18,6 +18,7 @@ export class SeekResult {
 	public graph!: GridGraph
 
 	public graphNodes: cc.Node[] = []
+	public drawBatchId: number = 0
 
 	get graphic() {
 		return AstarPath.active.graphic
@@ -30,9 +31,15 @@ export class SeekResult {
 	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number, up: cc.Vec3, options: PathFinderDebugDrawOptions) {
 		// start.y = 0
 		// end.y = 0
+		var drawBatchId = this.drawBatchId
 		var scale = lineWidth
 		var upOffset = options.upOffset
 		MyNodePool.load("PathHint", (node, err) => {
+			if (drawBatchId != this.drawBatchId) {
+				MyNodePool.put(node)
+				return;
+			}
+
 			// cc.resources.load<cc.Prefab>("PathFinding/Res/PathHint/PathHint", (err, shapePrefab) => {
 			// var node = cc.instantiate(shapePrefab) as cc.Node
 			node.name = "PathLine"
@@ -87,6 +94,8 @@ export class SeekResult {
 			return
 		}
 
+		this.drawBatchId++
+
 		var up = this.graph.up
 		if (this.vectorPath.length >= 2) {
 			var first = this.vectorPath[0]
@@ -99,6 +108,7 @@ export class SeekResult {
 	}
 
 	clearDebug() {
+		this.drawBatchId++
 		for (let node of this.graphNodes) {
 			MyNodePool.put(node)
 		}

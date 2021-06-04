@@ -18,6 +18,8 @@ export class Helloxx extends Component {
             pathFinder.init()
             console.log("scanGraph")
             pathFinder.scanGraph()
+            this.node.position = new Vec3(1, 0, -2)
+            pathFinder.scanGraph()
             console.log("scanGraph done")
 
             var seek = this.addComponent(Seeker)!
@@ -37,6 +39,7 @@ export class Helloxx extends Component {
                 // new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
                 new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 15)),
+                new TestCase(new Vec3(4, 0, 4), new Vec3(10, 0, 15)),
             ]
             for (var c of poses) {
                 var result = seek.startPath(c.start, c.end, (path) => {

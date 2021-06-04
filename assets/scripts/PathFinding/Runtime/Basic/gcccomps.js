@@ -584,6 +584,112 @@ var gcc;
         })(tools = box2d.tools || (box2d.tools = {}));
     })(box2d = gcc.box2d || (gcc.box2d = {}));
 })(gcc || (gcc = {}));
+// @ts-nocheck
+var ConeCollider = cc.ConeCollider, SimplexCollider = cc.SimplexCollider, AudioSource = cc.AudioSource, Camera = cc.Camera, Light = cc.Light, MeshRenderer = cc.MeshRenderer, SkinnedMeshRenderer = cc.SkinnedMeshRenderer, SkinnedMeshBatchRenderer = cc.SkinnedMeshBatchRenderer, SkinnedMeshUnit = cc.SkinnedMeshUnit, DirectionalLight = cc.DirectionalLight, SphereLight = cc.SphereLight, SpotLight = cc.SpotLight, Animation = cc.Animation, AnimationComponent = cc.AnimationComponent, SkeletalAnimation = cc.SkeletalAnimation, Billboard = cc.Billboard, Line = cc.Line, ParticleSystem = cc.ParticleSystem, Collider = cc.Collider, BoxCollider = cc.BoxCollider, SphereCollider = cc.SphereCollider, CapsuleCollider = cc.CapsuleCollider, MeshCollider = cc.MeshCollider, CylinderCollider = cc.CylinderCollider, RigidBody = cc.RigidBody, PhysicsMaterial = cc.PhysicsMaterial, Canvas = cc.Canvas, UIRenderable = cc.UIRenderable, UITransform = cc.UITransform, Button = cc.Button, EditBox = cc.EditBox, Layout = cc.Layout, Mask = cc.Mask, ProgressBar = cc.ProgressBar, RichText = cc.RichText, ScrollBar = cc.ScrollBar, ScrollView = cc.ScrollView, Slider = cc.Slider, Sprite = cc.Sprite, Toggle = cc.Toggle, ToggleContainer = cc.ToggleContainer, UIMeshRenderer = cc.UIMeshRenderer, Widget = cc.Widget, LabelOutline = cc.LabelOutline, Graphics = cc.Graphics, PageView = cc.PageView, PageViewIndicator = cc.PageViewIndicator, UIStaticBatch = cc.UIStaticBatch, UIOpacity = cc.UIOpacity, SafeArea = cc.SafeArea, UICoordinateTracker = cc.UICoordinateTracker, BlockInputEvents = cc.BlockInputEvents, Label = cc.Label;
+//@ts-expect-error
+cc.Collider = Collider;
+//@ts-expect-error
+cc.CapsuleCollider = CapsuleCollider;
+//@ts-expect-error
+cc.SphereCollider = SphereCollider;
+//@ts-expect-error
+cc.CylinderCollider = CylinderCollider;
+//@ts-expect-error
+cc.ConeCollider = ConeCollider;
+//@ts-expect-error
+cc.BoxCollider = BoxCollider;
+//@ts-expect-error
+cc.SimplexCollider = SimplexCollider;
+//@ts-expect-error
+cc.MeshCollider = MeshCollider;
+//@ts-expect-error
+cc.RigidBody = RigidBody;
+//@ts-expect-error
+cc.PhysicsMaterial = PhysicsMaterial;
+//@ts-expect-error
+cc.AudioSource = AudioSource;
+//@ts-expect-error
+cc.Camera = Camera;
+//@ts-expect-error
+cc.Light = Light;
+//@ts-expect-error
+cc.MeshRenderer = MeshRenderer;
+//@ts-expect-error
+cc.SkinnedMeshRenderer = SkinnedMeshRenderer;
+//@ts-expect-error
+cc.SkinnedMeshBatchRenderer = SkinnedMeshBatchRenderer;
+//@ts-expect-error
+cc.SkinnedMeshUnit = SkinnedMeshUnit;
+//@ts-expect-error
+cc.DirectionalLight = DirectionalLight;
+//@ts-expect-error
+cc.SphereLight = SphereLight;
+//@ts-expect-error
+cc.SpotLight = SpotLight;
+//@ts-expect-error
+cc.Animation = Animation !== null && Animation !== void 0 ? Animation : AnimationComponent;
+//@ts-expect-error
+cc.SkeletalAnimation = SkeletalAnimation;
+//@ts-expect-error
+cc.Billboard = Billboard;
+//@ts-expect-error
+cc.Line = Line;
+//@ts-expect-error
+cc.ParticleSystem = ParticleSystem;
+//@ts-expect-error
+cc.Canvas = Canvas;
+//@ts-expect-error
+cc.UIRenderable = UIRenderable;
+//@ts-expect-error
+cc.UITransform = UITransform;
+//@ts-expect-error
+cc.Button = Button;
+//@ts-expect-error
+cc.EditBox = EditBox;
+//@ts-expect-error
+cc.Layout = Layout;
+//@ts-expect-error
+cc.Mask = Mask;
+//@ts-expect-error
+cc.ProgressBar = ProgressBar;
+//@ts-expect-error
+cc.RichText = RichText;
+//@ts-expect-error
+cc.ScrollBar = ScrollBar;
+//@ts-expect-error
+cc.ScrollView = ScrollView;
+//@ts-expect-error
+cc.Slider = Slider;
+//@ts-expect-error
+cc.Sprite = Sprite;
+//@ts-expect-error
+cc.Toggle = Toggle;
+//@ts-expect-error
+cc.ToggleContainer = ToggleContainer;
+//@ts-expect-error
+cc.UIMeshRenderer = UIMeshRenderer;
+//@ts-expect-error
+cc.Widget = Widget;
+//@ts-expect-error
+cc.LabelOutline = LabelOutline;
+//@ts-expect-error
+cc.Graphics = Graphics;
+//@ts-expect-error
+cc.PageView = PageView;
+//@ts-expect-error
+cc.PageViewIndicator = PageViewIndicator;
+//@ts-expect-error
+cc.UIStaticBatch = UIStaticBatch;
+//@ts-expect-error
+cc.UIOpacity = UIOpacity;
+//@ts-expect-error
+cc.SafeArea = SafeArea;
+//@ts-expect-error
+cc.UICoordinateTracker = UICoordinateTracker;
+//@ts-expect-error
+cc.BlockInputEvents = BlockInputEvents;
+//@ts-expect-error
+cc.Label = Label;
 var gcc;
 (function (gcc) {
     var prefab;
@@ -1010,6 +1116,18 @@ var gcc;
                     pool.push(node);
                 }
             };
+            CCNodePoolMap.prototype.putNodeToRemove = function (prefabId, node) {
+                var pool = this.getResPool(prefabId);
+                if (pool.indexOf(node) < 0) {
+                    // node.position = new cc.Vec3(100000, 0, 0)
+                    node.parent = null;
+                    var animComps = node.getComponentsInChildren(cc.Animation);
+                    animComps.forEach(function (comp) {
+                        comp.stop();
+                    });
+                    pool.push(node);
+                }
+            };
             CCNodePoolMap.prototype.clear = function () {
                 for (var key in this.resPoolMap) {
                     var pool = this.resPoolMap[key];
@@ -1045,18 +1163,47 @@ var gcc;
             CCEasyNodePoolMap.prototype.registerPrefabUrl = function (prefabId, prefabUrl) {
                 var _this = this;
                 this.prefabUrlMap[prefabId] = prefabUrl;
-                cc.resources.load(prefabId, function (err, prefab) {
-                    if (err != null) {
-                        return;
-                    }
-                    _this.prefabMap[prefabId] = prefab;
-                });
+                if (this.prefabMap[prefabId] == null) {
+                    cc.resources.load(prefabId, function (err, prefab) {
+                        if (err != null) {
+                            return;
+                        }
+                        if (_this.prefabMap[prefabId] == null) {
+                            _this.prefabMap[prefabId] = prefab;
+                        }
+                    });
+                }
             };
             CCEasyNodePoolMap.prototype.registerPrefab = function (prefabId, prefab) {
                 this.prefabMap[prefabId] = prefab;
             };
             CCEasyNodePoolMap.prototype.registerPrefabLoader = function (prefabId, prefabLoadListener) {
                 this.prefabLoaderMap[prefabId] = prefabLoadListener;
+            };
+            CCEasyNodePoolMap.prototype.loadPrefabRaw = function (prefabUrl, call) {
+                cc.resources.load(prefabUrl, function (err, prefab) {
+                    call(prefab, err);
+                });
+            };
+            CCEasyNodePoolMap.prototype.loadPrefab = function (prefabId, call) {
+                var prefab = this.prefabMap[prefabId];
+                if (prefab != null) {
+                    call(prefab, null);
+                    return;
+                }
+                var prefabLoader = this.prefabLoaderMap[prefabId];
+                if (prefabLoader != null) {
+                    prefabLoader.onLoad(function (prefab) {
+                        call(prefab, null);
+                    });
+                    return;
+                }
+                var prefabUrl = this.prefabUrlMap[prefabId];
+                if (prefabUrl != null) {
+                    this.loadPrefabRaw(prefabUrl, call);
+                    return;
+                }
+                call(null, new Error("invalid prefabId"));
             };
             CCEasyNodePoolMap.prototype.getNode = function (prefabId) {
                 var prefab = this.prefabMap[prefabId];
@@ -1082,9 +1229,15 @@ var gcc;
                 }
                 call(null, new Error("no res found"));
             };
-            CCEasyNodePoolMap.prototype.putNode = function (node) {
+            CCEasyNodePoolMap.prototype.putNode = function (node, remove) {
+                if (remove === void 0) { remove = false; }
                 var prefabId = node[respool.CCNodeSaveKey];
-                this.putNodeToCull(prefabId, node);
+                if (remove) {
+                    this.putNodeToRemove(prefabId, node);
+                }
+                else {
+                    this.putNodeToCull(prefabId, node);
+                }
             };
             return CCEasyNodePoolMap;
         }(respool.CCNodePoolMap));
@@ -1249,6 +1402,53 @@ var gcc;
         }(respool.ResPoolMap));
         respool.CCNodePreloader = CCNodePreloader;
         respool.ccNodePreloader = new CCNodePreloader().init();
+    })(respool = gcc.respool || (gcc.respool = {}));
+})(gcc || (gcc = {}));
+var gcc;
+(function (gcc) {
+    var respool;
+    (function (respool) {
+        var MyNodePool = /** @class */ (function () {
+            function MyNodePool() {
+            }
+            MyNodePool.registerPrefabUrl = function (prefabId, prefabUrl) {
+                this.nodePoolMap.registerPrefabUrl(prefabId, prefabUrl);
+            };
+            MyNodePool.put = function (node) {
+                this.nodePoolMap.putNode(node);
+            };
+            MyNodePool.get = function (prefabId) {
+                return this.nodePoolMap.getNode(prefabId);
+            };
+            MyNodePool.load = function (prefabId, call) {
+                var _this = this;
+                this.nodePoolMap.loadNode(prefabId, function (node, err) {
+                    if (node != null) {
+                        call(node, err);
+                        return;
+                    }
+                    _this.nodePoolMap.getOrCreateNodeWithPrefabUrl(prefabId, prefabId, function (node, err) {
+                        if (node != null) {
+                            _this.nodePoolMap.registerPrefabUrl(prefabId, prefabId);
+                        }
+                        call(node, err);
+                    });
+                });
+            };
+            MyNodePool.loadPrefab = function (prefabId, call) {
+                var _this = this;
+                this.nodePoolMap.loadPrefab(prefabId, function (prefab, err) {
+                    if (prefab != null) {
+                        call(prefab, err);
+                        return;
+                    }
+                    _this.nodePoolMap.loadPrefab(prefabId, call);
+                });
+            };
+            MyNodePool.nodePoolMap = new gcc.respool.CCEasyNodePoolMap();
+            return MyNodePool;
+        }());
+        respool.MyNodePool = MyNodePool;
     })(respool = gcc.respool || (gcc.respool = {}));
 })(gcc || (gcc = {}));
 var gcc;

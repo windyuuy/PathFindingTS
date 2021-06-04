@@ -605,9 +605,16 @@ export class GridGraph {
 	protected graphNodes: cc.Node[] = []
 
 	drawNode(gridNode: GridNode, up: Vec3, options: PathFinderDebugDrawOptions) {
+		var drawBatchId = this.drawBatchId
+
 		var pos = gridNode.position.asVec3()
 		var upOffset = options.upOffset
 		MyNodePool.load("GridHint", (node) => {
+			if (drawBatchId != this.drawBatchId) {
+				MyNodePool.put(node)
+				return
+			}
+
 			node.name = "GridNode"
 			this.graphNodes.push(node)
 
@@ -623,6 +630,7 @@ export class GridGraph {
 		})
 	}
 
+	drawBatchId: number = 0
 	/**
 	 * 绘制地图调试信息
 	 */
@@ -634,6 +642,7 @@ export class GridGraph {
 			return
 		}
 
+		this.drawBatchId++
 		// 遍历节点绘制节点
 		var up = this.up.clone()
 		var options = this.debugDrawOptions
@@ -643,6 +652,7 @@ export class GridGraph {
 	}
 
 	public clearDebug() {
+		this.drawBatchId++
 		for (let node of this.graphNodes) {
 			MyNodePool.put(node)
 		}
