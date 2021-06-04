@@ -14,7 +14,7 @@ export class Seeker extends Component {
 	@property({
 		displayName: "绘制寻路线段",
 	})
-	needDrawDebug: boolean = false
+	needDrawDebug: boolean = true
 
 	@property({
 		displayName: "绘制线宽度",

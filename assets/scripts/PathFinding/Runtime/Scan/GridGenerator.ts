@@ -9,6 +9,7 @@ import { AstarPath } from "./AstarPath";
 import { ANode } from "../AStar/AStarLib/core/node";
 import { Vector } from "../Basic/Vector";
 import * as cc from "cc"
+import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
 
 export class GridGraph {
 
@@ -54,6 +55,8 @@ export class GridGraph {
 	public neighbours: NumNeighbours = NumNeighbours.Eight
 	public readonly LayerCount: number = 1;
 	public inspectorGridMode: InspectorGridMode = InspectorGridMode.Grid;
+
+	public debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	static readonly standardIsometric: number = 90 - Math.atan(1 / Math.sqrt(2)) * Float.Rad2Deg;
 	get standardIsometric(): number {
@@ -103,6 +106,8 @@ export class GridGraph {
 		this.initialPenalty = options.initialPenalty
 		this.heuristic = options.heuristic
 		this.heuristicScale = options.heuristicScale
+
+		this.debugDrawOptions = options.debugDrawOptions
 
 		this.SetDimensions(this.width, this.depth, this.nodeSize)
 
@@ -596,11 +601,16 @@ export class GridGraph {
 		return AstarPath.active.graphicRoot
 	}
 
-	drawNode(gridNode: GridNode) {
+	drawNode(gridNode: GridNode, up: Vec3, options: PathFinderDebugDrawOptions) {
 		var pos = gridNode.position.asVec3()
+		var upOffset = options.upOffset
 		resources.load<cc.Prefab>("PathFinding/Res/GridHint/GridHint", (err, prefab) => {
 			var node = cc.instantiate(prefab) as cc.Node
-			node.position = pos.clone().add(this.up)
+			var nodePos = pos.clone()
+			if (upOffset != 0) {
+				nodePos.add(up.clone().multiplyScalar(upOffset))
+			}
+			node.position = nodePos
 			node.parent = this.graphicRoot
 
 			node.getChildByName("CubeGreen")!.active = gridNode.Walkable
@@ -612,9 +622,18 @@ export class GridGraph {
 	 * 绘制地图调试信息
 	 */
 	public drawGraph() {
+		if (!this.debugDrawOptions.enableGraphicDrawer) {
+			return
+		}
+		if (!this.debugDrawOptions.needDrawGridMap) {
+			return
+		}
+
 		// 遍历节点绘制节点
+		var up = this.up.clone()
+		var options = this.debugDrawOptions
 		for (var node of this.nodes) {
-			this.drawNode(node)
+			this.drawNode(node, up, options)
 		}
 	}
 

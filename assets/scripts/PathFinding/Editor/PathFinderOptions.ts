@@ -1,6 +1,7 @@
 
 import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
 
 /**
@@ -196,9 +197,9 @@ export class PathFinderOptions {
 	initialPenalty: number = 0
 
 	@property({
-		displayName: "启用调试绘图",
+		displayName: "调试绘图选项",
 	})
-	enableGraphicDrawer: boolean = false
+	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	public static start() {
 		LayerMask.UpdateLayer(PathFinderOptions, "mask", "bitmask");
