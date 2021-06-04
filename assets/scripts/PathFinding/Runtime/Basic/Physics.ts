@@ -23,7 +23,7 @@ export enum QueryTriggerInteraction {
 
 export class Physics {
 	public static RaycastRaw(worldRay: geometry.Ray, mask?: number, maxDistance?: number, queryTrigger?: boolean): boolean {
-		return PhysicsSystem.instance.raycast(worldRay, mask, maxDistance, queryTrigger);
+		return PhysicsSystem.instance.raycastClosest(worldRay, mask, maxDistance, queryTrigger);
 	}
 
 	public static Raycast(origin: Vec3, direction: Vec3, outs: { hitInfo: RaycastHit }, maxDistance: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
@@ -33,7 +33,7 @@ export class Physics {
 		ray.d = direction
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, queryTriggerInteraction != QueryTriggerInteraction.Ignore)
 		if (ret) {
-			var result = PhysicsSystem.instance.raycastResults[0];
+			var result = PhysicsSystem.instance.raycastClosestResult
 			outs.hitInfo = result
 		}
 		return ret
