@@ -10,6 +10,7 @@ import { ANode } from "../AStar/AStarLib/core/node";
 import { Vector } from "../Basic/Vector";
 import * as cc from "cc"
 import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
+import { MyNodePool } from "../Basic/NodePool/MyNodePool";
 
 export class GridGraph {
 
@@ -601,11 +602,15 @@ export class GridGraph {
 		return AstarPath.active.graphicRoot
 	}
 
+	protected graphNodes: cc.Node[] = []
+
 	drawNode(gridNode: GridNode, up: Vec3, options: PathFinderDebugDrawOptions) {
 		var pos = gridNode.position.asVec3()
 		var upOffset = options.upOffset
-		resources.load<cc.Prefab>("PathFinding/Res/GridHint/GridHint", (err, prefab) => {
-			var node = cc.instantiate(prefab) as cc.Node
+		MyNodePool.load("GridHint", (node) => {
+			node.name = "GridNode"
+			this.graphNodes.push(node)
+
 			var nodePos = pos.clone()
 			if (upOffset != 0) {
 				nodePos.add(up.clone().multiplyScalar(upOffset))
@@ -621,7 +626,7 @@ export class GridGraph {
 	/**
 	 * 绘制地图调试信息
 	 */
-	public drawGraph() {
+	public drawDebug() {
 		if (!this.debugDrawOptions.enableGraphicDrawer) {
 			return
 		}
@@ -635,6 +640,13 @@ export class GridGraph {
 		for (var node of this.nodes) {
 			this.drawNode(node, up, options)
 		}
+	}
+
+	public clearDebug() {
+		for (let node of this.graphNodes) {
+			MyNodePool.put(node)
+		}
+		this.graphNodes.clear()
 	}
 
 }

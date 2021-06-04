@@ -21,11 +21,18 @@ export class Seeker extends Component {
 	})
 	lineWidth: number = 0.1
 
+	result?: SeekResult
+
 	public startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult | undefined {
+		if (this.result != null) {
+			this.result.clearDebug()
+		}
+
 		var result = AstarPath.active.seeker.StartPath(start, end, call)
 		if (this.needDrawDebug) {
 			result?.drawDebug(this.lineWidth)
 		}
+		this.result = result
 		return result
 	}
 }

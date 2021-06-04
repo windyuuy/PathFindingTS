@@ -47,4 +47,7 @@
     define("find", function(callback) {
         return this.where(callback).single
     })
+    define("clear", function() {
+        return this.length = 0
+    })
 })();

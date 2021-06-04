@@ -32,6 +32,20 @@ export enum NumNeighbours {
 	Six = 2,
 }
 
+/**
+ * 连通类型
+ */
+enum _NumNeighbours {
+	/**
+	 * 四向
+	 */
+	四向 = 0,
+	/**
+	 * 八向
+	 */
+	八向 = 1,
+}
+
 export enum ColliderType {
 	/**
 	 * 胶囊体
@@ -94,10 +108,21 @@ export class PathFinderOptions {
 	nodeSize: number = 1
 
 	@property({
-		type: Enum(NumNeighbours),
-		displayName: "节点连通类型",
+		type: Enum(_NumNeighbours),
+		displayName: "网格连通类型",
+		visible: true,
 	})
-	neighbours = NumNeighbours.Eight;
+	protected _neighbours = _NumNeighbours.八向;
+
+	public get neighbours(): NumNeighbours {
+		if (this._neighbours == _NumNeighbours.八向) {
+			return NumNeighbours.Eight
+		} else if (this._neighbours == _NumNeighbours.四向) {
+			return NumNeighbours.Four
+		} else {
+			throw new Error("not implement")
+		}
+	}
 
 	@property({
 		displayName: "最大爬升高度"

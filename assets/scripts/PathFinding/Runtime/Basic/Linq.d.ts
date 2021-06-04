@@ -20,4 +20,9 @@ interface Array<T> {
      * @param callback 
      */
     find(callback: (a: T) => boolean): T
+
+    /**
+     * 清空元素, 容量清零
+     */
+    clear(): void
 }

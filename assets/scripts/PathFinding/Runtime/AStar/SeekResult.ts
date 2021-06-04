@@ -1,5 +1,6 @@
 import * as cc from "cc";
 import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
+import { MyNodePool } from "../Basic/NodePool/MyNodePool";
 import { AstarPath } from "../Scan/AstarPath";
 import { GridGraph } from "../Scan/GridGenerator";
 import { ANode } from "./AStarLib/core/node";
@@ -16,6 +17,8 @@ export class SeekResult {
 	public nodes: ANode[] = []
 	public graph!: GridGraph
 
+	public graphNodes: cc.Node[] = []
+
 	get graphic() {
 		return AstarPath.active.graphic
 	}
@@ -29,11 +32,13 @@ export class SeekResult {
 		// end.y = 0
 		var scale = lineWidth
 		var upOffset = options.upOffset
-		cc.resources.load<cc.Prefab>("PathFinding/Res/PathHint/PathHint", (err, shapePrefab) => {
-			var axis = end.clone().subtract(start)
+		MyNodePool.load("PathHint", (node, err) => {
+			// cc.resources.load<cc.Prefab>("PathFinding/Res/PathHint/PathHint", (err, shapePrefab) => {
+			// var node = cc.instantiate(shapePrefab) as cc.Node
+			node.name = "PathLine"
+			this.graphNodes.push(node)
 
-			var node = cc.instantiate(shapePrefab) as cc.Node
-			node.name = "line"
+			var axis = end.clone().subtract(start)
 
 			var width = axis.length();
 			var bodyShape = cc.find("Body", node)!
@@ -92,4 +97,12 @@ export class SeekResult {
 			}
 		}
 	}
+
+	clearDebug() {
+		for (let node of this.graphNodes) {
+			MyNodePool.put(node)
+		}
+		this.graphNodes.clear()
+	}
+
 }

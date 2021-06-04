@@ -53,7 +53,8 @@ export class AstarPath {
 	 */
 	drawDebug() {
 		for (var graph of this.graphs) {
-			graph.drawGraph()
+			graph.clearDebug()
+			graph.drawDebug()
 		}
 	}
 

@@ -1,6 +1,7 @@
 
-import { _decorator, Component, Node, Graphics, resources, Prefab } from 'cc';
+import { _decorator, Component, Node, Graphics, resources, Prefab, NodePool, PrivateNode } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { MyNodePool } from "../Runtime/Basic/NodePool/MyNodePool";
 import { AstarPath } from "../Runtime/Scan/AstarPath";
 import { ProceduralGridMover } from "../Runtime/Scan/ProceduralGridMover";
 import { PathFinderOptions } from "./PathFinderOptions";
@@ -29,20 +30,35 @@ export class PathFinder extends Component {
 
     start() {
         PathFinderOptions.start();
+
+        MyNodePool.registerPrefabUrl("PathHint", "PathFinding/Res/PathHint/PathHint")
+        MyNodePool.registerPrefabUrl("GridHint", "PathFinding/Res/GridHint/GridHint")
     }
 
     update(deltaTime: number) {
         // [4]
         PathFinderOptions.update();
     }
+
+    protected _inited: boolean = false
     /**
      * 初始化
      */
     init() {
+        if (this._inited) {
+            return
+        }
+        this._inited = true
+
         AstarPath.active.options = this.options;
         AstarPath.active.init()
         AstarPath.active.graphic = this.addComponent(Graphics)
-        AstarPath.active.graphicRoot = this.node
+
+        if (AstarPath.active.graphicRoot == null || AstarPath.active.graphicRoot.parent != this.node) {
+            var graphicRoot = new PrivateNode("FindPathGraphicRoot")
+            graphicRoot.parent = this.node
+            AstarPath.active.graphicRoot = graphicRoot
+        }
     }
     /**
      * 扫描地图
