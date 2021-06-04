@@ -1,9 +1,9 @@
 
 import { _decorator, Component, Node, find, Vec3 } from 'cc';
-import { PathFinder } from "../PathFinding/Editor/PathFinder";
-import { Seeker } from "../PathFinding/Runtime/AStar/Seeker";
-import { LayerMask } from "../PathFinding/Runtime/Basic/LayerMask";
-import { WaitForSeconds } from "../PathFinding/Runtime/Basic/WaitForSeconds";
+import { PathFinder } from "../Editor/PathFinder";
+import { Seeker } from "../Runtime/AStar/Seeker";
+import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { WaitForSeconds } from "../Runtime/Basic/WaitForSeconds";
 import { TestCase } from "./TestCase";
 const { ccclass, property } = _decorator;
 
