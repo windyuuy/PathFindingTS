@@ -1,4 +1,37 @@
 declare namespace fsync {
+    interface IBLWHRectSpec {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
+    /**
+     * BLRect = 左下角 + size
+     */
+    class BLRect {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        constructor(x?: number, y?: number, width?: number, height?: number);
+        static top(self: BLRect): Vector2;
+        static bottom(self: BLRect): Vector2;
+        static center(self: BLRect): Vector2;
+        static fromRectLike({ x, y, width, height }: IBLWHRectSpec): BLRect;
+        static copyRectLike(self: BLRect, { x, y, width, height }: IBLWHRectSpec): BLRect;
+        static reset(self: BLRect): BLRect;
+        static mergeFrom(self: BLRect, rect: BLRect): BLRect;
+        static clone(self: BLRect): BLRect;
+        static containPoint(rect: BLRect, pt: IVector): bool;
+        /**
+         * 将点就近限制在矩形框内
+         * @param rect
+         * @param pt
+         */
+        static limitPointSelf(rect: BLRect, pt: IVector): void;
+    }
+}
+declare namespace fsync {
     class FloatMath {
     }
 }
@@ -39,14 +72,14 @@ declare namespace fsync.math {
     const calcMinAngle: (angle: number) => number;
 }
 declare namespace fsync {
-    interface IBLWHRectSpec {
+    interface IWHRectSpec {
         x: number;
         y: number;
         width: number;
         height: number;
     }
     /**
-     * Rect = 左下角 + size
+     * Rect = center + size
      */
     class Rect {
         x: number;
@@ -57,12 +90,17 @@ declare namespace fsync {
         static top(self: Rect): Vector2;
         static bottom(self: Rect): Vector2;
         static center(self: Rect): Vector2;
-        static fromRectLike({ x, y, width, height }: IBLWHRectSpec): Rect;
-        static copyRectLike(self: Rect, { x, y, width, height }: IBLWHRectSpec): Rect;
+        static fromRectLike({ x, y, width, height }: IWHRectSpec): Rect;
+        static copyRectLike(self: Rect, { x, y, width, height }: IWHRectSpec): Rect;
         static reset(self: Rect): Rect;
         static mergeFrom(self: Rect, rect: Rect): Rect;
         static clone(self: Rect): Rect;
         static containPoint(rect: Rect, pt: IVector): bool;
+        /**
+         * 将点就近限制在矩形框内
+         * @param rect
+         * @param pt
+         */
         static limitPointSelf(rect: Rect, pt: IVector): void;
     }
 }
@@ -104,9 +142,9 @@ declare namespace fsync {
         subDown<T extends IVector>(vec2: T): T;
         addUp<T extends IVector>(vec2: T): T;
         multUp<T extends IVector>(vec2: T): T;
-        multUpVar<T extends IVector>(v: number): T;
+        multUpVar(v: number): this;
         multVar<T extends IVector>(v: number): T;
-        normalizeSelf<T extends IVector>(): T;
+        normalizeSelf(): this;
         len<T extends IVector>(): number;
         /**
          * 覆盖
@@ -120,6 +158,9 @@ declare namespace fsync {
          * @param vec2
          */
         collect<T extends IVector>(vec2: T): T;
+        /**
+         * @default value = 0
+         */
         resetValues(value?: number): IVector;
         /**
          * 根据x，y决定的方向转换为角度 [-PI~PI]
@@ -135,11 +176,15 @@ declare namespace fsync {
          * 绕原点按笛卡尔坐标系弧度旋转
          * @param out
          */
-        rotateSelfByZero2(angle: number): IVector;
+        rotateSelfByZero2(angle: number): this;
         asVectorN<T extends IVector>(): T;
         asVector2(): Vector2;
         asVector3(): Vector3;
         asVector4(): Vector4;
+    }
+    interface IVector2Like {
+        x?: number;
+        y?: number;
     }
     class Vector2 extends CommonVector {
         protected data: number[];
@@ -171,6 +216,7 @@ declare namespace fsync {
             x?: number;
             y?: number;
         }): Vector2;
+        mergeToXYZLike<T extends IVector2Like>(v?: T): T;
     }
     interface IVector3SpecInput {
         x?: number;
@@ -236,6 +282,8 @@ declare namespace fsync {
         set w(value: number);
         copy(vec: IVector): IVector;
     }
+    const Quat: typeof Vector4;
+    type Quat = Vector4;
     class Vector {
         protected static _fromNumArray3(ns: number[]): Vector3;
         protected static _fromNumArray4(ns: number[]): Vector4;
@@ -1220,12 +1268,6 @@ declare namespace fsync.box2d.b2data {
         createJointDef(mainBodyModelA: Box2DBody, bodyModelA: Box2DBody, mainBodyModelB: Box2DBody, bodyModelB: Box2DBody): b2.WheelJointDef;
     }
 }
-declare namespace lang.helper {
-    class ArrayHelper {
-        static max<T>(ls: T[], call: (e: T) => number): T | undefined;
-        static min<T>(ls: T[], call: (e: T) => number): T | undefined;
-    }
-}
 declare namespace fsync {
     /**
      * Any compatible Long instance.
@@ -1254,6 +1296,66 @@ declare namespace fsync {
     class LongHelper {
         static toNumber(n: Long | number): number;
     }
+}
+declare namespace lang.helper {
+    class TArrayHelper {
+        max<T>(ls: T[], call: (e: T) => number): T | undefined;
+        min<T>(ls: T[], call: (e: T) => number): T | undefined;
+        remove<T>(ls: T[], e: T): void;
+        /**
+         * 求出两列中差异的部分
+         * @param ls1
+         * @param idGetter1
+         * @param ls2
+         * @param idGetter2
+         * @param call
+         */
+        foreachDifferentPairs<T, F>(ls1: T[], idGetter1: (e: T) => string, ls2: F[], idGetter2: (e: F) => string, call: (e1: T, e2: F) => any): void;
+        sum<T>(ls: T[], call?: (n: T) => number): number;
+        autoParseNumber(m: any): number;
+        average<T>(ls: T[], call?: (n: T) => number): number;
+    }
+    const ArrayHelper: TArrayHelper;
+}
+declare namespace lang.helper {
+    class TMapArrayHelper {
+        filter<T>(m: {
+            [key: string]: T;
+        }, call: (v: T, key: string) => any): T[];
+    }
+    const MapArrayHelper: TMapArrayHelper;
+}
+declare namespace lang {
+    const EmptyCall: () => any;
+    const EmptyTable: () => any;
+    function Clean<T extends Object>(container: T): T;
+    function CleanTable<T extends Object>(container: T): T;
+    function CleanArray<T extends Object>(container: T[]): T[];
+    class ObjectUtils {
+        /**
+         * 深度复制
+         * @param source
+         * @param target
+         */
+        static copyDataDeep<T extends object>(source: T, target: T): T;
+        /**
+         * 浅克隆对象
+         * @param source
+         */
+        static clone<T extends object>(source: T): T;
+        static values<T extends object>(source: {
+            [key: string]: T;
+        }): T[];
+    }
+}
+declare namespace fsync {
+    export import ArrayHelper = lang.helper.ArrayHelper;
+    export import MapArrayHelper = lang.helper.MapArrayHelper;
+    export import EmptyCall = lang.EmptyCall;
+    export import EmptyTable = lang.EmptyTable;
+    export import CleanTable = lang.CleanTable;
+    export import CleanArray = lang.CleanArray;
+    export import ObjectUtils = lang.ObjectUtils;
 }
 declare namespace fsync {
     class BufferHelper {
@@ -1287,6 +1389,11 @@ declare namespace fsync {
     function test_entry(desc: string, fun: () => void): void;
 }
 declare namespace fsync {
+    interface IClear {
+        clear(): any;
+    }
+}
+declare namespace fsync {
     interface IClone {
         clone(): IClone;
     }
@@ -1294,6 +1401,10 @@ declare namespace fsync {
 declare namespace fsync {
     interface IMerge<T> {
         mergeFrom(target: T): any;
+    }
+}
+declare namespace fsync {
+    interface IRollback<T> extends IMerge<T>, IClone {
     }
 }
 declare namespace fsync {
@@ -1310,13 +1421,6 @@ declare namespace fsync {
         setTimeout(call: Function, duration: number): void;
         clearAllTimeout(): void;
         clearAllTimer(): void;
-    }
-}
-declare namespace fsync {
-    const EmptyCall: () => any;
-    const EmptyTable: () => any;
-    class ObjectUtils {
-        static copyDataDeep<T extends object>(source: T, target: T): T;
     }
 }
 declare namespace fsync {
@@ -1371,6 +1475,7 @@ declare namespace slib {
             [key: string]: SimpleEvent<T>;
         };
         on(key: string, callback: EventHandler<T>): void;
+        once(key: string, callback: EventHandler<T>): void;
         off(key: string, callback: EventHandler<T>): void;
         emit(key: string, value: T): void;
     }
@@ -1379,14 +1484,16 @@ declare namespace fsync.eds {
     /**
      * 每个对象都要有id
      */
-    interface IOID {
+    interface IOID$ {
         readonly oid?: string;
     }
-    export import ArrayHelper = lang.helper.ArrayHelper;
+    interface IOID {
+        readonly oid: string;
+    }
 }
 declare namespace fsync.eds {
     type TDataClassID = string;
-    interface IDataClass extends IOID {
+    interface IDataClass$ extends IOID$ {
         readonly oid?: TDataClassID;
         /**
          * 类型名
@@ -1397,7 +1504,18 @@ declare namespace fsync.eds {
          */
         autoRelease?: bool;
     }
-    class DataClass implements IDataClass {
+    interface IDataClass extends IOID {
+        readonly oid: TDataClassID;
+        /**
+         * 类型名
+         */
+        readonly otype?: string;
+        /**
+         * 是否自动gc释放
+         */
+        autoRelease?: bool;
+    }
+    class DataClass implements IDataClass$ {
         readonly oid?: TDataClassID;
         /**
          * 类型名
@@ -1419,51 +1537,46 @@ declare namespace fsync.eds {
         isNotNull(): boolean;
     }
     class DataClassDef extends DataClass {
-        t: new () => IDataClass;
+        t: new () => IDataClass$;
     }
     const _NullData: DataClassDef;
-    function NullData<T extends IDataClass>(cls: new () => T): T;
-    function NewData<T extends IDataClass>(cls: new () => T): T;
+    function NullData<T extends IDataClass$>(cls: new () => T): T;
+    function NewData<T extends IDataClass$>(cls: new () => T): T;
 }
 declare namespace fsync.eds {
-    type TFeatureGroupMap<T extends IDataClass = IDataClass> = {
+    type TFeatureGroupMap<T extends IDataClass$ = IDataClass$> = {
         [key: string]: T;
     };
-    type TDataFeatureFunc = (data: IDataClass) => boolean;
-    interface IDataFeature<T extends IDataClass = IDataClass> {
+    type TDataFeatureFunc = (data: IDataClass$) => boolean;
+    interface IDataFeature<T extends IDataClass$ = IDataClass$> {
         name: string;
         filter?(data: T): boolean;
-        includes?: IDataFeature<IDataClass>[];
-        excludes?: IDataFeature<IDataClass>[];
+        includes?: IDataFeature<IDataClass$>[];
+        excludes?: IDataFeature<IDataClass$>[];
     }
-    class DataFeature<T extends IDataClass> implements IDataFeature<T> {
+    class DataFeature<T extends IDataClass$> implements IDataFeature<T> {
         name: string;
         filter?(data: T): any;
         includes?: IDataFeature<any>[];
         excludes?: IDataFeature<any>[];
     }
     class DataFeatureHelper {
-        static doFilter: (filter: IDataFeature<IDataClass>, data: IDataClass) => boolean;
+        static doFilter: (filter: IDataFeature<IDataClass$>, data: IDataClass$) => boolean;
     }
 }
 declare namespace fsync.eds {
     class DataContainer {
         clearEntities(): void;
         init(): this;
-        protected allDatas: IDataClass[];
+        protected allDatas: IDataClass$[];
         protected dataMap: {
-            [key: string]: IDataClass;
+            [key: string]: IDataClass$;
         };
         /**
          * 对象引用关系表
          */
         protected referRelationMap: {
             [key: string]: string[];
-        };
-        protected presetDataFeature(data: IDataClass): void;
-        protected cleanDataFeature(data: IDataClass): void;
-        protected usingFeatures: {
-            [key: string]: IDataFeature;
         };
         /**
          * 构建引用依赖表
@@ -1474,51 +1587,93 @@ declare namespace fsync.eds {
          */
         cleanUnused(): void;
         clearDatas(): void;
-        forEachDatas(call: (data: IDataClass) => void): void;
-        existsData(ecsdata: IDataClass): boolean;
-        getDataById(oid: TDataClassID): IDataClass;
-        attach(data: IDataClass): IDataClass;
-        deattach(data: IDataClass): void;
+        forEachDatas(call: (data: IDataClass$) => void): void;
+        existsData(ecsdata: IDataClass$): boolean;
+        getDataById(oid: TDataClassID): IDataClass$;
+        attach(data: IDataClass$): IDataClass$;
+        deattach(data: IDataClass$): void;
+        /**
+         * 特征缓存数据
+         */
         protected featureCache: {
-            [key: string]: IDataClass[];
+            [key: string]: IDataClass$[];
         };
         protected featureCacheMap: {
             [key: string]: TFeatureGroupMap;
         };
         /**
+         * 需要缓存的特征列表
+         */
+        protected usingFeatures: {
+            [key: string]: IDataFeature;
+        };
+        /**
+         * 更新该数据的特征组缓存
+         * @param data
+         */
+        protected presetDataFeature(data: IDataClass$): void;
+        /**
+         * 清除该数据的特征组缓存
+         * @param data
+         */
+        protected cleanDataFeature(data: IDataClass$): void;
+        /**
          * 构建特征群组
          */
         buildFeatureGroups(features: IDataFeature[]): void;
+        /**
+         * 添加需要持续缓存的特征
+         * @param feature
+         */
         addFeature(feature: IDataFeature): void;
-        protected _buildFeatureGroup(feature: IDataFeature, key?: string): void;
-        buildFeatureGroup(feature: IDataFeature, key?: string): void;
+        protected _buildFeatureGroup(feature: IDataFeature, key?: string): IDataClass$[];
+        /**
+         * 构建特征组
+         * @param feature
+         * @param key
+         */
+        buildFeatureGroup(feature: IDataFeature, key?: string): IDataClass$[];
+        /**
+         * 添加特征组
+         * @param cacheKey
+         * @param validGroup
+         * @param validGroupMap
+         */
         addFeatureGroup(cacheKey: string, validGroup: any[], validGroupMap: any): void;
-        existFeatureGroup(key: string): boolean;
-        getFeatureGroupByName<T extends IDataClass = IDataClass>(name: string): T[] | undefined;
+        /**
+         * 是否存在特征组
+         * @param key
+         */
+        existFeatureGroup(key: string): bool;
+        /**
+         * 获取特征组
+         * @param name
+         */
+        getFeatureGroupByName<T extends IDataClass$ = IDataClass$>(name: string): T[] | undefined;
         /**
          * 获取类型所属特征组
          * @param cls
          */
-        getTypeFeatureGroup<T extends IDataClass>(cls: new () => T): T[] | undefined;
+        getTypeFeatureGroup<T extends IDataClass$>(cls: new () => T): T[] | undefined;
         /**
          * 获取特征组
          * @param feature
          */
-        getFeatureGroup<T extends IDataClass>(feature: IDataFeature<T>): T[] | undefined;
+        getFeatureGroup<T extends IDataClass$>(feature: IDataFeature<T>): T[] | undefined;
         /**
          * 获取特征组
          * @param feature
          */
-        getFeatureGroupMap<T extends IDataClass>(feature: IDataFeature<T>): TFeatureGroupMap<T>;
+        getFeatureGroupMap<T extends IDataClass$>(feature: IDataFeature<T>): TFeatureGroupMap<T>;
         /**
          * 按特征组移除所有对象
          * @param feature
          */
-        deattachFeatureGroup(name: string): IDataClass[] | undefined;
+        deattachFeatureGroup(name: string): IDataClass$[] | undefined;
     }
 }
 declare namespace fsync.eds {
-    class DataManager implements IOID {
+    class DataManager implements IOID$ {
         private static _IdAcc;
         oid: string;
         name: string;
@@ -1528,58 +1683,58 @@ declare namespace fsync.eds {
         constructor();
         init(utils: FrameSyncUtils): this;
         clearDatas(): void;
-        existsData(ecsdata: IDataClass): boolean;
-        getDataById(oid: TDataClassID): IDataClass;
-        protected overwriteData(ecsdata: IDataClass, dataManager: DataManager): void;
-        protected removeData(ecsdata: IDataClass): void;
-        protected cloneData(ecsdata: IDataClass, dataManager: DataManager): IDataClass;
+        existsData(ecsdata: IDataClass$): boolean;
+        getDataById<T extends IDataClass$>(oid: TDataClassID): T;
+        protected overwriteData(ecsdata: IDataClass$, dataManager: DataManager): void;
+        protected removeData(ecsdata: IDataClass$): void;
+        protected cloneData(ecsdata: IDataClass$, dataManager: DataManager): IDataClass$;
         /**
          * 创建查询器
          */
         query(): DataQuery;
         buildReferRelationMap(): void;
-        addData<T extends IDataClass>(cls: new () => T): T;
-        deattachDatas<T extends IDataClass>(cls: new () => T): void;
-        deattachData<T extends IDataClass>(data: T): void;
-        attachData<T extends IDataClass>(data: T): T;
+        addData<T extends IDataClass$>(cls: new () => T): T;
+        deattachDatas<T extends IDataClass$>(cls: new () => T): void;
+        deattachData<T extends IDataClass$>(data: T): void;
+        attachData<T extends IDataClass$>(data: T): T;
         buildFeatureGroups(features: IDataFeature[]): void;
-        buildFeatureGroup(feature: IDataFeature, key?: string): void;
+        buildFeatureGroup(feature: IDataFeature, key?: string): IDataClass$[];
         /**
          * 移除特征组
          * @param feature
          */
-        deattachFeatureGroup<T extends IDataClass = IDataClass>(feature: IDataFeature<T>): T[];
+        deattachFeatureGroup<T extends IDataClass$ = IDataClass$>(feature: IDataFeature<T>): T[];
         /**
          * 按类型取
          * @param cls
          */
-        getTypeFeatureGroup<T extends IDataClass>(cls: new () => T): T[];
+        getTypeFeatureGroup<T extends IDataClass$>(cls: new () => T): T[];
         /**
          * 按feature名称取
          * @param name
          */
-        getFeatureGroupByName<T extends IDataClass = IDataClass>(name: string): T[];
+        getFeatureGroupByName<T extends IDataClass$ = IDataClass$>(name: string): T[];
         /**
          * 获取特征组
          * @param feature
          */
-        getFeatureGroup<T extends IDataClass>(feature: IDataFeature<T>): T[];
+        getFeatureGroup<T extends IDataClass$>(feature: IDataFeature<T>): T[];
         /**
          * 获取特征组
          * @param feature
          */
-        getFeatureGroupMap<T extends IDataClass>(feature: IDataFeature<T>): TFeatureGroupMap<T>;
-        forEachWithFeatures(features: IDataFeature[], call: (data: IDataClass) => any, cacheKey?: string): void;
+        getFeatureGroupMap<T extends IDataClass$>(feature: IDataFeature<T>): TFeatureGroupMap<T>;
+        forEachWithFeatures(features: IDataFeature[], call: (data: IDataClass$) => any, cacheKey?: string): void;
     }
 }
 declare namespace fsync.eds {
     interface IDataQuery {
-        forEach(call: (entity: IDataClass) => any): IDataQuery;
-        toArray(): IDataClass[];
-        first(): IDataClass;
+        forEach(call: (entity: IDataClass$) => any): IDataQuery;
+        toArray(): IDataClass$[];
+        first(): IDataClass$;
         count(): number;
     }
-    class DataQuery implements IOID, IDataQuery {
+    class DataQuery implements IOID$, IDataQuery {
         oid: string;
         dataManager: DataManager;
         protected filter: IDataFeature;
@@ -1587,25 +1742,31 @@ declare namespace fsync.eds {
         with(feature: IDataFeature): this;
         protected enableCache: boolean;
         withCache(enable: boolean): void;
-        forEach(call: (data: IDataClass) => any): DataQuery;
-        toArray(): IDataClass[];
-        first(): IDataClass;
+        forEach(call: (data: IDataClass$) => any): DataQuery;
+        toArray(): IDataClass$[];
+        first(): IDataClass$;
         count(): number;
     }
 }
 declare namespace fsync.eds {
-    function DefindECSDataMetaValue(data: IDataClass, dataManager: DataManager): void;
-    function DecoECSDataClass(data: IDataClass, dataManager: DataManager): void;
-    function MergeECSData(ecsdata: IDataClass, copy: IDataClass, dataManager: DataManager): void;
-    function CloneECSData(ecsdata: IDataClass, dataManager: DataManager): IDataClass;
+    function DefindECSDataMetaValue(data: IDataClass$, dataManager: DataManager): void;
+    function DecoECSDataClass(data: IDataClass$, dataManager: DataManager): void;
+    /**
+     * 合并 ecs 数据: ecsdata -> copy
+     * @param ecsdata
+     * @param copy
+     * @param dataManager
+     */
+    function MergeECSData(ecsdata: IDataClass$, copy: IDataClass$, dataManager: DataManager): void;
+    function CloneECSData(ecsdata: IDataClass$, dataManager: DataManager): IDataClass$;
 }
 declare namespace fsync.eds {
     class DirtyManager {
-        protected dirtyDatas: STMap<IDataClass>;
+        protected dirtyDatas: STMap<IDataClass$>;
         init(): this;
-        isDirty(data: IDataClass): bool;
-        markDirty(data: IDataClass): void;
-        forEachDirtyEntities(call: (data: IDataClass) => void): void;
+        isDirty(data: IDataClass$): bool;
+        markDirty(data: IDataClass$): void;
+        forEachDirtyEntities(call: (data: IDataClass$) => void): void;
         clearFlags(): void;
     }
 }
@@ -1864,6 +2025,8 @@ declare namespace fsync {
         ctype: string;
         get timer(): fsync.Timer | undefined;
         init(): this;
+        protected onInit(): void;
+        onSetup?(): any;
         instantiate(prefab: IPrefab): Entity;
         getCommandBuffer(): ECSCommandBuffer;
         getCommandBufferAfterUpdate(): ECSCommandBuffer;
@@ -1904,6 +2067,7 @@ declare namespace fsync {
         };
         disableGroup(key: string): void;
         enableGroup(key: string): void;
+        isGroupEnabled(key: string): boolean;
         protected foreachByOrder(call: (updater: UpdaterGroup) => void): void;
         onBeforeUpdate(): void;
         update(): void;
@@ -1952,11 +2116,29 @@ declare namespace fsync {
 }
 declare namespace fsync {
     class NetDelay {
+        /**
+         * 延迟总值
+         */
         netDelayAcc: number;
+        /**
+         * 方差总值
+         */
+        netDelayDeviationAcc: number;
         netDelayQueue: number[];
         maxSampleCount: number;
+        /**
+         * 输入网络延迟样本, 单位 秒
+         * @param delay
+         */
         putDelay(delay: number): void;
+        /**
+         * 平均网络延迟, 单位 秒
+         */
         getDelayAv(): number;
+        /**
+         * 网络延迟标准差, 单位 秒
+         */
+        getDelayStdDeviationAv(): number;
     }
 }
 declare namespace fsync {
@@ -2691,12 +2873,14 @@ declare namespace fsync.app {
      * 用于构建游戏世界规则
      */
     class SubWorld {
+        name: string;
         mainProcess: fsync.WorldMainProcess;
         inputCmdBuffer: fsync.InputCmdBuffer;
         timer: fsync.Timer;
         world: fsync.ECSWorld;
         updater: fsync.UpdaterGroupManager;
         get entityManager(): EntityManager;
+        get dataManager(): eds.DataManager;
         clear(): void;
         start(): void;
         /**
@@ -2704,7 +2888,7 @@ declare namespace fsync.app {
          * @param groupName
          * @param tsys
          */
-        addSystem<T extends fsync.SystemBase>(groupName: string, tsys: new () => T): T;
+        addSystem<T extends fsync.SystemBase>(tsys: new () => T, groupName: string): T;
         /**
          * 初始化各种子系统实例设置
          * @param sharedSlots
@@ -2749,6 +2933,11 @@ declare namespace fsync {
         genType?: "con" | "sep";
         createFrameCount?: number;
         frameCount?: number;
+        netFrameCount?: number;
+        /**
+         * 是处理过粘帧
+         */
+        isAdjustedForSurge?: boolean;
         receivedTime?: number;
         /**
          * 网络波动造成命令帧重叠
@@ -2757,6 +2946,9 @@ declare namespace fsync {
     };
 }
 declare namespace fsync {
+    /**
+     * 针对单个角色的命令缓冲管理
+     */
     class SinglePortCmdBuffer implements IMerge<SinglePortCmdBuffer> {
         name: string;
         roleId: TRoleId;
@@ -2771,10 +2963,22 @@ declare namespace fsync {
         init(roleId: TRoleId): this;
         protected latestNetCmd: IGameInputCmd;
         getLatestNetCmd(): IGameInputCmd;
+        latestOrderedCmdIndex: number;
+        /**
+         * 获取连续cmdIndex下,最新的net cmd
+         */
+        getOrderedNetCmd(): IGameInputCmd;
+        protected latestLocalCmd: IGameInputCmd;
+        /**
+         * 按cmdIndex排序, 获取最新的本地命令
+         */
         getLatestLocalCmd(): IGameInputCmd;
         putCmd(cmd: IGameInputCmd): void;
         protected flushNetCmds(): void;
+        needSync: boolean;
         protected _putCmd(cmd: IGameInputCmd): void;
+        surLastCmd: IGameInputCmd;
+        adjustSurgedCmds(triggerCmd: IGameInputCmd): void;
         popFrameCmds(frameCount: number, pops: IGameInputCmd[]): IGameInputCmd[];
         /**
          * 处理网络波动造成的挤帧，避免因此造成的跳帧
@@ -2796,14 +3000,17 @@ declare namespace fsync {
          * 清理过期的指令
          */
         protected cleanOutdateCmds(): void;
-        /**
-         * 清理过期的指令
-         */
-        cleanOutdateLocalCmdsForce(): void;
         mergeFrom(cmdBuffer: SinglePortCmdBuffer): void;
         syncLocalCmd(): void;
     }
+    /**
+     * 命令缓冲
+     * - 对收到的网络命令和本地命令执行合并
+     * - 同时对收到的网络命令执行排序合帧, 应对丢帧/补帧等情况
+     */
     class InputCmdBuffer implements IMerge<InputCmdBuffer> {
+        static orderid: number;
+        orderid: number;
         name: string;
         route: "net" | "local";
         protected cmdBuffers: {
@@ -2817,11 +3024,22 @@ declare namespace fsync {
         getLatestNetCmd(): IGameInputCmd;
         protected getCmdBuffer(roleId: TRoleId): SinglePortCmdBuffer;
         putCmd(cmd: IGameInputCmd): void;
+        /**
+         * 标记是否有同步需求
+         */
         needSync: boolean;
+        /**
+         * 标记是否需要立即同步
+         */
+        needSyncRightNow: boolean;
+        surgeTimes: number;
         popFrameCmds(frameCount: number): IGameInputCmd[];
         mergeFrom(cmdBuffer: InputCmdBuffer): void;
         syncLocalCmd(): void;
-        clearOutdateCmdsForce(): void;
+        /**
+         * 为了在udp模式下, 通过cmdIndex 确保前一帧数据都已经全部接收
+         */
+        getOrderedNetCmd(): IGameInputCmd;
     }
 }
 declare namespace fsync {
@@ -2877,8 +3095,8 @@ declare namespace kitten {
 declare namespace kitten.gamepad {
     type Vector3 = fsync.Vector3;
     const Vector3: typeof fsync.Vector3;
-    type Rect = fsync.Rect;
-    const Rect: typeof fsync.Rect;
+    type BLRect = fsync.BLRect;
+    const BLRect: typeof fsync.BLRect;
     /**
      * 环状摇杆
      */
@@ -2950,16 +3168,16 @@ declare namespace kitten.gamepad {
          * @param radius
          */
         getCircleRadius(): number;
-        touchRange: Rect;
+        touchRange: BLRect;
         /**
          * 设置触控范围
          * @param rect
          */
-        setTouchRange(rect: Rect): void;
+        setTouchRange(rect: BLRect): void;
         /**
          * 获取触控范围
          */
-        protected getTouchRange(): Rect;
+        protected getTouchRange(): BLRect;
         /**
          * 处理触控输入
          * @param data
@@ -3050,6 +3268,11 @@ declare namespace kitten.gamepad {
      */
     class NormalGamepad {
         protected enable: boolean;
+        /**
+         * 控制输入是否可用
+         */
+        get inputEnabled(): boolean;
+        set inputEnabled(value: boolean);
         /**
          * 左手控制器
          */
@@ -3393,16 +3616,19 @@ declare namespace kitten.rpg {
         setGameInput(gamepad: kitten.gamepad.NormalGamepad): any;
         clearCurGameCmd(): void;
         getCurGameCmd(): fsync.IGameInputCmd;
+        getNopCmd(): fsync.IGameInputCmd;
     }
 }
 declare namespace kitten.rpg {
     type TActorId = string;
     class RPGPlayerCmd implements fsync.IGameInputCmd {
+        netFrameCount?: number;
+        isAdjustedForSurge?: boolean;
         cmdType: "RoleCmd" | "Pass";
         cmdId: string;
         needSync?: boolean;
         route: "net" | "local";
-        roleId: number;
+        roleId: fsync.TRoleId;
         createTime: number;
         genType?: "con" | "sep";
         createFrameCount?: number;
@@ -3452,6 +3678,10 @@ declare namespace kitten.rpg {
         clearCurGameCmd(): void;
         protected cmdCopy: any;
         getCurGameCmd(): fsync.IGameInputCmd;
+        /**
+         * 创建一个空指令, 提示一帧结束
+         */
+        getNopCmd(): RPGPlayerCmd;
     }
 }
 declare namespace kitten.rpg {
@@ -3496,6 +3726,38 @@ declare namespace kitten.uievent {
         postInitEvent(size: fsync.Vector3): void;
     }
     const uiEventHandler: UIEventHandler;
+}
+declare namespace lang.libs {
+    type LogParam = {
+        time?: boolean;
+        tags?: string[];
+    };
+    class Log {
+        private static _enablePlainLog;
+        static get enablePlainLog(): boolean;
+        static toPlainLog(args: any[]): any[];
+        static set enablePlainLog(value: boolean);
+        protected static _instance: Log;
+        static get instance(): Log;
+        protected time?: boolean;
+        protected tags?: string[];
+        constructor(x?: LogParam);
+        setLogParams({ time, tags }?: LogParam): void;
+        protected getTagsStamp(): string;
+        /**
+         * 将消息打印到控制台，不存储至日志文件
+         */
+        info(...args: any[]): void;
+        /**
+         * 将消息打印到控制台，并储至日志文件
+         */
+        warn(...args: any[]): void;
+        /**
+         * 将消息打印到控制台，并储至日志文件
+         */
+        error(...args: any[]): void;
+    }
+    var log: Log;
 }
 declare namespace fsync {
     /**
@@ -3648,6 +3910,7 @@ declare namespace fsync {
         lastUpdateTime: number;
         netDelayUtil: NetDelay;
         lastSyncTime: number;
+        lastCmd: IGameInputCmd;
         update(): void;
     }
 }
@@ -3678,6 +3941,7 @@ declare namespace fsync {
         serverMainTime: number;
         clear(): void;
         init(): this;
+        get netDelayUtil(): NetDelay;
         createMergeSystem(source: ECSWorld, target: ECSWorld): EntityMergeSystem;
         createMergeSystem2(source: ECSWorld, target: ECSWorld): eds.ECSDataForceMergeSystem;
         protected frameSyncStrategy: FrameSyncStrategy;
@@ -3703,9 +3967,9 @@ declare namespace fsync.eds {
         target: ECSWorld;
         init(): this;
         protected mergeDiffEntities(mg1: eds.DataManager, mg2: eds.DataManager): void;
-        onNewEntity(entity: eds.IDataClass): void;
-        onRemoveEntity(entity: eds.IDataClass): void;
-        onUpdateEntity(entity: eds.IDataClass): void;
+        onNewEntity(entity: eds.IDataClass$): void;
+        onRemoveEntity(entity: eds.IDataClass$): void;
+        onUpdateEntity(entity: eds.IDataClass$): void;
         onBeforeUpdate(): void;
         onAfterUpdate(): void;
         update(): void;
@@ -3713,21 +3977,101 @@ declare namespace fsync.eds {
 }
 declare namespace fsync.eds {
     class ECSDataForceMergeSystem extends ECSDataMergeSystem {
-        onNewEntity(entity: IDataClass): void;
-        onRemoveEntity(entity: IDataClass): void;
-        onUpdateEntity(entity: IDataClass): void;
+        onNewEntity(entity: IDataClass$): void;
+        onRemoveEntity(entity: IDataClass$): void;
+        onUpdateEntity(entity: IDataClass$): void;
     }
 }
-declare namespace fsync {
-    class RoomClient {
-        matcherClient: PBClient;
-        roomClient: PBClient;
-        proto: ProtoTool;
-        intervals: Intervals;
-        protected stopHeartBeat: bool;
-        init(): this;
-        setProto(proto: ProtoTool): void;
-        close(): void;
+declare namespace fsync.network.roomclient {
+    /**
+     * 房间客户端工厂
+     */
+    class RoomClientFactory {
+        /**
+         * 创建房间客户端
+         * - mgobe 腾讯
+         * @param techSource 所使用的技术来源
+         */
+        static createClient(techSource: "mgobe" | "glee"): IRoomClient;
+    }
+}
+declare namespace fsync.roomserver {
+    /** TRolePlayState enum. */
+    enum TRolePlayState {
+        PENDING = 0,
+        READY = 1,
+        PLAYING = 2
+    }
+}
+/**
+ * 基于腾讯云游戏的房间服务器
+ */
+declare namespace fsync.network.roomclient {
+    type CreateSignature = (callback: (signature: MGOBE.types.Signature) => any) => any;
+    /**
+     * @name  初始化参数：游戏信息
+     * @description 游戏秘钥指控制台上的“游戏key”。在初始化SDK时，secretKey、CreateSignature两个参数传其中一个即可。如果实现了CreateSignature方法，则忽略secretKey参数。
+     * @description CreateSignature用于计算签名signature，优点在于避免客户端泄露游戏密钥。
+     * @field {string} gameId  游戏ID
+     * @field {string} openId  玩家openId
+     * @field {string} secretKey  游戏秘钥
+     * @field {CreateSignature} createSignature  签名函数
+     */
+    interface GameInfoPara {
+        gameId: string;
+        openId: string;
+        secretKey?: string;
+        createSignature?: CreateSignature;
+    }
+    /**
+     * @name  初始化参数：配置参数
+     * @description 服务地址指控制台上的“域名”
+     * @field {number} reconnectMaxTimes  重连接次数（默认15）（可选）
+     * @field {number} reconnectInterval  重连接时间间隔（毫秒，默认500）（可选）
+     * @field {number} resendInterval  消息重发时间间隔（毫秒，默认1000）（可选）
+     * @field {number} resendTimeout  消息重发超时时间（毫秒，默认20000）（可选）
+     * @field {string} url  服务地址
+     * @field {boolean} isAutoRequestFrame  是否自动补帧（默认false）（可选）
+     * @field {string} cacertNativeUrl  本地CA根证书路径（CocosNative环境需要该参数）（可选）
+     */
+    interface ConfigPara {
+        reconnectMaxTimes?: number;
+        reconnectInterval?: number;
+        resendInterval?: number;
+        resendTimeout?: number;
+        url?: string;
+        isAutoRequestFrame?: boolean;
+        cacertNativeUrl?: string;
+    }
+    class TRoomClientConnectInfo {
+        gameInfo: GameInfoPara;
+        config: ConfigPara;
+    }
+    class TRoomServerInfo {
+        serverTime: number;
+    }
+    class TRoomClientConnectResult {
+        indicate: roomserver.TResultIndicate;
+        serverInfo: TRoomServerInfo;
+    }
+    interface IRoomClient {
+        /**
+         * 获取本地缓存的房间数据
+         */
+        getLocalRoomInfo?(): roomserver.TRoomModel;
+        /**
+         * 设置protobuf工具
+         */
+        setProto(proto: ProtoTool): any;
+        /**
+         * 关闭连接
+         */
+        close(): any;
+        /**
+         * 初始化连接
+         * @param call
+         */
+        connectAsync(info: TRoomClientConnectInfo, call: (result: TRoomClientConnectResult) => void): any;
         /**
          * 更新 protobuf 协议文件
          * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
@@ -3737,150 +4081,205 @@ declare namespace fsync {
          */
         checkoutProto(info: {
             clientProtoVersion: number;
-        }, call: (result: roomserver.TDownloadProtoResult) => void): void;
+        }, call: (result: roomserver.TDownloadProtoResult) => void): any;
         /**
          * 通过房间匹配服匹配房间
          * @param roleInfo
          * @param roomInfo
          * @param call
          */
-        matchRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.TRoomInfo, call: (result: roomserver.TMatchJobResult) => void): void;
+        matchRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.TRoomInfo, call: (result: roomserver.TMatchJobResult) => void): any;
         /**
          * 通过ID搜索房间
          * @param opInfo
          * @param call
          */
-        searchRoomById(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TQueryRoomsResult) => void): void;
+        searchRoomById(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TQueryRoomsResult) => void): any;
         /**
          * 发送房间服心跳
          * @param opInfo
          * @param call
          */
-        sendRoomHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
+        sendRoomHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): any;
         /**
          * 发送房间匹配服心跳
          * @param opInfo
          * @param call
          */
-        sendMatcherHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
-        sendHeartBeat(opInfo: roomserver.ITRoomUserOpInfo): void;
+        sendMatcherHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): any;
+        sendHeartBeat(opInfo: roomserver.ITRoomUserOpInfo): any;
         /**
          * 维持心跳
          * @param opInfo
          */
-        startHeartBeatProcess(opInfo: roomserver.ITRoomUserOpInfo): void;
+        startHeartBeatProcess(opInfo: roomserver.ITRoomUserOpInfo): any;
         /**
          * 停止心跳
          */
-        stopHeartBeatProcess(): void;
+        stopHeartBeatProcess(): any;
         /**
          * 进入房间
          * @param roleInfo
          * @param roomInfo
          * @param call
          */
-        enterRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.ITRoomModel, call: (result: roomserver.TNormalResult) => void): void;
+        enterRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.ITRoomModel, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 退出房间
          * @param opInfo
          * @param call
          */
-        exitRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        exitRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 强制销毁房间
          * @param opInfo
          * @param call
          */
-        destoryRoomForce(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        destoryRoomForce(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 进入准备状态
          * - 所有玩家进入准备状态之后，即可开始游戏
          * @param opInfo
          * @param call
          */
-        prepareStartGame(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TRespStartGameResult) => void): void;
+        prepareStartGame(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TRespStartGameResult) => void): any;
         /**
          * 广播房间消息
          * @param reqData
          * @param call
          */
-        broadCastRoomMessage(reqData: roomserver.TReqBroadCastClientMessage, call: (result: roomserver.TNormalResult) => void): void;
+        broadCastRoomMessage(reqData: roomserver.TReqBroadCastClientMessage, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 广播帧同步消息
          * @param reqData
          * @param call
          */
-        broadCastFrameSyncMessage(reqData: roomserver.TReqBroadCastFrameSyncReq, call: (result: roomserver.TNormalResult) => void): void;
+        broadCastFrameSyncMessage(reqData: roomserver.TReqBroadCastFrameSyncReq, call: (result: roomserver.TNormalResult) => void): any;
+        /**
+         * 请求补帧
+         */
+        requestFrameSyncMessages(opInfo: roomserver.TRoomUserOpInfo, paras: roomserver.TReqFrameRecordsInfo, call: (result: roomserver.TReqFrameRecordsResult) => void): any;
         /**
          * 监听帧同步广播
          * @param call
          */
-        listenFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): void;
+        listenFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): any;
+        /**
+         * 取消监听帧同步广播
+         * @param call
+         */
+        offFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): any;
         /**
          * 监听房间内广播消息
          * @param call
          */
-        listenRoomBroadCast(call: (message: roomserver.TReqBroadCastClientMessage) => void): void;
+        listenRoomBroadCast(call: (message: roomserver.TReqBroadCastClientMessage) => void): any;
         /**
          * 监听成员离开房间
          * @param call
          */
-        listenExitRoom(call: (message: roomserver.TNormalResult) => void): void;
+        listenExitRoom(call: (message: roomserver.TNormalResult) => void): any;
         /**
          * 监听成员进入房间
          * @param call
          */
-        listenEnterRoom(call: (message: roomserver.TNormalResult) => void): void;
+        listenEnterRoom(call: (message: roomserver.TNormalResult) => void): any;
         /**
          * 监听成员设置房间
          * @param call
          */
-        listenSetRoomInfo(call: (message: roomserver.TNormalResult) => void): void;
+        listenSetRoomInfo(call: (message: roomserver.TNormalResult) => void): any;
         /**
          * 监听成员进入准备状态
          * @param call
          */
-        listenPrepareStartGame(call: (message: roomserver.TNormalResult) => void): void;
+        listenPrepareStartGame(call: (message: roomserver.TNormalResult) => void): any;
         /**
          * 监听游戏开始
          * @param call
          */
-        listenStartGame(call: (message: roomserver.TRespStartGameResult) => void): void;
+        listenStartGame(call: (message: roomserver.TRespStartGameResult) => void): any;
         /**
          * 监听同步游戏记录
          * @param call
          */
-        listenFetchGameOpRecords(call: (message: roomserver.TFetchGameOpRecordsResult) => void): void;
+        listenFetchGameOpRecords(call: (message: roomserver.TFetchGameOpRecordsResult) => void): any;
+        /**
+         * 房间销毁
+         * @param call
+         */
+        listenDestoryRoom(call: (message: roomserver.TNormalResult) => void): any;
         /**
          * 验证房间
          * @param call
          */
-        validateRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        validateRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 设置房间信息
          * @param call
          */
-        setRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, roomInfo: roomserver.ITRoomSettings, call: (result: roomserver.TNormalResult) => void): void;
+        setRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, roomInfo: roomserver.ITRoomSettings, call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 放逐成员（未实现）
          * @param call
          */
-        private banishMember;
+        banishMember(opInfo: roomserver.ITRoomUserOpInfo, roles: string[], call: (result: roomserver.TNormalResult) => void): any;
         /**
          * 获取房间信息（未实现）
          * @param call
          */
-        getRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TGetRoomInfoResult) => void): void;
+        getRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TGetRoomInfoResult) => void): any;
         /**
          * 获取游戏操作记录（未实现）
          * @param call
          */
-        fetchGameOpRecords(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TFetchGameOpRecordsResult) => void): void;
+        fetchGameOpRecords(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TFetchGameOpRecordsResult) => void): any;
+        /**
+         * 监听成员网络状态变化
+         * @param call
+         */
+        listenChangedMemberNetworkState(call: (result: roomserver.TChangeMemberNetworkStateResult) => void): any;
+        /**
+         * 监听玩家信息变化
+         * @param call
+         */
+        listenChangeCustomPlayerStatus(call: (result: roomserver.TChangeCustomPlayerStatus) => void): any;
+        /**
+         * 开始帧同步
+         * @param opInfo
+         * @param call
+         */
+        startFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
+        /**
+         * 停止帧同步
+         * @param opInfo
+         * @param call
+         */
+        stopFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
+        /**
+         * 开始帧同步广播回调接口
+         * @param call
+         */
+        onStartFrameSync(call: (result: roomserver.TNormalResult) => void): any;
+        /**
+         * 停止帧同步广播回调接口
+         */
+        onStopFrameSync(call: (result: roomserver.TNormalResult) => void): any;
+        /**
+         * 自动补帧失败回调接口
+         */
+        onAutoRequestFrameError(call: (result: roomserver.TReqFrameRecordsResult) => void): any;
+        /**
+         * 重试自动补帧
+         * @param opInfo
+         * @param call
+         */
+        retryAutoRequestFrame(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): any;
     }
 }
 declare namespace fsync {
     type TUserId = int64;
-    type TRoleId = int64;
+    type TRoleId = string;
     type TChairNo = int64;
     type TRoomId = int64;
     type TRoomSessionId = int64;
@@ -3922,7 +4321,7 @@ declare namespace fsync {
     };
     function toRespId(reqId: TReqId): TReqId;
 }
-declare const serverprotoSource = "\nsyntax = \"proto3\";\npackage roomserver;\n\n//type int64 int64\n//type int64 int64\n//type int64 int64\n\n//\u623F\u95F4id\u751F\u6210\u89C4\u5219: id:int64=parseInt64(timestamp+incr(0~99999))\n//type int64 int64\n//type int64 int64\n\n//type int64 int64\n//type int32 int32\n//type float float\n//type string string\n//type string string\n\nmessage TErrorInfo {\n  int32     code = 1;\n  string  reason = 2;\n  string  message = 3;\n}\nmessage TResultIndicate{\n  bool      ok = 1;\n  TErrorInfo err = 2;\n}\nmessage TNormalResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n}\n\nmessage TRoomBasic {\n  //\u623F\u95F4\u53F7\n  int64 room_id = 1;\n  //\u623F\u95F4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 2;\n  //uuid \u7528\u4E8E\u65E5\u5FD7\u67E5\u8BE2\u7B49\u529F\u80FD\n  string uuid = 3;\n  //\u623F\u95F4\u8FDE\u63A5\u5730\u5740\u914D\u7F6E\n  string conn_addr = 4;\n}\n\nmessage TRoomSettings {\n  int32   room_type = 1;\n  string       name = 2;\n  string   password = 3;\n}\n\nmessage TRoomGameInfo {\n  //  \u6E38\u620F\u6A21\u5F0F/\u7C7B\u578B\n  int32 game_mode = 1;\n  //  \u56FA\u5B9A\u5E27\u95F4\u9694\n  int64 frame_duration = 2;\n  //\u9700\u8981\u591A\u5C11\u89D2\u8272\u6765\u5339\u914D\n  int32 role_count = 3;\n  //\u5339\u914D\u65F6\u957F\n  float match_timeout = 4;\n}\n\nmessage TRoomGameState {\n  int64 game_session_id = 1;\n  int64 start_time = 2;\n  int32 random_seed = 3;\n  bool is_playing = 4;\n}\n\nmessage TServerInfo {\n  string address = 1;\n  string server_id = 2;\n}\n\nmessage TRoomInfo {\n  TRoomBasic    basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo     game_info = 3;\n  TServerInfo server_info = 4;\n}\n\nmessage TRoomModel {\n  TRoomBasic    basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo     game_info = 3;\n  TServerInfo server_info = 4;\n  TRoomGameState    game_state = 5;\n  repeated int64        roles = 6;\n}\n\nmessage TReqGetRoomInfo{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TGetRoomInfoResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomModel room_model = 3;\n}\n\nmessage TQueryRoomsResult {\n  TResultIndicate indicate = 1;\n  TRoomsInfo roomsInfo = 2;\n}\n\nmessage TRoomsInfo {\n  int32 count = 1;\n  repeated TRoomModel room_models = 2;\n}\n\nmessage TRoomUserOpInfo {\n  int64 room_id = 1;\n  int64 role_id = 2;\n}\n\nmessage TMatchJobResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomsInfo roomsInfo = 3;\n}\n\nmessage TUserInfo {\n  int64 user_id = 1;\n}\n\nmessage TRoleBasic {\n  int64 role_id = 1;\n  int32    sex = 2;\n}\n\nmessage TRoleGameInfo {\n  //\u5206\u6570\n  int32 score = 1;\n  //\u7B49\u7EA7\n  int32 level = 2;\n  //\u5BF9\u6218\u5C40\u6570\n  int32 battle_count = 3;\n  //\u80DC\u7387\n  float win_rate = 4;\n}\n\nmessage TRoleRoomState {\n  int64   room_id = 1;\n  int64  chair_no = 2;\n  //\u89D2\u8272\u5BA2\u6237\u7AEF\u548C\u670D\u52A1\u5668\u662F\u5426\u8FDE\u63A5\n  bool is_conn_active = 3;\n  bool is_master = 4;\n}\n\nenum TRolePlayState{\n  PENDING = 0;\n  READY = 1;\n  PLAYING = 2;\n}\n\nmessage TRoleGameState {\n  TRolePlayState state = 1;\n}\n\nmessage TRoleInfo {\n  TRoleBasic basic_info = 1;\n  TUserInfo  user_info = 2;\n  TRoleGameInfo  game_info = 3;\n  TRoleRoomState room_state = 4;\n}\n\nmessage TRoleModel {\n  TRoleBasic basic_info = 1;\n  TUserInfo  user_info = 2;\n  TRoleGameInfo  game_info = 3;\n  TRoleRoomState room_state = 4;\n  TRoleGameState game_state = 5;\n}\n\nmessage TRoomMemberFilterInfo {\n}\n\nmessage THandleResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomPlayerMessageOptions {\n\n}\nmessage TRoomPlayerMessage {\n  TRoomPlayerMessageOptions options = 1;\n}\n\nmessage TReqEnterRoom {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo       role_info = 2;\n  TRoomModel      room_info = 3;\n}\n\nmessage TReqExitRoom {\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqDestroyRoomForce {\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqRoleBroadOptions{\n  int64 role_id = 1;\n}\nmessage TFrameSyncInfo{\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 server_time = 1;\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u5DF2\u8FDB\u884C\u5E27\u6570\n  int64 server_frame_count = 2;\n  //\u5BA2\u6237\u7AEF\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 client_time = 3;\n}\n\nmessage TReqBroadCastFrameSyncReq{\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqBroadCastClientMessage{\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  //  \u6807\u8BB0\u63A5\u6536\u65B9\n  repeated TReqRoleBroadOptions targets = 3;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqValidateRoom{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqSetRoomInfo{\n  TRoomUserOpInfo op_info = 1;\n  TRoomSettings roomInfo = 2;\n}\n\nmessage TReqBanishMember{\n  TRoomUserOpInfo op_info = 1;\n  repeated int64 roles = 2;\n}\n\nmessage TReqSetSelfRoomChairNo{\n  TRoomUserOpInfo op_info = 1;\n  int64 chairNo = 2;\n}\n\nmessage TReqFilterMembers{\n  TRoomUserOpInfo op_info = 1;\n  TRoomMemberFilterInfo filterInfo = 2;\n}\n\nmessage TStartGameOptions{\n\n}\n\nmessage TReqStartGame{\n  TRoomUserOpInfo op_info = 1;\n  TStartGameOptions start_options = 2;\n}\n\nmessage TFrameSyncInitConfig{\n  int32 random_seed = 1;\n}\nmessage TRespStartGameResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TFrameSyncInitConfig frame_sync_init_config = 3;\n}\n\nmessage TReqSearchRoomById{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqGetRecommendRooms{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqMatchUsersWithDefaultRule{\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo roleInfo = 2;\n  TRoomInfo roomInfo = 3;\n}\n\nmessage TReqNotifyCreateRoom{\n  TRoomModel room_model = 1;\n}\n\nmessage TReqNotifyRemoveRoom{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqFetchGameOpRecords{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TFetchGameOpRecordsResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq sync_op_records = 3;\n}\n\nmessage TReqHeartBeat{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage THeartBeatResult{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TRoomServerRegisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string ServerId = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string ConnId = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string ClientConnAddr = 3;\n  //\u5F53\u524D\u623F\u95F4\u6570\u91CF\n  int64 RoomCount = 4;\n}\n\nmessage TRoomServerRegisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomServerUnregisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string ServerId = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string ConnId = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string ClientConnAddr = 3;\n}\n\nmessage TRoomServerUnregisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\n//string \u957F\u5EA6\u9700\u8981\u5C0F\u4E8E64MB\nmessage TReqDownloadProto{\n  //  \u5BA2\u6237\u7AEFproto\u7248\u672C\n  int32 proto_version = 1;\n  // \u662F\u5426\u5F3A\u5236\u66F4\u65B0\n  bool force = 2;\n}\n\nmessage TProtoInfo{\n  //  \u670D\u52A1\u7AEF\u4F20\u56DE\u7684proto\u7248\u672C\n  int32 version = 1;\n  //  \u5982\u679C\u5BA2\u6237\u7AEF\u7F13\u5B58\u7684\u534F\u8BAE\u7248\u672C\u548C\u670D\u52A1\u7AEF\u7684\u76F8\u540C\uFF0C\u5219\u4E0D\u9700\u8981\u91CD\u65B0\u4E0B\u8F7D proto_content\n  string content = 2;\n}\n\nmessage TDownloadProtoResult{\n  TResultIndicate indicate = 1;\n  TProtoInfo proto_info = 2;\n}\n\n";
+declare const serverprotoSource = "\nsyntax = \"proto3\";\npackage roomserver;\n\n// type int64 int64\n// type string string\n// type int64 int64\n// type string string\n// type string string\n\n//\u623F\u95F4id\u751F\u6210\u89C4\u5219: id:int64=parseInt64(timestamp+incr(0~99999))\n//type string string\n//type int64 int64\n\n// type int64 int64\n// type int32 int32\n// type float float\n// type string string\n// type string string\n// type string string\n// type int64 int64\n\nmessage TErrorInfo {\n  int32 code = 1;\n  string reason = 2;\n  string message = 3;\n}\nmessage TResultIndicate {\n  bool ok = 1;\n  TErrorInfo err = 2;\n}\nmessage TNormalResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n}\n\nmessage TRoomBasic {\n  //\u623F\u95F4\u53F7\n  string room_id = 1;\n  //\u623F\u95F4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 2;\n  // uuid \u7528\u4E8E\u65E5\u5FD7\u67E5\u8BE2\u7B49\u529F\u80FD\n  string uuid = 3;\n  //\u623F\u95F4\u8FDE\u63A5\u5730\u5740\u914D\u7F6E\n  string conn_addr = 4;\n  // \u521B\u5EFA\u623F\u95F4\u7684\u65B9\u5F0F\n  int64 create_type = 5;\n}\n\nmessage TRoomSettings {\n  string room_type = 1;\n  string name = 2;\n  string password = 3;\n  // \u623F\u4E3B\n  string owner_id = 4;\n  // \u662F\u5426\u7981\u6B62\u52A0\u5165\u623F\u95F4\n  bool is_forbid_join = 5;\n  // \u662F\u5426\u79C1\u6709, \u5C5E\u6027\u4E3A true \u8868\u793A\u8BE5\u623F\u95F4\u4E3A\u79C1\u6709\u623F\u95F4\uFF0C\u4E0D\u80FD\u88AB matchRoom \u63A5\u53E3\u5339\u914D\u5230\u3002\n  bool is_private = 6;\n}\n\nmessage TRoomGameInfo {\n  //  \u6E38\u620F\u6A21\u5F0F/\u7C7B\u578B\n  int32 game_mode = 1;\n  //  \u56FA\u5B9A\u5E27\u95F4\u9694\n  int64 frame_duration = 2;\n  //\u9700\u8981\u591A\u5C11\u89D2\u8272\u6765\u5339\u914D\n  int32 role_count = 3;\n  //\u5339\u914D\u65F6\u957F\n  float match_timeout = 4;\n}\n\nmessage TRoomGameState {\n  int64 game_session_id = 1;\n  int64 start_time = 2;\n  int32 random_seed = 3;\n  bool is_playing = 4;\n}\n\nmessage TServerInfo {\n  string address = 1;\n  string server_id = 2;\n}\n\nmessage TRoomInfo {\n  TRoomBasic basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo game_info = 3;\n  TServerInfo server_info = 4;\n}\n\nmessage TRoomModel {\n  TRoomBasic basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo game_info = 3;\n  TServerInfo server_info = 4;\n  TRoomGameState game_state = 5;\n  repeated TRoleModel role_models = 6;\n}\n\nmessage TReqGetRoomInfo { TRoomUserOpInfo op_info = 1; }\n\nmessage TGetRoomInfoResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomModel room_model = 3;\n}\n\nmessage TQueryRoomsResult {\n  TResultIndicate indicate = 1;\n  TRoomsInfo rooms_info = 2;\n}\n\nmessage TRoomsInfo {\n  int32 count = 1;\n  repeated TRoomModel room_models = 2;\n}\n\nmessage TRoomUserOpInfo {\n  string room_id = 1;\n  string role_id = 2;\n  // \u7528\u4E8E\u5339\u914D\u81EA\u5E26\u89D2\u8272id\u751F\u6210\u529F\u80FD\u7684\u670D\u52A1\u5668\n  string role_token = 3;\n}\n\nmessage TMatchJobResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomsInfo rooms_info = 3;\n}\n\nmessage TUserInfo { int64 user_id = 1; }\n\nmessage TRoleBasic {\n  // \u89D2\u8272id\n  string role_id = 1;\n  // \u89D2\u8272\u6027\u522B\n  int32 sex = 2;\n  // \u89D2\u8272\u540D\n  string role_name = 3;\n  // \u89D2\u8272\u5934\u50CFuri\n  string role_head_uri = 4;\n  // \u670D\u52A1\u5668\u751F\u6210\u7684roleId\n  string server_role_id = 5;\n  // \u662F\u5426\u4E3A\u4EBA\u673A\n  bool is_robot = 6;\n}\n\nmessage TRoleGameInfo {\n  //\u5206\u6570\n  int32 score = 1;\n  //\u7B49\u7EA7\n  int32 level = 2;\n  //\u5BF9\u6218\u5C40\u6570\n  int32 battle_count = 3;\n  //\u80DC\u7387\n  float win_rate = 4;\n}\n\nmessage TRoleRoomState {\n  string room_id = 1;\n  int64 chair_no = 2;\n  //\u89D2\u8272\u5BA2\u6237\u7AEF\u548C\u670D\u52A1\u5668\u662F\u5426\u8FDE\u63A5\n  bool is_conn_active = 3;\n  bool is_master = 4;\n}\n\nenum TRolePlayState {\n  PENDING = 0;\n  READY = 1;\n  PLAYING = 2;\n}\n\nmessage TRoleGameState { TRolePlayState state = 1; }\n\nmessage TRoleInfo {\n  TRoleBasic basic_info = 1;\n  TUserInfo user_info = 2;\n  TRoleGameInfo game_info = 3;\n  TRoleRoomState room_state = 4;\n}\n\nmessage TRoleModel {\n  TRoleBasic basic_info = 1;\n  TUserInfo user_info = 2;\n  TRoleGameInfo game_info = 3;\n  TRoleRoomState room_state = 4;\n  TRoleGameState game_state = 5;\n  TRoleNetworkInfo netwok_info = 6;\n}\n\nmessage TRoomMemberFilterInfo {}\n\nmessage THandleResult { TResultIndicate indicate = 1; }\n\nmessage TRoomPlayerMessageOptions {}\nmessage TRoomPlayerMessage { TRoomPlayerMessageOptions options = 1; }\n\nmessage TReqEnterRoom {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo role_info = 2;\n  TRoomModel room_info = 3;\n}\n\nmessage TReqExitRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqDestroyRoomForce { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqRoleBroadOptions { string role_id = 1; }\nmessage TFrameSyncInfo {\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 server_time = 1;\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u5DF2\u8FDB\u884C\u5E27\u6570\n  int64 server_frame_count = 2;\n  //\u5BA2\u6237\u7AEF\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 client_time = 3;\n  // \u5BA2\u6237\u7AEF\u62DF\u5408\u65F6\u95F4, \u5206\u5E03\u5C3D\u91CF\u5747\u5300\n  int64 client_lerp_time = 4;\n  // \u968F\u673A\u6570\u79CD\u5B50\n  int32 random_seed = 5;\n  // \u662F\u5426\u8865\u5E27\n  bool is_replay = 6;\n}\n\nmessage TReqBroadCastFrameSyncReq {\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqBroadCastClientMessage {\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  //  \u6807\u8BB0\u63A5\u6536\u65B9\n  repeated TReqRoleBroadOptions targets = 3;\n  bytes msg_bytes = 4;\n  string msg_str = 5;\n}\n\nmessage TReqValidateRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqSetRoomInfo {\n  TRoomUserOpInfo op_info = 1;\n  TRoomSettings room_info = 2;\n}\n\nmessage TReqBanishMember {\n  TRoomUserOpInfo op_info = 1;\n  repeated string roles = 2;\n}\n\nmessage TReqSetSelfRoomChairNo {\n  TRoomUserOpInfo op_info = 1;\n  int64 chair_no = 2;\n}\n\nmessage TReqFilterMembers {\n  TRoomUserOpInfo op_info = 1;\n  TRoomMemberFilterInfo filter_info = 2;\n}\n\nmessage TStartGameOptions {}\n\nmessage TReqStartGame {\n  TRoomUserOpInfo op_info = 1;\n  TStartGameOptions start_options = 2;\n}\n\nmessage TFrameSyncInitConfig { int32 random_seed = 1; }\nmessage TRespStartGameResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TFrameSyncInitConfig frame_sync_init_config = 3;\n}\n\nmessage TReqSearchRoomById { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqGetRecommendRooms { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqMatchUsersWithDefaultRule {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo role_info = 2;\n  TRoomInfo room_info = 3;\n}\n\nmessage TReqNotifyCreateRoom { TRoomModel room_model = 1; }\n\nmessage TReqNotifyRemoveRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqFetchGameOpRecords { TRoomUserOpInfo op_info = 1; }\n\nmessage TFetchGameOpRecordsResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq sync_op_records = 3;\n}\n\nmessage TReqHeartBeat { TRoomUserOpInfo op_info = 1; }\n\nmessage THeartBeatResult { TRoomUserOpInfo op_info = 1; }\n\nmessage TRoomServerRegisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string server_id = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string conn_id = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string client_conn_addr = 3;\n  //\u5F53\u524D\u623F\u95F4\u6570\u91CF\n  int64 room_count = 4;\n}\n\nmessage TRoomServerRegisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomServerUnregisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string server_id = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string conn_id = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string client_conn_addr = 3;\n}\n\nmessage TRoomServerUnregisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\n// string \u957F\u5EA6\u9700\u8981\u5C0F\u4E8E64MB\nmessage TReqDownloadProto {\n  //  \u5BA2\u6237\u7AEFproto\u7248\u672C\n  int32 proto_version = 1;\n  // \u662F\u5426\u5F3A\u5236\u66F4\u65B0\n  bool force = 2;\n}\n\nmessage TProtoInfo {\n  //  \u670D\u52A1\u7AEF\u4F20\u56DE\u7684proto\u7248\u672C\n  int32 version = 1;\n  //  \u5982\u679C\u5BA2\u6237\u7AEF\u7F13\u5B58\u7684\u534F\u8BAE\u7248\u672C\u548C\u670D\u52A1\u7AEF\u7684\u76F8\u540C\uFF0C\u5219\u4E0D\u9700\u8981\u91CD\u65B0\u4E0B\u8F7D proto_content\n  string content = 2;\n}\n\nmessage TDownloadProtoResult {\n  TResultIndicate indicate = 1;\n  TProtoInfo proto_info = 2;\n}\n\nmessage TRoleNetworkInfo{\n  int32 room_network_state = 1;\n  int32 relay_network_state = 2;\n}\n\nmessage TChangeMemberNetworkStateResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoleNetworkInfo network_info = 3;\n}\n\nmessage TChangeCustomPlayerStatus{\n\n}\n\nmessage TReqFrameRecordsInfo{\n  int32 begin_frame = 1;\n  int32 end_frame = 2;\n}\n\nmessage TReqFrameRecordsResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq messages = 3;\n}\n\n// \u79FB\u52A8\u65B9\u5411\u4FE1\u606F\nmessage TActorMoveInfo{\n  int32 x = 1;\n  int32 y = 2;\n  string actor_id = 3;\n}\n\n// RPG\u63A7\u5236\u547D\u4EE4\u4FE1\u606F\nmessage TRPGPlayerCmd {\n  // \u89D2\u8272id\n  int32 role_id = 1;\n  // \u547D\u4EE4\u552F\u4E00Id\n  int32 cmd_id = 2;\n  // \u547D\u4EE4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 3;\n  // \u547D\u4EE4\u521B\u5EFA\u6240\u5728\u5E27\n  int32 create_frame_count = 4;\n  // \u547D\u4EE4\u5B9E\u9645\u9700\u8981\u5728\u90A3\u4E00\u5E27\u6267\u884C\n  int32 frame_count = 5;\n  // \u547D\u4EE4\u5E8F\u53F7\n  int32 cmd_index = 6;\n  // // \u547D\u4EE4\u7C7B\u578B,false \u8868\u793A\u7A7A\u547D\u4EE4,true \u8868\u793A\u89D2\u8272\u547D\u4EE4\n  // bool cmd_type = 7;\n  // // \u8BE5\u547D\u4EE4\u662F\u5426\u53EF\u89E6\u53D1\u540C\u6B65\n  // bool need_sync = 8;\n  // // \u662F\u5426\u89E6\u53D1\u4F7F\u7528\u6280\u80FD\n  // bool use_skill = 9;\n  // \u5E03\u5C14\u503C\u6570\u636E\u96C6\u5408\n  int64 cmd_flags = 7;\n  // \u89D2\u8272\u79FB\u52A8\u4FE1\u606F\n  TActorMoveInfo move = 8;\n}\n\n";
 declare const fileBaseName = "serverproto";
 declare const srcFile: string;
 declare namespace fsync {
@@ -3989,13 +4388,15 @@ declare namespace fsync {
         /** Properties of a TRoomBasic. */
         export interface ITRoomBasic {
             /** TRoomBasic roomId */
-            roomId?: (number | Long | null);
+            roomId?: (string | null);
             /** TRoomBasic createTime */
             createTime?: (number | Long | null);
             /** TRoomBasic uuid */
             uuid?: (string | null);
             /** TRoomBasic connAddr */
             connAddr?: (string | null);
+            /** TRoomBasic createType */
+            createType?: (number | Long | null);
         }
         /** Represents a TRoomBasic. */
         export class TRoomBasic implements ITRoomBasic {
@@ -4004,22 +4405,30 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TRoomBasic roomId. */
-            roomId: (number | Long);
+            roomId: string;
             /** TRoomBasic createTime. */
             createTime: (number | Long);
             /** TRoomBasic uuid. */
             uuid: string;
             /** TRoomBasic connAddr. */
             connAddr: string;
+            /** TRoomBasic createType. */
+            createType: (number | Long);
         }
         /** Properties of a TRoomSettings. */
         export interface ITRoomSettings {
             /** TRoomSettings roomType */
-            roomType?: (number | null);
+            roomType?: (string | null);
             /** TRoomSettings name */
             name?: (string | null);
             /** TRoomSettings password */
             password?: (string | null);
+            /** TRoomSettings ownerId */
+            ownerId?: (string | null);
+            /** TRoomSettings isForbidJoin */
+            isForbidJoin?: (boolean | null);
+            /** TRoomSettings isPrivate */
+            isPrivate?: (boolean | null);
         }
         /** Represents a TRoomSettings. */
         export class TRoomSettings implements ITRoomSettings {
@@ -4028,11 +4437,17 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TRoomSettings roomType. */
-            roomType: number;
+            roomType: string;
             /** TRoomSettings name. */
             name: string;
             /** TRoomSettings password. */
             password: string;
+            /** TRoomSettings ownerId. */
+            ownerId: string;
+            /** TRoomSettings isForbidJoin. */
+            isForbidJoin: boolean;
+            /** TRoomSettings isPrivate. */
+            isPrivate: boolean;
         }
         /** Properties of a TRoomGameInfo. */
         export interface ITRoomGameInfo {
@@ -4142,8 +4557,8 @@ declare namespace fsync {
             serverInfo?: (ITServerInfo | null);
             /** TRoomModel gameState */
             gameState?: (ITRoomGameState | null);
-            /** TRoomModel roles */
-            roles?: ((number | Long)[] | null);
+            /** TRoomModel roleModels */
+            roleModels?: (ITRoleModel[] | null);
         }
         /** Represents a TRoomModel. */
         export class TRoomModel implements ITRoomModel {
@@ -4161,8 +4576,8 @@ declare namespace fsync {
             serverInfo?: (ITServerInfo | null);
             /** TRoomModel gameState. */
             gameState?: (ITRoomGameState | null);
-            /** TRoomModel roles. */
-            roles: (number | Long)[];
+            /** TRoomModel roleModels. */
+            roleModels: ITRoleModel[];
         }
         /** Properties of a TReqGetRoomInfo. */
         export interface ITReqGetRoomInfo {
@@ -4239,9 +4654,11 @@ declare namespace fsync {
         /** Properties of a TRoomUserOpInfo. */
         export interface ITRoomUserOpInfo {
             /** TRoomUserOpInfo roomId */
-            roomId?: (number | Long | null);
+            roomId?: (string | null);
             /** TRoomUserOpInfo roleId */
-            roleId?: (number | Long | null);
+            serverRoleId?: (string | null);
+            /** TRoomUserOpInfo roleToken */
+            roleId?: (string | null);
         }
         /** Represents a TRoomUserOpInfo. */
         export class TRoomUserOpInfo implements ITRoomUserOpInfo {
@@ -4250,9 +4667,11 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TRoomUserOpInfo roomId. */
-            roomId: (number | Long);
+            roomId: string;
             /** TRoomUserOpInfo roleId. */
-            roleId: (number | Long);
+            serverRoleId: string;
+            /** TRoomUserOpInfo roleToken. */
+            roleId: string;
         }
         /** Properties of a TMatchJobResult. */
         export interface ITMatchJobResult {
@@ -4293,9 +4712,17 @@ declare namespace fsync {
         /** Properties of a TRoleBasic. */
         export interface ITRoleBasic {
             /** TRoleBasic roleId */
-            roleId?: (number | Long | null);
+            serverRoleId?: (string | null);
             /** TRoleBasic sex */
             sex?: (number | null);
+            /** TRoleBasic roleName */
+            roleName?: (string | null);
+            /** TRoleBasic roleHeadUri */
+            roleHeadUri?: (string | null);
+            /** TRoleBasic serverRoleId */
+            roleId?: (string | null);
+            /** TRoleBasic isRobot */
+            isRobot?: (boolean | null);
         }
         /** Represents a TRoleBasic. */
         export class TRoleBasic implements ITRoleBasic {
@@ -4304,9 +4731,17 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TRoleBasic roleId. */
-            roleId: (number | Long);
+            serverRoleId: string;
             /** TRoleBasic sex. */
             sex: number;
+            /** TRoleBasic roleName. */
+            roleName: string;
+            /** TRoleBasic roleHeadUri. */
+            roleHeadUri: string;
+            /** TRoleBasic serverRoleId. */
+            roleId: string;
+            /** TRoleBasic isRobot. */
+            isRobot: boolean;
         }
         /** Properties of a TRoleGameInfo. */
         export interface ITRoleGameInfo {
@@ -4337,7 +4772,7 @@ declare namespace fsync {
         /** Properties of a TRoleRoomState. */
         export interface ITRoleRoomState {
             /** TRoleRoomState roomId */
-            roomId?: (number | Long | null);
+            roomId?: (string | null);
             /** TRoleRoomState chairNo */
             chairNo?: (number | Long | null);
             /** TRoleRoomState isConnActive */
@@ -4352,7 +4787,7 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TRoleRoomState roomId. */
-            roomId: (number | Long);
+            roomId: string;
             /** TRoleRoomState chairNo. */
             chairNo: (number | Long);
             /** TRoleRoomState isConnActive. */
@@ -4418,6 +4853,8 @@ declare namespace fsync {
             roomState?: (ITRoleRoomState | null);
             /** TRoleModel gameState */
             gameState?: (ITRoleGameState | null);
+            /** TRoleModel netwokInfo */
+            netwokInfo?: (ITRoleNetworkInfo | null);
         }
         /** Represents a TRoleModel. */
         export class TRoleModel implements ITRoleModel {
@@ -4435,6 +4872,8 @@ declare namespace fsync {
             roomState?: (ITRoleRoomState | null);
             /** TRoleModel gameState. */
             gameState?: (ITRoleGameState | null);
+            /** TRoleModel netwokInfo. */
+            netwokInfo?: (ITRoleNetworkInfo | null);
         }
         /** Properties of a TRoomMemberFilterInfo. */
         export interface ITRoomMemberFilterInfo {
@@ -4529,7 +4968,7 @@ declare namespace fsync {
         /** Properties of a TReqRoleBroadOptions. */
         export interface ITReqRoleBroadOptions {
             /** TReqRoleBroadOptions roleId */
-            roleId?: (number | Long | null);
+            roleId?: (string | null);
         }
         /** Represents a TReqRoleBroadOptions. */
         export class TReqRoleBroadOptions implements ITReqRoleBroadOptions {
@@ -4538,7 +4977,7 @@ declare namespace fsync {
              * @param [properties] Properties to set
              */
             /** TReqRoleBroadOptions roleId. */
-            roleId: (number | Long);
+            roleId: string;
         }
         /** Properties of a TFrameSyncInfo. */
         export interface ITFrameSyncInfo {
@@ -4548,6 +4987,12 @@ declare namespace fsync {
             serverFrameCount?: (number | Long | null);
             /** TFrameSyncInfo clientTime */
             clientTime?: (number | Long | null);
+            /** TFrameSyncInfo clientLerpTime */
+            clientLerpTime?: (number | Long | null);
+            /** TFrameSyncInfo randomSeed */
+            randomSeed?: (number | null);
+            /** TFrameSyncInfo isReplay */
+            isReplay?: (boolean | null);
         }
         /** Represents a TFrameSyncInfo. */
         export class TFrameSyncInfo implements ITFrameSyncInfo {
@@ -4561,6 +5006,12 @@ declare namespace fsync {
             serverFrameCount: (number | Long);
             /** TFrameSyncInfo clientTime. */
             clientTime: (number | Long);
+            /** TFrameSyncInfo clientLerpTime. */
+            clientLerpTime: (number | Long);
+            /** TFrameSyncInfo randomSeed. */
+            randomSeed: number;
+            /** TFrameSyncInfo isReplay. */
+            isReplay: boolean;
         }
         /** Properties of a TReqBroadCastFrameSyncReq. */
         export interface ITReqBroadCastFrameSyncReq {
@@ -4594,6 +5045,8 @@ declare namespace fsync {
             targets?: (ITReqRoleBroadOptions[] | null);
             /** TReqBroadCastClientMessage msgBytes */
             msgBytes?: (Uint8Array | null);
+            /** TReqBroadCastClientMessage msgStr */
+            msgStr?: (string | null);
         }
         /** Represents a TReqBroadCastClientMessage. */
         export class TReqBroadCastClientMessage implements ITReqBroadCastClientMessage {
@@ -4609,6 +5062,8 @@ declare namespace fsync {
             targets: ITReqRoleBroadOptions[];
             /** TReqBroadCastClientMessage msgBytes. */
             msgBytes: Uint8Array;
+            /** TReqBroadCastClientMessage msgStr. */
+            msgStr: string;
         }
         /** Properties of a TReqValidateRoom. */
         export interface ITReqValidateRoom {
@@ -4647,7 +5102,7 @@ declare namespace fsync {
             /** TReqBanishMember opInfo */
             opInfo?: (ITRoomUserOpInfo | null);
             /** TReqBanishMember roles */
-            roles?: ((number | Long)[] | null);
+            roles?: (string[] | null);
         }
         /** Represents a TReqBanishMember. */
         export class TReqBanishMember implements ITReqBanishMember {
@@ -4658,7 +5113,7 @@ declare namespace fsync {
             /** TReqBanishMember opInfo. */
             opInfo?: (ITRoomUserOpInfo | null);
             /** TReqBanishMember roles. */
-            roles: (number | Long)[];
+            roles: string[];
         }
         /** Properties of a TReqSetSelfRoomChairNo. */
         export interface ITReqSetSelfRoomChairNo {
@@ -4900,14 +5355,14 @@ declare namespace fsync {
         }
         /** Properties of a TRoomServerRegisterForMatcherServerInfo. */
         export interface ITRoomServerRegisterForMatcherServerInfo {
-            /** TRoomServerRegisterForMatcherServerInfo ServerId */
-            ServerId?: (string | null);
-            /** TRoomServerRegisterForMatcherServerInfo ConnId */
-            ConnId?: (string | null);
-            /** TRoomServerRegisterForMatcherServerInfo ClientConnAddr */
-            ClientConnAddr?: (string | null);
-            /** TRoomServerRegisterForMatcherServerInfo RoomCount */
-            RoomCount?: (number | Long | null);
+            /** TRoomServerRegisterForMatcherServerInfo serverId */
+            serverId?: (string | null);
+            /** TRoomServerRegisterForMatcherServerInfo connId */
+            connId?: (string | null);
+            /** TRoomServerRegisterForMatcherServerInfo clientConnAddr */
+            clientConnAddr?: (string | null);
+            /** TRoomServerRegisterForMatcherServerInfo roomCount */
+            roomCount?: (number | Long | null);
         }
         /** Represents a TRoomServerRegisterForMatcherServerInfo. */
         export class TRoomServerRegisterForMatcherServerInfo implements ITRoomServerRegisterForMatcherServerInfo {
@@ -4915,14 +5370,14 @@ declare namespace fsync {
              * Constructs a new TRoomServerRegisterForMatcherServerInfo.
              * @param [properties] Properties to set
              */
-            /** TRoomServerRegisterForMatcherServerInfo ServerId. */
-            ServerId: string;
-            /** TRoomServerRegisterForMatcherServerInfo ConnId. */
-            ConnId: string;
-            /** TRoomServerRegisterForMatcherServerInfo ClientConnAddr. */
-            ClientConnAddr: string;
-            /** TRoomServerRegisterForMatcherServerInfo RoomCount. */
-            RoomCount: (number | Long);
+            /** TRoomServerRegisterForMatcherServerInfo serverId. */
+            serverId: string;
+            /** TRoomServerRegisterForMatcherServerInfo connId. */
+            connId: string;
+            /** TRoomServerRegisterForMatcherServerInfo clientConnAddr. */
+            clientConnAddr: string;
+            /** TRoomServerRegisterForMatcherServerInfo roomCount. */
+            roomCount: (number | Long);
         }
         /** Properties of a TRoomServerRegisterForMatcherServerResult. */
         export interface ITRoomServerRegisterForMatcherServerResult {
@@ -4940,12 +5395,12 @@ declare namespace fsync {
         }
         /** Properties of a TRoomServerUnregisterForMatcherServerInfo. */
         export interface ITRoomServerUnregisterForMatcherServerInfo {
-            /** TRoomServerUnregisterForMatcherServerInfo ServerId */
-            ServerId?: (string | null);
-            /** TRoomServerUnregisterForMatcherServerInfo ConnId */
-            ConnId?: (string | null);
-            /** TRoomServerUnregisterForMatcherServerInfo ClientConnAddr */
-            ClientConnAddr?: (string | null);
+            /** TRoomServerUnregisterForMatcherServerInfo serverId */
+            serverId?: (string | null);
+            /** TRoomServerUnregisterForMatcherServerInfo connId */
+            connId?: (string | null);
+            /** TRoomServerUnregisterForMatcherServerInfo clientConnAddr */
+            clientConnAddr?: (string | null);
         }
         /** Represents a TRoomServerUnregisterForMatcherServerInfo. */
         export class TRoomServerUnregisterForMatcherServerInfo implements ITRoomServerUnregisterForMatcherServerInfo {
@@ -4953,12 +5408,12 @@ declare namespace fsync {
              * Constructs a new TRoomServerUnregisterForMatcherServerInfo.
              * @param [properties] Properties to set
              */
-            /** TRoomServerUnregisterForMatcherServerInfo ServerId. */
-            ServerId: string;
-            /** TRoomServerUnregisterForMatcherServerInfo ConnId. */
-            ConnId: string;
-            /** TRoomServerUnregisterForMatcherServerInfo ClientConnAddr. */
-            ClientConnAddr: string;
+            /** TRoomServerUnregisterForMatcherServerInfo serverId. */
+            serverId: string;
+            /** TRoomServerUnregisterForMatcherServerInfo connId. */
+            connId: string;
+            /** TRoomServerUnregisterForMatcherServerInfo clientConnAddr. */
+            clientConnAddr: string;
         }
         /** Properties of a TRoomServerUnregisterForMatcherServerResult. */
         export interface ITRoomServerUnregisterForMatcherServerResult {
@@ -5028,7 +5483,582 @@ declare namespace fsync {
             /** TDownloadProtoResult protoInfo. */
             protoInfo?: (ITProtoInfo | null);
         }
+        /** Properties of a TRoleNetworkInfo. */
+        export interface ITRoleNetworkInfo {
+            /** TRoleNetworkInfo roomNetworkState */
+            roomNetworkState?: (number | null);
+            /** TRoleNetworkInfo relayNetworkState */
+            relayNetworkState?: (number | null);
+        }
+        /** Represents a TRoleNetworkInfo. */
+        export class TRoleNetworkInfo implements ITRoleNetworkInfo {
+            /**
+             * Constructs a new TRoleNetworkInfo.
+             * @param [properties] Properties to set
+             */
+            /** TRoleNetworkInfo roomNetworkState. */
+            roomNetworkState: number;
+            /** TRoleNetworkInfo relayNetworkState. */
+            relayNetworkState: number;
+        }
+        /** Properties of a TChangeMemberNetworkStateResult. */
+        export interface ITChangeMemberNetworkStateResult {
+            /** TChangeMemberNetworkStateResult indicate */
+            indicate?: (ITResultIndicate | null);
+            /** TChangeMemberNetworkStateResult opInfo */
+            opInfo?: (ITRoomUserOpInfo | null);
+            /** TChangeMemberNetworkStateResult networkInfo */
+            networkInfo?: (ITRoleNetworkInfo | null);
+        }
+        /** Represents a TChangeMemberNetworkStateResult. */
+        export class TChangeMemberNetworkStateResult implements ITChangeMemberNetworkStateResult {
+            /**
+             * Constructs a new TChangeMemberNetworkStateResult.
+             * @param [properties] Properties to set
+             */
+            /** TChangeMemberNetworkStateResult indicate. */
+            indicate?: (ITResultIndicate | null);
+            /** TChangeMemberNetworkStateResult opInfo. */
+            opInfo?: (ITRoomUserOpInfo | null);
+            /** TChangeMemberNetworkStateResult networkInfo. */
+            networkInfo?: (ITRoleNetworkInfo | null);
+        }
+        /** Properties of a TChangeCustomPlayerStatus. */
+        export interface ITChangeCustomPlayerStatus {
+        }
+        /** Represents a TChangeCustomPlayerStatus. */
+        export class TChangeCustomPlayerStatus implements ITChangeCustomPlayerStatus {
+        }
+        /** Properties of a TReqFrameRecordsInfo. */
+        export interface ITReqFrameRecordsInfo {
+            /** TReqFrameRecordsInfo beginFrame */
+            beginFrame?: (number | null);
+            /** TReqFrameRecordsInfo endFrame */
+            endFrame?: (number | null);
+        }
+        /** Represents a TReqFrameRecordsInfo. */
+        export class TReqFrameRecordsInfo implements ITReqFrameRecordsInfo {
+            /**
+             * Constructs a new TReqFrameRecordsInfo.
+             * @param [properties] Properties to set
+             */
+            /** TReqFrameRecordsInfo beginFrame. */
+            beginFrame: number;
+            /** TReqFrameRecordsInfo endFrame. */
+            endFrame: number;
+        }
+        /** Properties of a TReqFrameRecordsResult. */
+        export interface ITReqFrameRecordsResult {
+            /** TReqFrameRecordsResult indicate */
+            indicate?: (ITResultIndicate | null);
+            /** TReqFrameRecordsResult opInfo */
+            opInfo?: (ITRoomUserOpInfo | null);
+            /** TReqFrameRecordsResult messages */
+            messages?: (ITReqBroadCastFrameSyncReq[] | null);
+        }
+        /** Represents a TReqFrameRecordsResult. */
+        export class TReqFrameRecordsResult implements ITReqFrameRecordsResult {
+            /**
+             * Constructs a new TReqFrameRecordsResult.
+             * @param [properties] Properties to set
+             */
+            /** TReqFrameRecordsResult indicate. */
+            indicate?: (ITResultIndicate | null);
+            /** TReqFrameRecordsResult opInfo. */
+            opInfo?: (ITRoomUserOpInfo | null);
+            /** TReqFrameRecordsResult messages. */
+            messages: ITReqBroadCastFrameSyncReq[];
+        }
+        /** Properties of a TActorMoveInfo. */
+        export interface ITActorMoveInfo {
+            /** TActorMoveInfo x */
+            x?: (number | null);
+            /** TActorMoveInfo y */
+            y?: (number | null);
+            /** TActorMoveInfo actorId */
+            actorId?: (string | null);
+        }
+        /** Represents a TActorMoveInfo. */
+        export class TActorMoveInfo implements ITActorMoveInfo {
+            /**
+             * Constructs a new TActorMoveInfo.
+             * @param [properties] Properties to set
+             */
+            /** TActorMoveInfo x. */
+            x: number;
+            /** TActorMoveInfo y. */
+            y: number;
+            /** TActorMoveInfo actorId. */
+            actorId: string;
+        }
+        /** Properties of a TRPGPlayerCmd. */
+        export interface ITRPGPlayerCmd {
+            /** TRPGPlayerCmd roleId */
+            roleId?: (number | null);
+            /** TRPGPlayerCmd cmdId */
+            cmdId?: (number | null);
+            /** TRPGPlayerCmd createTime */
+            createTime?: (number | Long | null);
+            /** TRPGPlayerCmd createFrameCount */
+            createFrameCount?: (number | null);
+            /** TRPGPlayerCmd frameCount */
+            frameCount?: (number | null);
+            /** TRPGPlayerCmd cmdIndex */
+            cmdIndex?: (number | null);
+            /** TRPGPlayerCmd cmdFlags */
+            cmdFlags?: (number | Long | null);
+            /** TRPGPlayerCmd move */
+            move?: (ITActorMoveInfo | null);
+        }
+        /** Represents a TRPGPlayerCmd. */
+        export class TRPGPlayerCmd implements ITRPGPlayerCmd {
+            /**
+             * Constructs a new TRPGPlayerCmd.
+             * @param [properties] Properties to set
+             */
+            /** TRPGPlayerCmd roleId. */
+            roleId: number;
+            /** TRPGPlayerCmd cmdId. */
+            cmdId: number;
+            /** TRPGPlayerCmd createTime. */
+            createTime: (number | Long);
+            /** TRPGPlayerCmd createFrameCount. */
+            createFrameCount: number;
+            /** TRPGPlayerCmd frameCount. */
+            frameCount: number;
+            /** TRPGPlayerCmd cmdIndex. */
+            cmdIndex: number;
+            /** TRPGPlayerCmd cmdFlags. */
+            cmdFlags: (number | Long);
+            /** TRPGPlayerCmd move. */
+            move?: (ITActorMoveInfo | null);
+        }
         export {};
+    }
+}
+declare namespace fsync.network.roomclient.mgobe {
+    enum TRoomMsgEnum {
+        roommsg = "roommsg",
+        leaveroom = "leaveroom",
+        enterroom = "enterroom",
+        changeroom = "changeroom",
+        prepareready = "prepareready",
+        startgame = "startgame",
+        detoryroom = "detoryroom",
+        changedmembernetowrk = "changedmembernetowrk",
+        framemsg = "framemsg",
+        startframesync = "startframesync",
+        stopframesync = "stopframesync"
+    }
+    class TRoomProtoHelper {
+        getLocalPlayerIdInRoom(roomInfo: MGOBE.types.RoomInfo, serverRoleId: string): string;
+        getFrameInfo(frame: MGOBE.types.Frame, item: MGOBE.types.FrameItem): roomserver.TReqBroadCastFrameSyncReq;
+        getIndicate(evt: MGOBE.types.ResponseEvent<any>): roomserver.TResultIndicate;
+        getOkIndicate(): roomserver.TResultIndicate;
+        getOpInfo(roleInfo: roomserver.TRoleInfo, roomInfo: MGOBE.types.RoomInfo): roomserver.TRoomUserOpInfo;
+        cloneOpInfo(opInfo: roomserver.ITRoomUserOpInfo): roomserver.TRoomUserOpInfo;
+        getRoomInfo(roomInfoRaw: MGOBE.types.RoomInfo): roomserver.TRoomModel;
+        getTheOnlyRoomsInfo(roomInfoRaw: MGOBE.types.RoomInfo): roomserver.TRoomsInfo;
+        getNormalResult(opInfo: roomserver.ITRoomUserOpInfo, evt: MGOBE.types.ResponseEvent<any>): roomserver.TNormalResult;
+        getOkNormalResult(opInfo: roomserver.ITRoomUserOpInfo): roomserver.TNormalResult;
+    }
+    const RoomProtoHelper: TRoomProtoHelper;
+    class RoomClient implements IRoomClient {
+        matcherClient: MGOBE.Room;
+        roomClient: MGOBE.Room;
+        proto: ProtoTool;
+        intervals: Intervals;
+        protected stopHeartBeat: bool;
+        protected cachedRoomInfo?: roomserver.TRoomModel;
+        init(): this;
+        setProto(proto: ProtoTool): void;
+        static isNetworkInited: boolean;
+        /**
+         * 初始化连接
+         * @param call
+         */
+        connectAsync(info: TRoomClientConnectInfo, call: (result: TRoomClientConnectResult) => void): void;
+        protected setupRoomInstanceApi(): void;
+        close(): void;
+        /**
+         * 更新 protobuf 协议文件
+         * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
+         * - 如果客户端版本较旧，则服务器返回新协议文件内容
+         * @param info
+         * @param call
+         */
+        checkoutProto(info: {
+            clientProtoVersion: number;
+        }, call: (result: roomserver.TDownloadProtoResult) => void): void;
+        /**
+         * 通过房间匹配服匹配房间
+         * @param roleInfo
+         * @param roomInfo
+         * @param call
+         */
+        matchRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.TRoomInfo, call: (result: roomserver.TMatchJobResult) => void): void;
+        /**
+         * 通过ID搜索房间
+         * @param opInfo
+         * @param call
+         */
+        searchRoomById(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TQueryRoomsResult) => void): void;
+        /**
+         * 发送房间服心跳
+         * @param opInfo
+         * @param call
+         */
+        sendRoomHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
+        /**
+         * 发送房间匹配服心跳
+         * @param opInfo
+         * @param call
+         */
+        sendMatcherHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
+        sendHeartBeat(opInfo: roomserver.ITRoomUserOpInfo): void;
+        /**
+         * 维持心跳
+         * @param opInfo
+         */
+        startHeartBeatProcess(opInfo: roomserver.ITRoomUserOpInfo): void;
+        /**
+         * 停止心跳
+         */
+        stopHeartBeatProcess(): void;
+        protected _updateRoomInfo(roomInfo?: MGOBE.types.RoomInfo): void;
+        getLocalRoomInfo(): roomserver.TRoomModel;
+        /**
+         * 进入房间
+         * @param roleInfo
+         * @param roomInfo
+         * @param call
+         */
+        enterRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.ITRoomModel, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 退出房间
+         * @param opInfo
+         * @param call
+         */
+        exitRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 强制销毁房间
+         * @param opInfo
+         * @param call
+         */
+        destoryRoomForce(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 进入准备状态
+         * - 所有玩家进入准备状态之后，即可开始游戏
+         * @param opInfo
+         * @param call
+         */
+        prepareStartGame(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TRespStartGameResult) => void): void;
+        protected frameEvent: slib.SEvent<roomserver.ITReqBroadCastFrameSyncReq>;
+        protected initFrameMsgListener(): void;
+        /**
+         * 监听帧同步广播
+         * @param call
+         */
+        listenFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): void;
+        offFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastClientMessage) => void): void;
+        /**
+         * 广播房间消息
+         * @param reqData
+         * @param call
+         */
+        broadCastRoomMessage(reqData: roomserver.TReqBroadCastClientMessage, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 广播帧同步消息
+         * @param reqData
+         * @param call
+         */
+        broadCastFrameSyncMessage(reqData: roomserver.TReqBroadCastFrameSyncReq, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 请求补帧
+         */
+        requestFrameSyncMessages(opInfo: roomserver.TRoomUserOpInfo, paras: roomserver.TReqFrameRecordsInfo, call: (result: roomserver.TReqFrameRecordsResult) => void): void;
+        protected roomEvent: slib.SEvent<any>;
+        protected initRoomClientMsgListener(): void;
+        /**
+         * 监听房间内广播消息
+         * @param call
+         */
+        listenRoomBroadCast(call: (message: roomserver.TReqBroadCastClientMessage) => void): void;
+        /**
+         * 监听成员离开房间
+         * @param call
+         */
+        listenExitRoom(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员进入房间
+         * @param call
+         */
+        listenEnterRoom(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员设置房间
+         * @param call
+         */
+        listenSetRoomInfo(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员进入准备状态
+         * @param call
+         */
+        listenPrepareStartGame(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听游戏开始
+         * @param call
+         */
+        listenStartGame(call: (message: roomserver.TRespStartGameResult) => void): void;
+        /**
+         * 监听同步游戏记录
+         * @param call
+         */
+        listenFetchGameOpRecords(call: (message: roomserver.TFetchGameOpRecordsResult) => void): void;
+        /**
+         * 房间销毁
+         * @param call
+         */
+        listenDestoryRoom(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 验证房间
+         * @param call
+         */
+        validateRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 设置房间信息
+         * @param call
+         */
+        setRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, roomInfo: roomserver.ITRoomSettings, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 放逐成员（未实现）
+         * @param call
+         */
+        banishMember(opInfo: roomserver.ITRoomUserOpInfo, roles: string[], call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 获取房间信息（未实现）
+         * @param call
+         */
+        getRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TGetRoomInfoResult) => void): void;
+        /**
+         * 获取游戏操作记录（未实现）
+         * @param call
+         */
+        fetchGameOpRecords(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TFetchGameOpRecordsResult) => void): void;
+        /**
+         * 监听成员网络状态变化
+         * @param call
+         */
+        listenChangedMemberNetworkState(call: (result: roomserver.TChangeMemberNetworkStateResult) => void): void;
+        /**
+         * 监听玩家信息变化
+         * @param call
+         */
+        listenChangeCustomPlayerStatus(call: (result: roomserver.TChangeCustomPlayerStatus) => void): void;
+        /**
+         * 开始帧同步
+         * @param opInfo
+         * @param call
+         */
+        startFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 停止帧同步
+         * @param opInfo
+         * @param call
+         */
+        stopFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 开始帧同步广播回调接口
+         * @param call
+         */
+        onStartFrameSync(call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 停止帧同步广播回调接口
+         */
+        onStopFrameSync(call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 自动补帧失败回调接口
+         */
+        onAutoRequestFrameError(call: (result: roomserver.TReqFrameRecordsResult) => void): void;
+        /**
+         * 重试自动补帧
+         * @param opInfo
+         * @param call
+         */
+        retryAutoRequestFrame(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+    }
+}
+declare namespace fsync.network.roomclient.glee.v1 {
+    class RoomClient implements IRoomClient {
+        getLocalRoomInfo?(): roomserver.TRoomModel;
+        offFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): void;
+        connectAsync(info: TRoomClientConnectInfo, call: (result: TRoomClientConnectResult) => void): void;
+        requestFrameSyncMessages(opInfo: roomserver.TRoomUserOpInfo, paras: roomserver.TReqFrameRecordsInfo, call: (result: roomserver.TReqFrameRecordsResult) => void): void;
+        listenDestoryRoom(call: (message: roomserver.TNormalResult) => void): void;
+        listenChangedMemberNetworkState(call: (result: roomserver.TChangeMemberNetworkStateResult) => void): void;
+        listenChangeCustomPlayerStatus(call: (result: roomserver.TChangeCustomPlayerStatus) => void): void;
+        startFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        stopFrameSync(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        onStartFrameSync(call: (result: roomserver.TNormalResult) => void): void;
+        onStopFrameSync(call: (result: roomserver.TNormalResult) => void): void;
+        onAutoRequestFrameError(call: (result: roomserver.TReqFrameRecordsResult) => void): void;
+        retryAutoRequestFrame(opInfo: roomserver.TRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        matcherClient: PBClient;
+        roomClient: PBClient;
+        proto: ProtoTool;
+        intervals: Intervals;
+        protected stopHeartBeat: bool;
+        init(): this;
+        setProto(proto: ProtoTool): void;
+        close(): void;
+        /**
+         * 更新 protobuf 协议文件
+         * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
+         * - 如果客户端版本较旧，则服务器返回新协议文件内容
+         * @param info
+         * @param call
+         */
+        checkoutProto(info: {
+            clientProtoVersion: number;
+        }, call: (result: roomserver.TDownloadProtoResult) => void): void;
+        /**
+         * 通过房间匹配服匹配房间
+         * @param roleInfo
+         * @param roomInfo
+         * @param call
+         */
+        matchRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.TRoomInfo, call: (result: roomserver.TMatchJobResult) => void): void;
+        /**
+         * 通过ID搜索房间
+         * @param opInfo
+         * @param call
+         */
+        searchRoomById(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TQueryRoomsResult) => void): void;
+        /**
+         * 发送房间服心跳
+         * @param opInfo
+         * @param call
+         */
+        sendRoomHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
+        /**
+         * 发送房间匹配服心跳
+         * @param opInfo
+         * @param call
+         */
+        sendMatcherHeartBeat(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.THeartBeatResult) => void): void;
+        sendHeartBeat(opInfo: roomserver.ITRoomUserOpInfo): void;
+        /**
+         * 维持心跳
+         * @param opInfo
+         */
+        startHeartBeatProcess(opInfo: roomserver.ITRoomUserOpInfo): void;
+        /**
+         * 停止心跳
+         */
+        stopHeartBeatProcess(): void;
+        /**
+         * 进入房间
+         * @param roleInfo
+         * @param roomInfo
+         * @param call
+         */
+        enterRoom(roleInfo: roomserver.TRoleInfo, roomInfo: roomserver.ITRoomModel, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 退出房间
+         * @param opInfo
+         * @param call
+         */
+        exitRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 强制销毁房间
+         * @param opInfo
+         * @param call
+         */
+        destoryRoomForce(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 进入准备状态
+         * - 所有玩家进入准备状态之后，即可开始游戏
+         * @param opInfo
+         * @param call
+         */
+        prepareStartGame(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TRespStartGameResult) => void): void;
+        /**
+         * 广播房间消息
+         * @param reqData
+         * @param call
+         */
+        broadCastRoomMessage(reqData: roomserver.TReqBroadCastClientMessage, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 广播帧同步消息
+         * @param reqData
+         * @param call
+         */
+        broadCastFrameSyncMessage(reqData: roomserver.TReqBroadCastFrameSyncReq, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听帧同步广播
+         * @param call
+         */
+        listenFrameSyncBroadCast(call: (message: roomserver.TReqBroadCastFrameSyncReq) => void): void;
+        /**
+         * 监听房间内广播消息
+         * @param call
+         */
+        listenRoomBroadCast(call: (message: roomserver.TReqBroadCastClientMessage) => void): void;
+        /**
+         * 监听成员离开房间
+         * @param call
+         */
+        listenExitRoom(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员进入房间
+         * @param call
+         */
+        listenEnterRoom(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员设置房间
+         * @param call
+         */
+        listenSetRoomInfo(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听成员进入准备状态
+         * @param call
+         */
+        listenPrepareStartGame(call: (message: roomserver.TNormalResult) => void): void;
+        /**
+         * 监听游戏开始
+         * @param call
+         */
+        listenStartGame(call: (message: roomserver.TRespStartGameResult) => void): void;
+        /**
+         * 监听同步游戏记录
+         * @param call
+         */
+        listenFetchGameOpRecords(call: (message: roomserver.TFetchGameOpRecordsResult) => void): void;
+        /**
+         * 验证房间
+         * @param call
+         */
+        validateRoom(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 设置房间信息
+         * @param call
+         */
+        setRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, roomInfo: roomserver.ITRoomSettings, call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 放逐成员（未实现）
+         * @param call
+         * @deprecated
+         */
+        banishMember(opInfo: roomserver.ITRoomUserOpInfo, roles: TRoleId[], call: (result: roomserver.TNormalResult) => void): void;
+        /**
+         * 获取房间信息（未实现）
+         * @param call
+         */
+        getRoomInfo(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TGetRoomInfoResult) => void): void;
+        /**
+         * 获取游戏操作记录（未实现）
+         * @param call
+         */
+        fetchGameOpRecords(opInfo: roomserver.ITRoomUserOpInfo, call: (result: roomserver.TFetchGameOpRecordsResult) => void): void;
     }
 }
 declare namespace fsync {

@@ -1,5 +1,103 @@
 var fsync;
 (function (fsync) {
+    /**
+     * BLRect = 左下角 + size
+     */
+    var BLRect = /** @class */ (function () {
+        function BLRect(x, y, width, height) {
+            if (x === void 0) { x = 0; }
+            if (y === void 0) { y = 0; }
+            if (width === void 0) { width = 0; }
+            if (height === void 0) { height = 0; }
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+        BLRect.top = function (self) {
+            return new fsync.Vector2(self.x + self.width / 2, self.y + self.height);
+        };
+        BLRect.bottom = function (self) {
+            return new fsync.Vector2(self.x + self.width / 2, self.y);
+        };
+        BLRect.center = function (self) {
+            return new fsync.Vector2(self.x + self.width / 2, self.y + self.height / 2);
+        };
+        BLRect.fromRectLike = function (_a) {
+            var x = _a.x, y = _a.y, width = _a.width, height = _a.height;
+            return new BLRect(x, y, width, height);
+        };
+        BLRect.copyRectLike = function (self, _a) {
+            var x = _a.x, y = _a.y, width = _a.width, height = _a.height;
+            self.x = x;
+            self.y = y;
+            self.width = width;
+            self.height = height;
+            return self;
+        };
+        BLRect.reset = function (self) {
+            self.x = 0;
+            self.y = 0;
+            self.width = 0;
+            self.height = 0;
+            return self;
+        };
+        BLRect.mergeFrom = function (self, rect) {
+            self.width = rect.width;
+            self.height = rect.height;
+            self.x = rect.x;
+            self.y = rect.y;
+            return self;
+        };
+        BLRect.clone = function (self) {
+            var rect = new BLRect();
+            this.mergeFrom(rect, self);
+            return rect;
+        };
+        BLRect.containPoint = function (rect, pt) {
+            var ns = pt.getBinData();
+            var x = ns[0];
+            var y = ns[1];
+            if ((rect.x - x) * (rect.x + rect.width - x) <= 0
+                && (rect.y - y) * (rect.y + rect.height - y) <= 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        /**
+         * 将点就近限制在矩形框内
+         * @param rect
+         * @param pt
+         */
+        BLRect.limitPointSelf = function (rect, pt) {
+            var ns = pt.getBinData();
+            var x = ns[0];
+            var y = ns[1];
+            if (x < rect.x) {
+                x = rect.x;
+            }
+            var rx = rect.x + rect.width;
+            if (x > rx) {
+                x = rx;
+            }
+            if (y < rect.y) {
+                y = rect.y;
+            }
+            var ry = rect.y + rect.height;
+            if (y > ry) {
+                y = ry;
+            }
+            ns[0] = x;
+            ns[1] = y;
+        };
+        return BLRect;
+    }());
+    fsync.BLRect = BLRect;
+})(fsync || (fsync = {}));
+var fsync;
+(function (fsync) {
     var FloatMath = /** @class */ (function () {
         function FloatMath() {
         }
@@ -89,7 +187,7 @@ var fsync;
 var fsync;
 (function (fsync) {
     /**
-     * Rect = 左下角 + size
+     * Rect = center + size
      */
     var Rect = /** @class */ (function () {
         function Rect(x, y, width, height) {
@@ -103,13 +201,13 @@ var fsync;
             this.height = height;
         }
         Rect.top = function (self) {
-            return new fsync.Vector2(self.x + self.width / 2, self.y + self.height);
+            return new fsync.Vector2(self.x, self.y + self.height / 2);
         };
         Rect.bottom = function (self) {
-            return new fsync.Vector2(self.x + self.width / 2, self.y);
+            return new fsync.Vector2(self.x, self.y - self.height / 2);
         };
         Rect.center = function (self) {
-            return new fsync.Vector2(self.x + self.width / 2, self.y + self.height / 2);
+            return new fsync.Vector2(self.x, self.y);
         };
         Rect.fromRectLike = function (_a) {
             var x = _a.x, y = _a.y, width = _a.width, height = _a.height;
@@ -146,29 +244,36 @@ var fsync;
             var ns = pt.getBinData();
             var x = ns[0];
             var y = ns[1];
-            if ((rect.x - x) * (rect.x + rect.width - x) <= 0
-                && (rect.y - y) * (rect.y + rect.height - y) <= 0) {
+            if ((rect.x - rect.width / 2 - x) * (rect.x + rect.width / 2 - x) <= 0
+                && (rect.y - rect.height / 2 - y) * (rect.y + rect.height / 2 - y) <= 0) {
                 return true;
             }
             else {
                 return false;
             }
         };
+        /**
+         * 将点就近限制在矩形框内
+         * @param rect
+         * @param pt
+         */
         Rect.limitPointSelf = function (rect, pt) {
             var ns = pt.getBinData();
             var x = ns[0];
             var y = ns[1];
-            if (x < rect.x) {
-                x = rect.x;
+            var lx = rect.x - rect.width / 2;
+            if (x < lx) {
+                x = lx;
             }
-            var rx = rect.x + rect.width;
+            var rx = rect.x + rect.width / 2;
             if (x > rx) {
                 x = rx;
             }
-            if (y < rect.y) {
-                y = rect.y;
+            var ly = rect.y - rect.height / 2;
+            if (y < ly) {
+                y = ly;
             }
-            var ry = rect.y + rect.height;
+            var ry = rect.y + rect.height / 2;
             if (y > ry) {
                 y = ry;
             }
@@ -384,6 +489,9 @@ var fsync;
         CommonVector.prototype.collect = function (vec2) {
             return Vector.collect(this, vec2);
         };
+        /**
+         * @default value = 0
+         */
         CommonVector.prototype.resetValues = function (value) {
             if (value === void 0) { value = 0; }
             return Vector.resetValues(this, value);
@@ -512,6 +620,12 @@ var fsync;
             var x = _a.x, y = _a.y;
             var vec = this.fromNumArray([x, y]);
             return vec;
+        };
+        Vector2.prototype.mergeToXYZLike = function (v) {
+            var data = this.data;
+            v.x = data[0];
+            v.y = data[1];
+            return v;
         };
         Vector2.zero = new Vector2();
         return Vector2;
@@ -735,6 +849,7 @@ var fsync;
         return Vector4;
     }(CommonVector));
     fsync.Vector4 = Vector4;
+    fsync.Quat = Vector4;
     var Vector = /** @class */ (function () {
         function Vector() {
         }
@@ -2852,9 +2967,9 @@ var fsync;
                 };
                 PhysicsCircleCollider.prototype.createShape = function (mainBody) {
                     var shapePtInMainBody = this.calcShaptPtInMainBody(mainBody, this.offset);
-                    var cir = new b2.CircleShape(this.radius);
-                    //所有的图形顶点左右翻转
-                    cir.m_p.Set(shapePtInMainBody.x, shapePtInMainBody.y);
+                    var cir = new b2.CircleShape();
+                    // cir.m_p.Set(shapePtInMainBody.x, shapePtInMainBody.y)
+                    cir.Set(new b2.Vec2(shapePtInMainBody.x, shapePtInMainBody.y), this.radius);
                     return cir;
                 };
                 return PhysicsCircleCollider;
@@ -3281,44 +3396,6 @@ var fsync;
         })(b2data = box2d.b2data || (box2d.b2data = {}));
     })(box2d = fsync.box2d || (fsync.box2d = {}));
 })(fsync || (fsync = {}));
-var lang;
-(function (lang) {
-    var helper;
-    (function (helper) {
-        var ArrayHelper = /** @class */ (function () {
-            function ArrayHelper() {
-            }
-            ArrayHelper.max = function (ls, call) {
-                var maxValue = -Infinity;
-                var maxEle = ls[0];
-                for (var _i = 0, ls_1 = ls; _i < ls_1.length; _i++) {
-                    var e = ls_1[_i];
-                    var value = call(e);
-                    if (maxValue <= value) {
-                        maxValue = value;
-                        maxEle = e;
-                    }
-                }
-                return maxEle;
-            };
-            ArrayHelper.min = function (ls, call) {
-                var minValue = Infinity;
-                var minEle = ls[0];
-                for (var _i = 0, ls_2 = ls; _i < ls_2.length; _i++) {
-                    var e = ls_2[_i];
-                    var value = call(e);
-                    if (minValue >= value) {
-                        minValue = value;
-                        minEle = e;
-                    }
-                }
-                return minEle;
-            };
-            return ArrayHelper;
-        }());
-        helper.ArrayHelper = ArrayHelper;
-    })(helper = lang.helper || (lang.helper = {}));
-})(lang || (lang = {}));
 var fsync;
 (function (fsync) {
     var LongHelper = /** @class */ (function () {
@@ -3336,6 +3413,297 @@ var fsync;
     }());
     fsync.LongHelper = LongHelper;
 })(fsync || (fsync = {}));
+var lang;
+(function (lang) {
+    var helper;
+    (function (helper) {
+        var TArrayHelper = /** @class */ (function () {
+            function TArrayHelper() {
+            }
+            TArrayHelper.prototype.max = function (ls, call) {
+                var maxValue = -Infinity;
+                var maxEle = ls[0];
+                for (var _i = 0, ls_1 = ls; _i < ls_1.length; _i++) {
+                    var e = ls_1[_i];
+                    var value = call(e);
+                    if (maxValue <= value) {
+                        maxValue = value;
+                        maxEle = e;
+                    }
+                }
+                return maxEle;
+            };
+            TArrayHelper.prototype.min = function (ls, call) {
+                var minValue = Infinity;
+                var minEle = ls[0];
+                for (var _i = 0, ls_2 = ls; _i < ls_2.length; _i++) {
+                    var e = ls_2[_i];
+                    var value = call(e);
+                    if (minValue >= value) {
+                        minValue = value;
+                        minEle = e;
+                    }
+                }
+                return minEle;
+            };
+            TArrayHelper.prototype.remove = function (ls, e) {
+                var index = ls.indexOf(e);
+                if (index >= 0) {
+                    ls.splice(index, 1);
+                }
+            };
+            /**
+             * 求出两列中差异的部分
+             * @param ls1
+             * @param idGetter1
+             * @param ls2
+             * @param idGetter2
+             * @param call
+             */
+            TArrayHelper.prototype.foreachDifferentPairs = function (ls1, idGetter1, ls2, idGetter2, call) {
+                var ls1Map = lang.EmptyTable();
+                var ls2Map = lang.EmptyTable();
+                ls1.forEach(function (e) {
+                    var id = idGetter1(e);
+                    ls1Map[id] = e;
+                });
+                ls2.forEach(function (e) {
+                    var id = idGetter2(e);
+                    ls2Map[id] = e;
+                });
+                for (var id in ls1Map) {
+                    var e1 = ls1Map[id];
+                    var e2 = ls2Map[id];
+                    call(e1, e2);
+                }
+                for (var id in ls2Map) {
+                    var e1 = ls1Map[id];
+                    var e2 = ls2Map[id];
+                    if (!(id in ls1Map)) {
+                        call(e1, e2);
+                    }
+                }
+            };
+            TArrayHelper.prototype.sum = function (ls, call) {
+                if (!call) {
+                    var n = 0;
+                    for (var _i = 0, ls_3 = ls; _i < ls_3.length; _i++) {
+                        var m = ls_3[_i];
+                        n += this.autoParseNumber(m);
+                    }
+                    return n;
+                }
+                else {
+                    var n = 0;
+                    for (var _a = 0, ls_4 = ls; _a < ls_4.length; _a++) {
+                        var m = ls_4[_a];
+                        var ret = call(m);
+                        if (typeof (ret) == "number") {
+                            n += ret;
+                        }
+                    }
+                    return n;
+                }
+            };
+            TArrayHelper.prototype.autoParseNumber = function (m) {
+                if (typeof (m) == "number") {
+                    return m;
+                }
+                else if (typeof (m) == "string") {
+                    return parseFloat(m);
+                }
+                else {
+                    return m;
+                }
+            };
+            TArrayHelper.prototype.average = function (ls, call) {
+                if (ls.length == 0) {
+                    return 0;
+                }
+                if (!call) {
+                    var n = 0;
+                    for (var _i = 0, ls_5 = ls; _i < ls_5.length; _i++) {
+                        var m = ls_5[_i];
+                        n += this.autoParseNumber(m);
+                    }
+                    var ave = n / ls.length;
+                    return ave;
+                }
+                else {
+                    var count = 0;
+                    var n = 0;
+                    for (var _a = 0, ls_6 = ls; _a < ls_6.length; _a++) {
+                        var m = ls_6[_a];
+                        var ret = call(m);
+                        if (typeof (ret) == "number") {
+                            n += ret;
+                            count++;
+                        }
+                    }
+                    var ave = n / count;
+                    return ave;
+                }
+            };
+            return TArrayHelper;
+        }());
+        helper.TArrayHelper = TArrayHelper;
+        helper.ArrayHelper = new TArrayHelper();
+    })(helper = lang.helper || (lang.helper = {}));
+})(lang || (lang = {}));
+var lang;
+(function (lang) {
+    var helper;
+    (function (helper) {
+        var TMapArrayHelper = /** @class */ (function () {
+            function TMapArrayHelper() {
+            }
+            TMapArrayHelper.prototype.filter = function (m, call) {
+                var ls = [];
+                for (var key in m) {
+                    var v = m[key];
+                    if (call(v, key)) {
+                        ls.push(v);
+                    }
+                }
+                return ls;
+            };
+            return TMapArrayHelper;
+        }());
+        helper.TMapArrayHelper = TMapArrayHelper;
+        helper.MapArrayHelper = new TMapArrayHelper();
+    })(helper = lang.helper || (lang.helper = {}));
+})(lang || (lang = {}));
+var lang;
+(function (lang) {
+    lang.EmptyCall = function () { };
+    lang.EmptyTable = function () {
+        return Object.create(null);
+        // return {}
+    };
+    function Clean(container) {
+        if (container == null) {
+            return container;
+        }
+        if (container instanceof Array) {
+            container.length = 0;
+        }
+        else {
+            for (var _i = 0, _a = Object.keys(container); _i < _a.length; _i++) {
+                var key = _a[_i];
+                delete container[key];
+            }
+        }
+        return container;
+    }
+    lang.Clean = Clean;
+    function CleanTable(container) {
+        if (container == null) {
+            return lang.EmptyTable();
+        }
+        else {
+            return Clean(container);
+        }
+    }
+    lang.CleanTable = CleanTable;
+    function CleanArray(container) {
+        if (container == null) {
+            return [];
+        }
+        else {
+            return Clean(container);
+        }
+    }
+    lang.CleanArray = CleanArray;
+    var _copyDataDeep = function (source, target) {
+        for (var _i = 0, _a = Object.getOwnPropertyNames(source); _i < _a.length; _i++) {
+            var key = _a[_i];
+            // 清除溢出字段
+            if (target[key] == null) {
+                delete source[key];
+            }
+        }
+        for (var _b = 0, _c = Object.getOwnPropertyNames(target); _b < _c.length; _b++) {
+            var key = _c[_b];
+            var tvalue = target[key];
+            if (tvalue == null) {
+                source[key] = target[key];
+            }
+            else if (typeof (tvalue) == "object") {
+                var svalue = source[key];
+                if (typeof (svalue) != "object" || svalue == tvalue) {
+                    // 指向同一个对象或空，则重新创建新的
+                    svalue = {};
+                    source[key] = svalue;
+                }
+                _copyDataDeep(svalue, tvalue);
+            }
+            else {
+                if (source[key] != target[key]) {
+                    source[key] = target[key];
+                }
+            }
+        }
+    };
+    var ObjectUtils = /** @class */ (function () {
+        function ObjectUtils() {
+        }
+        /**
+         * 深度复制
+         * @param source
+         * @param target
+         */
+        ObjectUtils.copyDataDeep = function (source, target) {
+            if (target == null) {
+                return null;
+            }
+            else if (typeof (source) == "object" && typeof (target) == "object") {
+                _copyDataDeep(source, target);
+                return source;
+            }
+            else {
+                return target;
+            }
+        };
+        /**
+         * 浅克隆对象
+         * @param source
+         */
+        ObjectUtils.clone = function (source) {
+            var target = lang.EmptyTable();
+            for (var key in source) {
+                target[key] = source[key];
+            }
+            Object.setPrototypeOf(target, Object.getPrototypeOf(source));
+            return target;
+        };
+        ObjectUtils.values = function (source) {
+            if (Object.values) {
+                return Object.values(source);
+            }
+            var values = [];
+            for (var _i = 0, _a = Object.keys(source); _i < _a.length; _i++) {
+                var key = _a[_i];
+                values.push(source[key]);
+            }
+            return values;
+        };
+        return ObjectUtils;
+    }());
+    lang.ObjectUtils = ObjectUtils;
+})(lang || (lang = {}));
+/// <reference path="../lang/ArrayHelper.ts" />
+/// <reference path="../lang/MapHelper.ts" />
+/// <reference path="../lang/ObjectUtils.ts" />
+var fsync;
+(function (fsync) {
+    fsync.ArrayHelper = lang.helper.ArrayHelper;
+    fsync.MapArrayHelper = lang.helper.MapArrayHelper;
+    fsync.EmptyCall = lang.EmptyCall;
+    fsync.EmptyTable = lang.EmptyTable;
+    fsync.CleanTable = lang.CleanTable;
+    fsync.CleanArray = lang.CleanArray;
+    fsync.ObjectUtils = lang.ObjectUtils;
+})(fsync || (fsync = {}));
 var fsync;
 (function (fsync) {
     var BufferHelper = /** @class */ (function () {
@@ -3343,14 +3711,14 @@ var fsync;
         }
         BufferHelper.concatUint8Array = function (ls) {
             var len = 0;
-            for (var _i = 0, ls_3 = ls; _i < ls_3.length; _i++) {
-                var b = ls_3[_i];
+            for (var _i = 0, ls_7 = ls; _i < ls_7.length; _i++) {
+                var b = ls_7[_i];
                 len += b.length;
             }
             var m = new Uint8Array(len);
             var i = 0;
-            for (var _a = 0, ls_4 = ls; _a < ls_4.length; _a++) {
-                var b = ls_4[_a];
+            for (var _a = 0, ls_8 = ls; _a < ls_8.length; _a++) {
+                var b = ls_8[_a];
                 for (var j = 0; j < b.length; j++) {
                     m[i++] = b[j];
                 }
@@ -3834,62 +4202,6 @@ var fsync;
 })(fsync || (fsync = {}));
 var fsync;
 (function (fsync) {
-    fsync.EmptyCall = function () { };
-    fsync.EmptyTable = function () {
-        return Object.create(null);
-        // return {}
-    };
-    var _copyDataDeep = function (source, target) {
-        for (var _i = 0, _a = Object.getOwnPropertyNames(source); _i < _a.length; _i++) {
-            var key = _a[_i];
-            // 清除溢出字段
-            if (target[key] == null) {
-                delete source[key];
-            }
-        }
-        for (var _b = 0, _c = Object.getOwnPropertyNames(target); _b < _c.length; _b++) {
-            var key = _c[_b];
-            var tvalue = target[key];
-            if (tvalue == null) {
-                source[key] = target[key];
-            }
-            else if (typeof (tvalue) == "object") {
-                var svalue = source[key];
-                if (typeof (svalue) != "object" || svalue == tvalue) {
-                    // 指向同一个对象或空，则重新创建新的
-                    svalue = {};
-                    source[key] = svalue;
-                }
-                _copyDataDeep(svalue, tvalue);
-            }
-            else {
-                if (source[key] != target[key]) {
-                    source[key] = target[key];
-                }
-            }
-        }
-    };
-    var ObjectUtils = /** @class */ (function () {
-        function ObjectUtils() {
-        }
-        ObjectUtils.copyDataDeep = function (source, target) {
-            if (target == null) {
-                return null;
-            }
-            else if (typeof (source) == "object" && typeof (target) == "object") {
-                _copyDataDeep(source, target);
-                return source;
-            }
-            else {
-                return target;
-            }
-        };
-        return ObjectUtils;
-    }());
-    fsync.ObjectUtils = ObjectUtils;
-})(fsync || (fsync = {}));
-var fsync;
-(function (fsync) {
     /**
      * 反转 MyPromise
      * - 外部调用 success时相当于调用了 resolve
@@ -3930,7 +4242,8 @@ var slib;
             this._callbacks.push(callback);
         };
         SimpleEvent.prototype.off = function (callback) {
-            this._callbacks.splice(this._callbacks.indexOf(callback), 1);
+            // this._callbacks.remove(callback)
+            lang.helper.ArrayHelper.remove(this._callbacks, callback);
         };
         SimpleEvent.prototype.emit = function (value) {
             this._callbacks.concat().forEach(function (callback) {
@@ -3953,9 +4266,17 @@ var slib;
                 event.on(callback);
             }
         };
+        SEvent.prototype.once = function (key, callback) {
+            var _this = this;
+            var call = function (evt) {
+                _this.off(key, call);
+                callback(evt);
+            };
+            this.on(key, call);
+        };
         SEvent.prototype.off = function (key, callback) {
             if (callback == undefined) {
-                this._events[key] = undefined;
+                delete this._events[key];
             }
             else {
                 var event_1 = this._events[key];
@@ -3976,13 +4297,8 @@ var slib;
     }());
     slib.SEvent = SEvent;
 })(slib || (slib = {}));
-var fsync;
-(function (fsync) {
-    var eds;
-    (function (eds) {
-        eds.ArrayHelper = lang.helper.ArrayHelper;
-    })(eds = fsync.eds || (fsync.eds = {}));
-})(fsync || (fsync = {}));
+/// <reference path="../lang/ArrayHelper.ts" />
+/// <reference path="../lang/ObjectUtils.ts" />
 var fsync;
 (function (fsync) {
     var eds;
@@ -4104,57 +4420,6 @@ var fsync;
                 this.featureCacheMap = fsync.EmptyTable();
                 return this;
             };
-            DataContainer.prototype.presetDataFeature = function (data) {
-                var featureCache = this.featureCache;
-                var featureCacheMap = this.featureCacheMap;
-                // 更新默认featuer缓存
-                var cacheKey = data.oid;
-                if (this.featureCache[cacheKey] == null) {
-                    this.featureCache[cacheKey] = [];
-                }
-                this.featureCache[cacheKey].push(data);
-                if (this.featureCacheMap[cacheKey] == null) {
-                    this.featureCacheMap[cacheKey] = fsync.EmptyTable();
-                }
-                this.featureCacheMap[cacheKey][data.oid] = data;
-                for (var key in this.usingFeatures) {
-                    var feature = this.usingFeatures[key];
-                    var b = doFilter(feature, data);
-                    if (b) {
-                        var cacheKey_1 = feature.name;
-                        var ls = featureCache[cacheKey_1];
-                        var map = featureCacheMap[cacheKey_1];
-                        ls.push(data);
-                        map[data.oid] = data;
-                    }
-                }
-            };
-            DataContainer.prototype.cleanDataFeature = function (data) {
-                var featureCache = this.featureCache;
-                var featureCacheMap = this.featureCacheMap;
-                // 更新默认featuer缓存
-                var cacheKey = data.oid;
-                if (this.featureCache[cacheKey] == null) {
-                    var index = this.featureCache[cacheKey].indexOf(data);
-                    if (index >= 0) {
-                        this.featureCache[cacheKey].splice(index, 1);
-                    }
-                }
-                if (this.featureCacheMap[cacheKey] == null) {
-                    delete this.featureCacheMap[cacheKey][data.oid];
-                }
-                for (var key in this.usingFeatures) {
-                    var feature = this.usingFeatures[key];
-                    var cacheKey_2 = feature.name;
-                    var ls = featureCache[cacheKey_2];
-                    var map = featureCacheMap[cacheKey_2];
-                    var index = ls.indexOf(data);
-                    if (index >= 0) {
-                        ls.splice(index, 1);
-                    }
-                    delete map[data.oid];
-                }
-            };
             /**
              * 构建引用依赖表
              */
@@ -4222,12 +4487,46 @@ var fsync;
                 if (dataMap[key]) {
                     var data_1 = dataMap[key];
                     this.cleanDataFeature(data_1);
-                    var index = this.allDatas.indexOf(data_1);
-                    if (index !== -1) {
-                        this.allDatas.splice(index, 1);
-                    }
+                    // this.allDatas.remove(data)
+                    fsync.ArrayHelper.remove(this.allDatas, data_1);
                     delete dataMap[key];
                     delete data_1["dataManager"];
+                }
+            };
+            /**
+             * 更新该数据的特征组缓存
+             * @param data
+             */
+            DataContainer.prototype.presetDataFeature = function (data) {
+                var featureCache = this.featureCache;
+                var featureCacheMap = this.featureCacheMap;
+                for (var key in this.usingFeatures) {
+                    var feature = this.usingFeatures[key];
+                    var b = doFilter(feature, data);
+                    if (b) {
+                        var cacheKey = feature.name;
+                        var ls = featureCache[cacheKey];
+                        var map = featureCacheMap[cacheKey];
+                        ls.push(data);
+                        map[data.oid] = data;
+                    }
+                }
+            };
+            /**
+             * 清除该数据的特征组缓存
+             * @param data
+             */
+            DataContainer.prototype.cleanDataFeature = function (data) {
+                var featureCache = this.featureCache;
+                var featureCacheMap = this.featureCacheMap;
+                for (var key in this.usingFeatures) {
+                    var feature = this.usingFeatures[key];
+                    var cacheKey = feature.name;
+                    var ls = featureCache[cacheKey];
+                    var map = featureCacheMap[cacheKey];
+                    // ls.remove(data)
+                    fsync.ArrayHelper.remove(ls, data);
+                    delete map[data.oid];
                 }
             };
             /**
@@ -4268,6 +4567,10 @@ var fsync;
                     _this._buildFeatureGroup(feature, feature.name);
                 });
             };
+            /**
+             * 添加需要持续缓存的特征
+             * @param feature
+             */
             DataContainer.prototype.addFeature = function (feature) {
                 this.usingFeatures[feature.name] = feature;
             };
@@ -4284,7 +4587,13 @@ var fsync;
                         map[data.oid] = data;
                     }
                 });
+                return ls;
             };
+            /**
+             * 构建特征组
+             * @param feature
+             * @param key
+             */
             DataContainer.prototype.buildFeatureGroup = function (feature, key) {
                 var featureCache = this.featureCache;
                 var featureCacheMap = this.featureCacheMap;
@@ -4296,15 +4605,30 @@ var fsync;
                     featureCache[key] = [];
                 }
                 featureCacheMap[key] = fsync.EmptyTable();
-                this._buildFeatureGroup(feature, key);
+                var group = this._buildFeatureGroup(feature, key);
+                return group;
             };
+            /**
+             * 添加特征组
+             * @param cacheKey
+             * @param validGroup
+             * @param validGroupMap
+             */
             DataContainer.prototype.addFeatureGroup = function (cacheKey, validGroup, validGroupMap) {
                 this.featureCache[cacheKey] = validGroup;
                 this.featureCacheMap[cacheKey] = validGroupMap;
             };
+            /**
+             * 是否存在特征组
+             * @param key
+             */
             DataContainer.prototype.existFeatureGroup = function (key) {
                 return !!this.featureCache[key];
             };
+            /**
+             * 获取特征组
+             * @param name
+             */
             DataContainer.prototype.getFeatureGroupByName = function (name) {
                 var group = this.featureCache[name];
                 return group;
@@ -4314,7 +4638,15 @@ var fsync;
              * @param cls
              */
             DataContainer.prototype.getTypeFeatureGroup = function (cls) {
-                return this.getFeatureGroupByName(cls.name);
+                var group = this.getFeatureGroupByName(cls.name);
+                if (group == null) {
+                    var typeFeature = {
+                        name: cls.name,
+                        filter: function (data) { return data instanceof cls; },
+                    };
+                    group = this.buildFeatureGroup(typeFeature);
+                }
+                return group;
             };
             /**
              * 获取特征组
@@ -4378,11 +4710,15 @@ var fsync;
             DataManager.prototype.getDataById = function (oid) {
                 return this.dataContainer.getDataById(oid);
             };
+            //#region 用于合并
             DataManager.prototype.overwriteData = function (ecsdata, dataManager) {
                 var data = this.getDataById(ecsdata.oid);
                 eds.MergeECSData(ecsdata, data, this);
             };
             DataManager.prototype.removeData = function (ecsdata) {
+                if (ecsdata.clear) {
+                    ecsdata.clear();
+                }
                 this.deattachData(ecsdata);
             };
             DataManager.prototype.cloneData = function (ecsdata, dataManager) {
@@ -4390,6 +4726,7 @@ var fsync;
                 this.attachData(copyed);
                 return copyed;
             };
+            //#endregion
             /**
              * 创建查询器
              */
@@ -4444,7 +4781,7 @@ var fsync;
              * @param cls
              */
             DataManager.prototype.getTypeFeatureGroup = function (cls) {
-                return this.dataContainer.getTypeFeatureGroup(cls) || [];
+                return this.dataContainer.getTypeFeatureGroup(cls);
             };
             /**
              * 按feature名称取
@@ -4488,7 +4825,7 @@ var fsync;
                     }
                     return;
                 }
-                var minFeature = eds.ArrayHelper.min(features, function (feature) {
+                var minFeature = fsync.ArrayHelper.min(features, function (feature) {
                     return _this.getFeatureGroup(feature).length;
                 });
                 if (minFeature) {
@@ -4496,6 +4833,7 @@ var fsync;
                     var maps = features.map(function (feature) {
                         return _this.getFeatureGroupMap(feature);
                     });
+                    // maps.removeAt(index)
                     maps.splice(index, 1);
                     if (cacheKey) {
                         var validGroupMap = fsync.EmptyTable();
@@ -4684,54 +5022,79 @@ var fsync;
             DefindECSDataMetaValue(data, dataManager);
         }
         eds.DecoECSDataClass = DecoECSDataClass;
+        /**
+         * 合并 ecs 数据: ecsdata -> copy
+         * @param ecsdata
+         * @param copy
+         * @param dataManager
+         */
         function MergeECSData(ecsdata, copy, dataManager) {
-            // 复制属性值
-            for (var key in ecsdata) {
-                var data = ecsdata[key];
-                if (typeof (data) == "object" && data != null) {
-                    if (data.clone != undefined) {
-                        copy[key] = data.clone();
-                    }
-                    else {
-                        if (data instanceof Array) {
-                            // 仅简单支持基础类型数组复制
-                            copy[key] = __spreadArrays(data);
+            if (copy.mergeFrom) {
+                // 如果支持 自带 merge, 那么优先用自带merge
+                copy.mergeFrom(ecsdata);
+            }
+            else {
+                // 复制属性值
+                for (var key in ecsdata) {
+                    var data = ecsdata[key];
+                    if (typeof (data) == "object" && data != null) {
+                        if (data.mergeFrom
+                            && (!!copy[key])
+                            && Object.getPrototypeOf(copy[key]) == Object.getPrototypeOf(data)) {
+                            copy[key].mergeFrom(data);
+                        }
+                        else if (data.clone != undefined) {
+                            var copyAttrValue = copy[key] = data.clone();
+                            DefindECSDataMetaValue(copyAttrValue, dataManager);
                         }
                         else {
-                            throw new Error("unsupport data type to clone");
+                            if (data instanceof Array) {
+                                // 仅简单支持基础类型数组复制
+                                copy[key] = __spreadArrays(data);
+                            }
+                            else {
+                                throw new Error("unsupport data type to clone");
+                            }
                         }
                     }
-                }
-                else {
-                    copy[key] = data;
-                }
-            }
-            if (copy.oid == null) {
-                for (var _i = 0, _a = Object.getOwnPropertyNames(ecsdata); _i < _a.length; _i++) {
-                    var key = _a[_i];
-                    if (!key.startsWith("__") && key != "dataManager") {
-                        var prop = Object.getOwnPropertyDescriptor(ecsdata, key);
-                        Object.defineProperty(copy, key, prop);
+                    else {
+                        copy[key] = data;
                     }
                 }
-                delete copy["dataManager"];
-                Object.defineProperty(copy, 'dataManager', {
-                    value: dataManager,
-                    writable: false,
-                    enumerable: false,
-                });
+                if (copy.oid == null) {
+                    for (var _i = 0, _a = Object.getOwnPropertyNames(ecsdata); _i < _a.length; _i++) {
+                        var key = _a[_i];
+                        if (!key.startsWith("__") && key != "dataManager") {
+                            var prop = Object.getOwnPropertyDescriptor(ecsdata, key);
+                            Object.defineProperty(copy, key, prop);
+                        }
+                    }
+                    delete copy["dataManager"];
+                    Object.defineProperty(copy, 'dataManager', {
+                        value: dataManager,
+                        writable: false,
+                        enumerable: false,
+                    });
+                }
+                // 相同继承
+                Object.setPrototypeOf(copy, Object.getPrototypeOf(ecsdata));
             }
-            // 相同继承
-            Object.setPrototypeOf(copy, Object.getPrototypeOf(ecsdata));
         }
         eds.MergeECSData = MergeECSData;
         function CloneECSData(ecsdata, dataManager) {
-            var copy = {
-            // oid: ecsdata.oid,
-            // otype: ecsdata.otype,
-            };
-            MergeECSData(ecsdata, copy, dataManager);
-            return copy;
+            if (ecsdata.clone) {
+                // 如果支持 自带 clone, 那么优先用自带clone
+                var copy = ecsdata.clone();
+                return copy;
+            }
+            else {
+                var copy = {
+                // oid: ecsdata.oid,
+                // otype: ecsdata.otype,
+                };
+                MergeECSData(ecsdata, copy, dataManager);
+                return copy;
+            }
         }
         eds.CloneECSData = CloneECSData;
     })(eds = fsync.eds || (fsync.eds = {}));
@@ -5539,6 +5902,7 @@ var fsync;
         };
         FrameSyncRandom.prototype.setRandSeed = function (seed) {
             this.seed = seed;
+            this.inc = seed;
         };
         // return [0~1)
         FrameSyncRandom.prototype.rand = function () {
@@ -5607,7 +5971,10 @@ var fsync;
             this._commondBuffer = new ECSCommandBuffer().init();
             this._commondBufferAfterUpdate = new ECSCommandBuffer().init();
             this.ctype = this["constructor"].name;
+            this.onInit();
             return this;
+        };
+        SystemBase.prototype.onInit = function () {
         };
         SystemBase.prototype.instantiate = function (prefab) {
             return this.world.prefabEnv.instantiate(prefab);
@@ -5741,6 +6108,9 @@ var fsync;
         UpdaterGroupManager.prototype.enableGroup = function (key) {
             delete this._disabledGroup[key];
         };
+        UpdaterGroupManager.prototype.isGroupEnabled = function (key) {
+            return !this._disabledGroup[key];
+        };
         UpdaterGroupManager.prototype.foreachByOrder = function (call) {
             var updatedMap = fsync.EmptyTable();
             var updaters = this.updaters;
@@ -5837,20 +6207,52 @@ var fsync;
 (function (fsync) {
     var NetDelay = /** @class */ (function () {
         function NetDelay() {
+            /**
+             * 延迟总值
+             */
             this.netDelayAcc = 0;
+            /**
+             * 方差总值
+             */
+            this.netDelayDeviationAcc = 0;
             this.netDelayQueue = [];
-            this.maxSampleCount = 10;
+            this.maxSampleCount = 15;
         }
+        /**
+         * 输入网络延迟样本, 单位 秒
+         * @param delay
+         */
         NetDelay.prototype.putDelay = function (delay) {
-            this.netDelayQueue.push(delay);
             this.netDelayAcc += delay;
+            this.netDelayDeviationAcc += Math.abs(delay - this.netDelayQueue[0] || delay);
+            this.netDelayQueue.unshift(delay);
             if (this.netDelayQueue.length > this.maxSampleCount) {
-                var d = this.netDelayQueue.shift();
+                var d = this.netDelayQueue.pop();
                 this.netDelayAcc -= d;
+                // 不严格的减法, 但是数值可以保持平衡
+                this.netDelayDeviationAcc -= Math.abs(d - this.netDelayQueue[this.netDelayQueue.length - 1] || d);
+                if (this.netDelayDeviationAcc < 0) {
+                    console.log("klwefjlkj");
+                }
             }
         };
+        /**
+         * 平均网络延迟, 单位 秒
+         */
         NetDelay.prototype.getDelayAv = function () {
+            if (this.netDelayQueue.length == 0) {
+                return 0;
+            }
             return this.netDelayAcc / this.netDelayQueue.length;
+        };
+        /**
+         * 网络延迟标准差, 单位 秒
+         */
+        NetDelay.prototype.getDelayStdDeviationAv = function () {
+            if (this.netDelayQueue.length == 0) {
+                return 0;
+            }
+            return this.netDelayDeviationAcc / this.netDelayQueue.length;
         };
         return NetDelay;
     }());
@@ -7385,10 +7787,18 @@ var fsync;
          */
         var SubWorld = /** @class */ (function () {
             function SubWorld() {
+                this.name = "unkown_SubWorld";
             }
             Object.defineProperty(SubWorld.prototype, "entityManager", {
                 get: function () {
                     return this.world.entityManager;
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Object.defineProperty(SubWorld.prototype, "dataManager", {
+                get: function () {
+                    return this.world.dataManager;
                 },
                 enumerable: false,
                 configurable: true
@@ -7404,9 +7814,10 @@ var fsync;
              * @param groupName
              * @param tsys
              */
-            SubWorld.prototype.addSystem = function (groupName, tsys) {
-                var sys = new tsys().init();
+            SubWorld.prototype.addSystem = function (tsys, groupName) {
+                var sys = new tsys();
                 sys.world = this.world;
+                sys.init();
                 this.updater.getUpdaterGroup(groupName).addUpdater(sys);
                 return sys;
             };
@@ -7425,7 +7836,7 @@ var fsync;
                 return this;
             };
             SubWorld.prototype.update = function () {
-                this.timer.updateTime(Date.now());
+                // this.timer.updateTime(Date.now())
             };
             return SubWorld;
         }());
@@ -7437,10 +7848,16 @@ var fsync;
     var sortCmds = function (cmds) {
         cmds.sort(function (a, b) { return a.cmdIndex - b.cmdIndex; });
     };
+    /**
+     * 针对单个角色的命令缓冲管理
+     */
     var SinglePortCmdBuffer = /** @class */ (function () {
         function SinglePortCmdBuffer() {
             this.name = "unknown";
             this.latestNetCmd = null;
+            this.latestOrderedCmdIndex = 0;
+            this.latestLocalCmd = null;
+            this.needSync = false;
             /**
              * 处理网络波动造成的挤帧，避免因此造成的跳帧
              * - 没有特殊情况，每帧都只发送一个帧命令包
@@ -7469,15 +7886,25 @@ var fsync;
         SinglePortCmdBuffer.prototype.getLatestNetCmd = function () {
             return this.latestNetCmd;
         };
-        SinglePortCmdBuffer.prototype.getLatestLocalCmd = function () {
-            var latestLocalCmd = null;
-            for (var _i = 0, _a = this.cmds; _i < _a.length; _i++) {
-                var cmd = _a[_i];
-                if (latestLocalCmd == null || cmd.cmdIndex > latestLocalCmd.cmdIndex) {
-                    latestLocalCmd = cmd;
+        /**
+         * 获取连续cmdIndex下,最新的net cmd
+         */
+        SinglePortCmdBuffer.prototype.getOrderedNetCmd = function () {
+            sortCmds(this.cmds);
+            var cmdIndex = this.latestOrderedCmdIndex;
+            this.cmds.forEach(function (cmd) {
+                if (cmd.cmdIndex == cmdIndex + 1) {
+                    cmdIndex += 1;
                 }
-            }
-            return latestLocalCmd;
+            });
+            this.latestOrderedCmdIndex = cmdIndex;
+            return this.cmds.find(function (cmd) { return cmd.cmdIndex == cmdIndex; });
+        };
+        /**
+         * 按cmdIndex排序, 获取最新的本地命令
+         */
+        SinglePortCmdBuffer.prototype.getLatestLocalCmd = function () {
+            return this.latestLocalCmd;
         };
         SinglePortCmdBuffer.prototype.putCmd = function (cmd) {
             if (cmd.route == "local") {
@@ -7486,6 +7913,7 @@ var fsync;
             else {
                 this.cmdReorderQueue.put(cmd);
                 this.flushNetCmds();
+                this.adjustSurgedCmds(cmd);
             }
         };
         // 重新整理接收到的网络命令顺序
@@ -7513,6 +7941,7 @@ var fsync;
                 else if (c.route == "local") {
                     // 优先使用net替换local
                     if (cmd.route == "net") {
+                        this.needSync = true;
                         // console.log("replace", c.cmdIndex, '->', cmd.cmdIndex)
                         var index = this.cmds.indexOf(c);
                         this.cmds[index] = cmd;
@@ -7520,9 +7949,62 @@ var fsync;
                 }
             }
             else {
+                if (cmd.route == "net") {
+                    this.needSync = true;
+                }
                 // 没有net，则暂时使用local
                 this.cmds.push(cmd);
             }
+        };
+        SinglePortCmdBuffer.prototype.adjustSurgedCmds = function (triggerCmd) {
+            var surLastCmd = this.surLastCmd;
+            //#region 
+            // 辅助前置条件, 仅帮助优化性能
+            if (surLastCmd != null
+                && triggerCmd != null
+                && (surLastCmd.cmdIndex + 1 != triggerCmd.cmdIndex)) {
+                return;
+            }
+            //#endregion
+            var cmds = this.cmds.filter(function (cmd) { return cmd.route == "net"; });
+            if (cmds.length > 0) {
+                if (surLastCmd == null) {
+                    surLastCmd = cmds[0];
+                    cmds = cmds.slice(1);
+                }
+                cmds.forEach(function (cmd, index) {
+                    if (surLastCmd.cmdIndex + 1 == cmd.cmdIndex) {
+                        var localDiff = cmd.createFrameCount - surLastCmd.createFrameCount;
+                        var netDiff = cmd.frameCount - surLastCmd.frameCount;
+                        var diff = netDiff - localDiff;
+                        if (0 < diff
+                        // && diff < 5
+                        ) {
+                            if (!cmd.isAdjustedForSurge) {
+                                cmd.isAdjustedForSurge = true;
+                                cmd.netFrameCount = cmd.frameCount;
+                                // let predictFrameCount = surLastCmd.frameCount + localDiff
+                                var maxDiff = 3;
+                                if (diff > 5) {
+                                    maxDiff = 2;
+                                }
+                                var predictFrameCount = cmd.frameCount - Math.min(diff, maxDiff);
+                                if (false) {
+                                    console.log("adjustSurgedCmds:(" + surLastCmd.cmdIndex + "," + surLastCmd.createFrameCount + "," + surLastCmd.frameCount + ")"
+                                        + (",(" + cmd.cmdIndex + "," + cmd.createFrameCount + "," + cmd.frameCount + ")")
+                                        + ("|" + cmd.frameCount + " -> " + predictFrameCount));
+                                }
+                                cmd.frameCount = predictFrameCount;
+                                if (cmd.frameCount < 0) {
+                                    console.error("lkjwefklj");
+                                }
+                            }
+                        }
+                        surLastCmd = cmd;
+                    }
+                });
+            }
+            this.surLastCmd = surLastCmd;
         };
         SinglePortCmdBuffer.prototype.popFrameCmds = function (frameCount, pops) {
             sortCmds(this.cmds);
@@ -7531,7 +8013,7 @@ var fsync;
             var curCmdIndex = this.curCmdIndex;
             for (var _i = 0, _a = this.cmds; _i < _a.length; _i++) {
                 var cmd = _a[_i];
-                if (outdateCmdIndex < cmd.cmdIndex && cmd.frameCount <= frameCount) {
+                if (curCmdIndex + 1 == cmd.cmdIndex && cmd.frameCount <= frameCount) {
                     this.processFrameCmdsSurge(cmd);
                     pops.push(cmd);
                     if (curCmdIndex != cmd.cmdIndex - 1) {
@@ -7562,7 +8044,7 @@ var fsync;
                         }
                         if (isSurge) {
                             cmd.isSurge = true;
-                            console.warn("marksourge:", this.name, this.roleId, cmd.cmdIndex, "for", frameCount, ">=", cmd.frameCount);
+                            console.warn("marksurge:", this.name, this.roleId, cmd.cmdIndex, "for", frameCount, ">=", cmd.frameCount);
                         }
                     }
                     else {
@@ -7580,38 +8062,38 @@ var fsync;
         SinglePortCmdBuffer.prototype.cleanOutdateCmds = function () {
             var cmds = this.cmds;
             sortCmds(cmds);
-            var outdateIndex = this.curOutdateCmdIndex + 1;
+            var outdateIndex = this.curOutdateCmdIndex;
             var delIndex = 0;
             for (var _i = 0, cmds_1 = cmds; _i < cmds_1.length; _i++) {
                 var cmd = cmds_1[_i];
-                if (cmd.cmdIndex <= outdateIndex && cmd.frameCount <= this.curFrameCount && cmd.route == "net") {
+                if (cmd.cmdIndex == outdateIndex + 1 && cmd.frameCount <= this.curFrameCount && cmd.route == "net") {
                     // delete
                     delIndex++;
                     outdateIndex++;
                 }
             }
             this.curOutdateCmdIndex = outdateIndex;
-            this.cmds = cmds.slice(delIndex);
+            // this.cmds = cmds.slice(delIndex)
+            this.cmds = cmds.filter(function (c) { return c.cmdIndex >= outdateIndex - 8; });
         };
-        /**
-         * 清理过期的指令
-         */
-        SinglePortCmdBuffer.prototype.cleanOutdateLocalCmdsForce = function () {
-            var cmds = this.cmds;
-            sortCmds(cmds);
-            var outdateIndex = this.curOutdateCmdIndex + 1;
-            var delIndex = 0;
-            for (var _i = 0, cmds_2 = cmds; _i < cmds_2.length; _i++) {
-                var cmd = cmds_2[_i];
-                if (cmd.cmdIndex <= outdateIndex && cmd.frameCount <= this.curFrameCount) {
-                    // delete
-                    delIndex++;
-                    outdateIndex++;
-                }
-            }
-            this.curOutdateCmdIndex = outdateIndex - 1;
-            this.cmds = cmds.slice(delIndex - 12);
-        };
+        // /**
+        //  * 清理过期的指令
+        //  */
+        // cleanOutdateLocalCmdsForce() {
+        // 	let cmds = this.cmds
+        // 	sortCmds(cmds)
+        // 	let outdateIndex = this.curOutdateCmdIndex + 1
+        // 	let delIndex = 0
+        // 	for (let cmd of cmds) {
+        // 		if (cmd.cmdIndex <= outdateIndex && cmd.frameCount <= this.curFrameCount) {
+        // 			// delete
+        // 			delIndex++
+        // 			outdateIndex++
+        // 		}
+        // 	}
+        // 	this.curOutdateCmdIndex = outdateIndex - 1
+        // 	this.cmds = cmds.slice(delIndex - 12)
+        // }
         SinglePortCmdBuffer.prototype.mergeFrom = function (cmdBuffer) {
             cmdBuffer.flushNetCmds();
             this.flushNetCmds();
@@ -7625,11 +8107,18 @@ var fsync;
             for (var i = sCmds.length - 1; i > -1; i--) {
                 var cmd = sCmds[i];
                 if (!cmdIdMap[cmd.cmdId]) {
-                    // 直接插入可能会导致数据共享的bug，所以后续不能修改cmd内的数据
-                    tCmds.unshift(cmd);
+                    // 深度克隆, 避免共享数据bug
+                    tCmds.unshift(JSON.parse(JSON.stringify(cmd)));
                 }
             }
             this.syncLocalCmd();
+            if (cmdBuffer.surLastCmd == null) {
+                this.surLastCmd = null;
+            }
+            else {
+                this.surLastCmd = this.cmds.find(function (cmd) { return cmd.cmdIndex == cmdBuffer.surLastCmd.cmdIndex; });
+            }
+            this.adjustSurgedCmds(null);
             this.curCmdIndex = cmdBuffer.curCmdIndex;
             this.curFrameCount = cmdBuffer.curFrameCount;
             this.curOutdateCmdIndex = cmdBuffer.curOutdateCmdIndex;
@@ -7655,14 +8144,31 @@ var fsync;
         return SinglePortCmdBuffer;
     }());
     fsync.SinglePortCmdBuffer = SinglePortCmdBuffer;
+    /**
+     * 命令缓冲
+     * - 对收到的网络命令和本地命令执行合并
+     * - 同时对收到的网络命令执行排序合帧, 应对丢帧/补帧等情况
+     */
     var InputCmdBuffer = /** @class */ (function () {
         function InputCmdBuffer() {
+            this.orderid = ++InputCmdBuffer.orderid;
+            // constructor() {
+            // 	console.error("lkwjeflk")
+            // }
             this.route = "net";
             this.cmdBuffers = fsync.EmptyTable();
             this.latestLocalCmd = null;
             this.latestUserCmd = null;
             this.latestNetCmd = null;
+            /**
+             * 标记是否有同步需求
+             */
             this.needSync = false;
+            /**
+             * 标记是否需要立即同步
+             */
+            this.needSyncRightNow = false;
+            this.surgeTimes = 0;
         }
         InputCmdBuffer.prototype.getLatestLocalCmd = function () {
             return this.latestLocalCmd;
@@ -7682,6 +8188,20 @@ var fsync;
             }
             return cmdBuffer;
         };
+        // protected netCmds: IGameInputCmd[] = []
+        // /**
+        //  * 将网络指令存入缓存, 等待下一帧
+        //  * @param cmd 
+        //  */
+        // putNetCmd(cmd: IGameInputCmd) {
+        // 	this.netCmds.push(cmd)
+        // }
+        // update() {
+        // 	this.netCmds.forEach(cmd => {
+        // 		this.putCmd(cmd)
+        // 	})
+        // 	this.netCmds.length = 0
+        // }
         InputCmdBuffer.prototype.putCmd = function (cmd) {
             if (cmd.cmdType != "Pass") {
                 if (this.latestUserCmd == null || this.latestUserCmd.cmdIndex < cmd.cmdIndex) {
@@ -7701,8 +8221,18 @@ var fsync;
             if (cmd.cmdType == "Pass") {
                 return;
             }
+            // if (this.name == "predict") {
+            // 	// if (cmd.route == "net") {
+            // 	console.log("receivecmd:", cmd.route, cmd.cmdIndex, cmd)
+            // 	// }
+            // }
             var cmdBuffer = this.getCmdBuffer(cmd.roleId);
+            cmdBuffer.needSync = false;
             cmdBuffer.putCmd(cmd);
+            if (cmdBuffer.needSync) {
+                cmdBuffer.needSync = false;
+                this.needSync = true;
+            }
         };
         InputCmdBuffer.prototype.popFrameCmds = function (frameCount) {
             var pops = [];
@@ -7727,13 +8257,20 @@ var fsync;
                 }
                 return n;
             });
-            for (var _b = 0, pops_1 = pops; _b < pops_1.length; _b++) {
-                var cmd = pops_1[_b];
-                if (cmd.route == "local" && cmd.needSync) {
-                    this.needSync = true;
-                    break;
-                }
-            }
+            // this.needSync = false
+            // for (let cmd of pops) {
+            // 	if (cmd.route == "local" && cmd.needSync) {
+            // 		this.needSync = true
+            // 		break
+            // 	}
+            // }
+            // if (this.name == "predict") {
+            // 	pops.forEach(cmd => {
+            // 		// if (cmd.route == "net") {
+            // 		console.log("popcmd:", cmd.route, cmd.cmdIndex, cmd)
+            // 		// }
+            // 	})
+            // }
             return pops;
         };
         InputCmdBuffer.prototype.mergeFrom = function (cmdBuffer) {
@@ -7749,13 +8286,23 @@ var fsync;
                 cmdBuffer.syncLocalCmd();
             }
         };
-        InputCmdBuffer.prototype.clearOutdateCmdsForce = function () {
-            var cmdBuffers = this.cmdBuffers;
-            for (var roleId in cmdBuffers) {
-                var tCmdBuffer = cmdBuffers[roleId];
-                tCmdBuffer.cleanOutdateLocalCmdsForce();
-            }
+        // clearOutdateCmdsForce() {
+        // 	let cmdBuffers = this.cmdBuffers
+        // 	for (let roleId in cmdBuffers) {
+        // 		let tCmdBuffer = cmdBuffers[roleId]
+        // 		tCmdBuffer.cleanOutdateLocalCmdsForce()
+        // 	}
+        // }
+        /**
+         * 为了在udp模式下, 通过cmdIndex 确保前一帧数据都已经全部接收
+         */
+        InputCmdBuffer.prototype.getOrderedNetCmd = function () {
+            var cmdBuffers = fsync.ObjectUtils.values(this.cmdBuffers);
+            var cmds = cmdBuffers.map(function (buf) { return buf.getOrderedNetCmd(); }).filter(function (buf) { return !!buf; });
+            var minCmd = fsync.ArrayHelper.min(cmds, function (cmd) { return cmd.frameCount; });
+            return minCmd;
         };
+        InputCmdBuffer.orderid = 0;
         return InputCmdBuffer;
     }());
     fsync.InputCmdBuffer = InputCmdBuffer;
@@ -7870,6 +8417,7 @@ var fsync;
         NetworkCmdTranslator.prototype.translate = function (message) {
             var sdata = this.textDecorder.decode(message.msgBytes);
             var data = JSON.parse(sdata);
+            // console.log(`received net cmd: ${JSON.stringify(data)}`)
             data.route = "net";
             data.frameCount = fsync.LongHelper.toNumber(message.syncInfo.serverFrameCount);
             data.receivedTime = Date.now();
@@ -7893,7 +8441,7 @@ var kitten;
         var Vector3 = fsync.Vector3;
         var UserInput = fsync.UserInput;
         var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
+        var BLRect = fsync.BLRect;
         /**
          * 环状摇杆
          */
@@ -8109,7 +8657,7 @@ var kitten;
                             continue;
                         }
                         var pos = Vector3.fromNumArray([t.clientX, t.clientY]);
-                        if (Rect.containPoint(this.getTouchRange(), pos)) {
+                        if (BLRect.containPoint(this.getTouchRange(), pos)) {
                             this.sharedState.multiTouchMap[t.identifier] = this.identity;
                             this.multiTouchMap[t.identifier] = this.identity;
                             this.ctrlStatusRaw.pressed = true;
@@ -8163,7 +8711,6 @@ var kitten;
         var Vector3 = fsync.Vector3;
         var UserInput = fsync.UserInput;
         var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 基础控制器视图
          */
@@ -8191,10 +8738,6 @@ var kitten;
 (function (kitten) {
     var gamepad;
     (function (gamepad) {
-        var Vector3 = fsync.Vector3;
-        var UserInput = fsync.UserInput;
-        var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 自动重定位的摇杆
          */
@@ -8242,10 +8785,6 @@ var kitten;
 (function (kitten) {
     var gamepad;
     (function (gamepad) {
-        var Vector3 = fsync.Vector3;
-        var UserInput = fsync.UserInput;
-        var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 主技能摇杆
          */
@@ -8302,7 +8841,6 @@ var kitten;
         var Vector3 = fsync.Vector3;
         var UserInput = fsync.UserInput;
         var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 移动摇杆
          */
@@ -8399,8 +8937,6 @@ var kitten;
     (function (gamepad) {
         var Vector3 = fsync.Vector3;
         var UserInput = fsync.UserInput;
-        var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 虚拟游戏手柄
          * - 虚拟设备
@@ -8409,6 +8945,19 @@ var kitten;
             function NormalGamepad() {
                 this.enable = true;
             }
+            Object.defineProperty(NormalGamepad.prototype, "inputEnabled", {
+                /**
+                 * 控制输入是否可用
+                 */
+                get: function () {
+                    return this.enable;
+                },
+                set: function (value) {
+                    this.enable = value;
+                },
+                enumerable: false,
+                configurable: true
+            });
             Object.defineProperty(NormalGamepad.prototype, "leftStick", {
                 /**
                  * 左手控制器
@@ -8561,8 +9110,6 @@ var kitten;
     (function (gamepad) {
         var Vector3 = fsync.Vector3;
         var UserInput = fsync.UserInput;
-        var Vector = fsync.Vector;
-        var Rect = fsync.Rect;
         /**
          * 前一次摇杆状态
          */
@@ -9283,6 +9830,35 @@ var kitten;
                 }
                 return cmd;
             };
+            /**
+             * 创建一个空指令, 提示一帧结束
+             */
+            RPGPlayerCmdTranslator.prototype.getNopCmd = function () {
+                var cmd = {
+                    /**
+                     * 命令类型
+                     */
+                    cmdType: "RoleCmd",
+                    cmdId: uidTool.genTypedId("icmd_" + this.roleData.roleId),
+                    /**
+                     * 创建顺序，保证命令执行顺序
+                     */
+                    cmdIndex: this.curCmdIndex++,
+                    /**
+                     * 该命令是否需要触发同步
+                     * - 默认false
+                     */
+                    needSync: true,
+                    // 来源
+                    route: "local",
+                    // 输入端id，通常可使用roleId代替
+                    roleId: this.roleData.roleId,
+                    // 创建时间（发送时间）
+                    createTime: Date.now(),
+                    skills: [],
+                };
+                return cmd;
+            };
             return RPGPlayerCmdTranslator;
         }());
         rpg.RPGPlayerCmdTranslator = RPGPlayerCmdTranslator;
@@ -9295,7 +9871,7 @@ var kitten;
         var RPGRoleDataBase = /** @class */ (function () {
             function RPGRoleDataBase() {
                 this.userId = 0;
-                this.roleId = 0;
+                this.roleId = "";
                 this.roomId = 0;
                 this.level = 0;
                 this.battleCount = 0;
@@ -9572,6 +10148,172 @@ var kitten;
         uievent.uiEventHandler = new UIEventHandler();
     })(uievent = kitten.uievent || (kitten.uievent = {}));
 })(kitten || (kitten = {}));
+var lang;
+(function (lang) {
+    var libs;
+    (function (libs) {
+        var Log = /** @class */ (function () {
+            function Log(x) {
+                if (x === void 0) { x = {}; }
+                this.setLogParams(x);
+            }
+            Object.defineProperty(Log, "enablePlainLog", {
+                get: function () {
+                    return Log._enablePlainLog;
+                },
+                set: function (value) {
+                    Log._enablePlainLog = value;
+                    if (value) {
+                        var logOld_1 = console.log;
+                        var warnOld_1 = console.warn;
+                        var errorOld_1 = console.error;
+                        console['logOld'] = console['logOld'] || logOld_1;
+                        console['warnOld'] = console['warnOld'] || warnOld_1;
+                        console['errorOld'] = console['errorOld'] || errorOld_1;
+                        console.log = function () {
+                            var args = [];
+                            for (var _i = 0; _i < arguments.length; _i++) {
+                                args[_i] = arguments[_i];
+                            }
+                            var plainTexts = Log.toPlainLog(args);
+                            logOld_1.apply(console, plainTexts);
+                        };
+                        console.warn = function () {
+                            var args = [];
+                            for (var _i = 0; _i < arguments.length; _i++) {
+                                args[_i] = arguments[_i];
+                            }
+                            var plainTexts = Log.toPlainLog(args);
+                            warnOld_1.apply(console, plainTexts);
+                        };
+                        console.error = function () {
+                            var args = [];
+                            for (var _i = 0; _i < arguments.length; _i++) {
+                                args[_i] = arguments[_i];
+                            }
+                            var plainTexts = Log.toPlainLog(args);
+                            errorOld_1.apply(console, plainTexts);
+                        };
+                    }
+                    else {
+                        if (console['logOld']) {
+                            console.log = console['logOld'];
+                        }
+                        if (console['warnOld']) {
+                            console.warn = console['warnOld'];
+                        }
+                        if (console['errorOld']) {
+                            console.error = console['errorOld'];
+                        }
+                    }
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Log.toPlainLog = function (args) {
+                var plainTexts = [];
+                for (var _i = 0, args_1 = args; _i < args_1.length; _i++) {
+                    var info = args_1[_i];
+                    var ret = '';
+                    if (info instanceof Error) {
+                        ret = "Error content: " + JSON.stringify(info) + "\n" + info.stack;
+                    }
+                    else if (info instanceof Object) {
+                        ret = JSON.stringify(info);
+                    }
+                    else {
+                        ret = info;
+                    }
+                    plainTexts.push(ret);
+                }
+                return plainTexts;
+            };
+            Object.defineProperty(Log, "instance", {
+                get: function () {
+                    if (!this._instance)
+                        this._instance = new Log();
+                    return this._instance;
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Log.prototype.setLogParams = function (_a) {
+                var _b = _a === void 0 ? {} : _a, time = _b.time, tags = _b.tags;
+                this.time = time;
+                if (tags) {
+                    this.tags = tags.concat();
+                }
+            };
+            Log.prototype.getTagsStamp = function () {
+                var tag = "[" + this.tags.join('][') + "]";
+                if (this.time) {
+                    tag = tag + ("[t/" + Date.now() + "]");
+                }
+                return tag;
+            };
+            /**
+             * 将消息打印到控制台，不存储至日志文件
+             */
+            Log.prototype.info = function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                // if (this.tags) {
+                //     args = this.tags.concat(args)
+                // }
+                // if (this.time) {
+                //     args.push(new Date().getTime())
+                // }
+                console.log.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+            };
+            /**
+             * 将消息打印到控制台，并储至日志文件
+             */
+            Log.prototype.warn = function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                // if (this.tags) {
+                //     args = this.tags.concat(args)
+                // }
+                // if (this.time) {
+                //     args.push(new Date().getTime())
+                // }
+                console.warn.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+            };
+            /**
+             * 将消息打印到控制台，并储至日志文件
+             */
+            Log.prototype.error = function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                // if (this.tags) {
+                //     args = this.tags.concat(args)
+                // }
+                // if (this.time) {
+                //     args.push(new Date().getTime())
+                // }
+                console.error.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+                for (var _a = 0, args_2 = args; _a < args_2.length; _a++) {
+                    var p = args_2[_a];
+                    if (p instanceof Error) {
+                        console.log(p.stack);
+                    }
+                }
+                console.log('>>>error');
+                console.log(new Error().stack);
+            };
+            Log._enablePlainLog = false;
+            return Log;
+        }());
+        libs.Log = Log;
+        libs.log = Log.instance;
+    })(libs = lang.libs || (lang.libs = {}));
+})(lang || (lang = {}));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9805,7 +10547,7 @@ var fsync;
             return this.client.connect(url);
         };
         PBClient.prototype.listen = function (reqId, call) {
-            return this.listen(reqId, call);
+            return this.client.listen(reqId, call);
         };
         PBClient.prototype.sendRaw = function (data) {
             return this.client.sendRaw(data);
@@ -10098,11 +10840,12 @@ var fsync;
             var predictCmdBuffer = this.mainProcess.predictCmdBuffer;
             var mainCmdBuffer = this.mainProcess.mainCmdBuffer;
             var netCmd = predictCmdBuffer.getLatestNetCmd();
-            var netDelay = 0;
-            if (netCmd != null) {
+            if (netCmd != null && this.lastCmd != netCmd) {
+                this.lastCmd = netCmd;
+                var netDelay = 0;
                 netDelay = (netCmd.receivedTime - netCmd.createTime) / 1e3;
+                this.netDelayUtil.putDelay(netDelay);
             }
-            this.netDelayUtil.putDelay(netDelay);
             // 以下单位秒
             var littleDelay = 0.08;
             var middleDelay = 1.0;
@@ -10110,12 +10853,15 @@ var fsync;
             var delayAv = this.netDelayUtil.getDelayAv();
             var syncDuration = 5000;
             if (delayAv < 0.100) {
-                syncDuration = 4000;
+                syncDuration = 2500;
             }
             else if (delayAv < 0.300) {
-                syncDuration = 5000;
+                syncDuration = 2000;
             }
-            else if (delayAv < 0.700) {
+            else if (delayAv < 0.500) {
+                syncDuration = 1700;
+            }
+            else if (delayAv < 0.750) {
                 syncDuration = 3000;
             }
             else if (delayAv < 1.100) {
@@ -10124,24 +10870,58 @@ var fsync;
             else {
                 syncDuration = delayAv * 10;
             }
+            // 回滚重演流程
+            var syncDt = (Date.now() - this.lastSyncTime);
+            var needSyncRightNow = false;
+            if (predictCmdBuffer.needSyncRightNow && syncDt > 800) {
+                predictCmdBuffer.needSyncRightNow = false;
+                needSyncRightNow = true;
+            }
+            if (mainCmdBuffer.needSyncRightNow && syncDt > 800) {
+                mainCmdBuffer.needSyncRightNow = false;
+                needSyncRightNow = true;
+            }
+            if (predictCmdBuffer.needSync
+                && (Date.now() - this.lastSyncTime) > Math.max(500, syncDuration - mainCmdBuffer.surgeTimes * 500)) {
+                predictCmdBuffer.needSync = false;
+                needSyncRightNow = true;
+            }
+            if (needSyncRightNow) {
+                mainCmdBuffer.surgeTimes = 0;
+                predictCmdBuffer.surgeTimes = 0;
+            }
             // if (false) {
-            if (predictCmdBuffer.needSync && Date.now() - this.lastSyncTime > 5000) {
+            if (needSyncRightNow) {
                 console.log("syncmmm");
+                var t1 = Date.now();
+                // 回滚重演流程需要禁用输入流程
+                // 同时也尽量避免代入视图流程, 减少性能消耗
+                var predictUpdater = this.mainProcess.predictUpdater;
+                var isInputEnabled = predictUpdater.isGroupEnabled(fsync.Refers.InputSystem);
+                if (isInputEnabled) {
+                    predictUpdater.disableGroup(fsync.Refers.InputSystem);
+                }
                 this.lastSyncTime = Date.now();
                 var curPredictFrameCount = this.mainProcess.worldPredict.frameCount;
                 // this.mainProcess.syncPredictToCurFrame()
                 this.mainProcess.syncMain(true);
-                predictCmdBuffer.mergeFrom(mainCmdBuffer);
                 var latestLocalCmd = predictCmdBuffer.getLatestLocalCmd();
-                if (latestLocalCmd != null) {
-                    this.mainProcess.updatePredictToTheFrame(latestLocalCmd.frameCount);
+                // if (latestLocalCmd != null) {
+                // this.mainProcess.updatePredictToTheFrame(latestLocalCmd.frameCount)
+                // } else {
+                this.mainProcess.updatePredictToTheFrame(curPredictFrameCount);
+                // }
+                if (isInputEnabled) {
+                    predictUpdater.enableGroup(fsync.Refers.InputSystem);
                 }
-                else {
-                    this.mainProcess.updatePredictToTheFrame(curPredictFrameCount);
-                }
-                console.log("merge all done");
+                var t2 = Date.now();
+                console.log("merge all done", t2 - t1);
             }
-            else {
+            // 正常的推进流程
+            {
+                // let latestCmd = this.mainProcess.mainCmdBuffer.getOrderedNetCmd()
+                // let serverMainFrameCount = latestCmd ? latestCmd.frameCount : 0
+                // console.log("framexx:", this.mainProcess.worldPredict.frameCount, this.mainProcess.worldMain.frameCount, serverMainFrameCount, Date.now())
                 var curPredictFrameCount = this.mainProcess.worldPredict.frameCount;
                 // console.log("CPC:", curPredictFrameCount)
                 predictCmdBuffer.syncLocalCmd();
@@ -10153,7 +10933,8 @@ var fsync;
                     this.mainProcess.updatePredict();
                 }
                 // console.log("updateto", this.mainProcess.worldPredict.frameCount)
-                this.mainProcess.updateMain();
+                // this.mainProcess.updateMain()
+                this.mainProcess.syncMain(false);
             }
         };
         return FrameSyncStrategy;
@@ -10176,6 +10957,7 @@ var fsync;
         function WorldMainProcess() {
             // 主线帧计数
             this.serverMainFrameCount = 0;
+            // 主线时间
             this.serverMainTime = 0;
             this.lastTT = 0;
         }
@@ -10216,6 +10998,8 @@ var fsync;
             this.mainUpdater.getUpdaterGroup(Refers.MergeSystem).addUpdater(this.mergeSystem);
             this.ecsDataMergeSystem = this.createMergeSystem2(this.worldMain, this.worldPredict);
             this.mainUpdater.getUpdaterGroup(Refers.MergeSystem).addUpdater(this.ecsDataMergeSystem);
+            // 默认禁用合并系统
+            this.mainUpdater.disableGroup(Refers.MergeSystem);
             {
                 var inputCmdBuffer = new fsync.InputCmdBuffer();
                 inputCmdBuffer.name = this.worldMain.name;
@@ -10229,6 +11013,13 @@ var fsync;
             }
             return this;
         };
+        Object.defineProperty(WorldMainProcess.prototype, "netDelayUtil", {
+            get: function () {
+                return this.frameSyncStrategy.netDelayUtil;
+            },
+            enumerable: false,
+            configurable: true
+        });
         WorldMainProcess.prototype.createMergeSystem = function (source, target) {
             var mergeSystem = new fsync.ForceMergeSystem().init();
             mergeSystem.source = source;
@@ -10254,17 +11045,29 @@ var fsync;
         };
         WorldMainProcess.prototype.syncMain = function (needMerge) {
             if (needMerge === void 0) { needMerge = false; }
+            var latestNetCmd = this.mainCmdBuffer.getOrderedNetCmd();
+            var serverMainFrameCount = latestNetCmd ? latestNetCmd.frameCount : 0;
             // 主线按照服务器节奏追赶进度
-            while (this.worldMain.frameCount < this.serverMainFrameCount - 2) {
+            while (this.worldMain.frameCount < serverMainFrameCount - 2) {
                 this.updateMain();
             }
             if (needMerge) {
+                console.log("serverMainFrameCount:", serverMainFrameCount);
                 // this.mergeSystem.needMerge = true
-                this.mainUpdater.disableGroup(Refers.MergeSystem);
-                if (this.worldMain.frameCount < this.serverMainFrameCount - 1) {
+                // this.mainUpdater.enableGroup(Refers.MergeSystem)
+                /**
+                 * 之所以维持 -1 而不是 -0 是为了确保每次执行的一帧内所有 cmdIndex 都已经接收到了
+                 */
+                if (this.worldMain.frameCount < serverMainFrameCount - 1) {
                     this.updateMain();
+                    this.ecsDataMergeSystem.onBeforeUpdate();
+                    this.predictCmdBuffer.mergeFrom(this.mainCmdBuffer);
+                    // 需要定位出 latestNetCmd 附近的 localCmd, 从而定位出时间点相当的localCmd
+                    // test
+                    this.worldPredict.frameCount = latestNetCmd.createFrameCount;
                 }
-                this.mainUpdater.enableGroup(Refers.MergeSystem);
+                // this.mergeSystem.onBeforeUpdate()
+                // this.mainUpdater.disableGroup(Refers.MergeSystem)
                 // this.mergeSystem.needMerge = false
             }
         };
@@ -10288,7 +11091,9 @@ var fsync;
             }
         };
         WorldMainProcess.prototype.updateMain = function () {
-            if (this.worldMain.frameCount < this.serverMainFrameCount - 1) {
+            var latestCmd = this.mainCmdBuffer.getOrderedNetCmd();
+            var serverMainFrameCount = latestCmd ? latestCmd.frameCount : 0;
+            if (this.worldMain.frameCount < serverMainFrameCount - 1) {
                 // let xx = Date.now()
                 // console.log("update time:", xx - this.lastTT)
                 // this.lastTT = xx
@@ -10438,407 +11243,83 @@ var fsync;
 })(fsync || (fsync = {}));
 var fsync;
 (function (fsync) {
-    var RoomClient = /** @class */ (function () {
-        function RoomClient() {
-        }
-        RoomClient.prototype.init = function () {
-            this.stopHeartBeat = false;
-            this.matcherClient = new fsync.PBClient().init(fsync.ClientFactory.createClient("websocket"));
-            this.roomClient = new fsync.PBClient().init(fsync.ClientFactory.createClient("websocket"));
-            var onClose = function () {
-                console.warn("client disconnected");
-            };
-            this.matcherClient.onclose = onClose;
-            this.roomClient.onclose = onClose;
-            return this;
-        };
-        RoomClient.prototype.setProto = function (proto) {
-            this.proto = proto;
-            this.matcherClient.proto = proto;
-            this.roomClient.proto = proto;
-        };
-        // setPerformRecordContainer(performer: PerformRecordContainer) {
-        // this.MatcherClient.SetPerformRecordContainer(performer)
-        // this.RoomClient.SetPerformRecordContainer(performer)
-        // }
-        RoomClient.prototype.close = function () {
-            this.matcherClient.close();
-            this.roomClient.close();
-        };
-        /**
-         * 更新 protobuf 协议文件
-         * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
-         * - 如果客户端版本较旧，则服务器返回新协议文件内容
-         * @param info
-         * @param call
-         */
-        RoomClient.prototype.checkoutProto = function (info, call) {
-            var _this = this;
-            var reqData = {
-                protoVersion: info.clientProtoVersion,
-                force: false,
-            };
-            this.matcherClient.SendReqPB(fsync.ReqId.BasicCheckoutProto, reqData, fsync.roomserver.TReqDownloadProto, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TDownloadProtoResult);
-                call(result);
-            });
-        };
-        /**
-         * 通过房间匹配服匹配房间
-         * @param roleInfo
-         * @param roomInfo
-         * @param call
-         */
-        RoomClient.prototype.matchRoom = function (roleInfo, roomInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: {
-                    roleId: roleInfo.basicInfo.roleId,
-                    roomId: roomInfo.basicInfo.roomId,
-                },
-                roleInfo: roleInfo,
-                roomInfo: roomInfo,
-            };
-            this.matcherClient.SendReqPB(fsync.ReqId.RoomMatchUsersWithDefaultRule, reqData, fsync.roomserver.TReqMatchUsersWithDefaultRule, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TMatchJobResult);
-                call(result);
-            });
-        };
-        /**
-         * 通过ID搜索房间
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.searchRoomById = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.matcherClient.SendReqPB(fsync.ReqId.RoomSearchRoomById, reqData, fsync.roomserver.TReqSearchRoomById, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TQueryRoomsResult);
-                call(result);
-            });
-        };
-        /**
-         * 发送房间服心跳
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.sendRoomHeartBeat = function (opInfo, call) {
-            var _this = this;
-            if (!this.roomClient.isConnected) {
-                return;
-            }
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.BasicHeartBeat, reqData, fsync.roomserver.TReqHeartBeat, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.THeartBeatResult);
-                call(result);
-            });
-        };
-        /**
-         * 发送房间匹配服心跳
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.sendMatcherHeartBeat = function (opInfo, call) {
-            var _this = this;
-            if (!this.matcherClient.isConnected) {
-                return;
-            }
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.matcherClient.SendReqPB(fsync.ReqId.BasicHeartBeat, reqData, fsync.roomserver.TReqHeartBeat, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.THeartBeatResult);
-                call(result);
-            });
-        };
-        RoomClient.prototype.sendHeartBeat = function (opInfo) {
-            this.sendRoomHeartBeat(opInfo, function (result) {
-                //fmt.Println("SendRoomHeartBeat:", result)
-            });
-            this.sendMatcherHeartBeat(opInfo, function (result) {
-                //fmt.Println("SendMatcherHeartBeat:", result)
-            });
-        };
-        /**
-         * 维持心跳
-         * @param opInfo
-         */
-        RoomClient.prototype.startHeartBeatProcess = function (opInfo) {
-            var _this = this;
-            var id;
-            id = this.intervals.setInterval(function () {
-                if (_this.stopHeartBeat) {
-                    clearInterval(id);
-                    return;
+    var network;
+    (function (network) {
+        var roomclient;
+        (function (roomclient) {
+            /**
+             * 房间客户端工厂
+             */
+            var RoomClientFactory = /** @class */ (function () {
+                function RoomClientFactory() {
                 }
-                _this.sendHeartBeat(opInfo);
-            }, 1e3);
-        };
-        /**
-         * 停止心跳
-         */
-        RoomClient.prototype.stopHeartBeatProcess = function () {
-            this.stopHeartBeat = true;
-        };
-        /**
-         * 进入房间
-         * @param roleInfo
-         * @param roomInfo
-         * @param call
-         */
-        RoomClient.prototype.enterRoom = function (roleInfo, roomInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: {
-                    roleId: roleInfo.basicInfo.roleId,
-                    roomId: roomInfo.basicInfo.roomId,
-                },
-                roleInfo: roleInfo,
-                roomInfo: roomInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomEnterRoom, reqData, fsync.roomserver.TReqEnterRoom, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 退出房间
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.exitRoom = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomExitRoom, reqData, fsync.roomserver.TReqExitRoom, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 强制销毁房间
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.destoryRoomForce = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomDestroyRoomForce, reqData, fsync.roomserver.TReqDestroyRoomForce, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 进入准备状态
-         * - 所有玩家进入准备状态之后，即可开始游戏
-         * @param opInfo
-         * @param call
-         */
-        RoomClient.prototype.prepareStartGame = function (opInfo, call) {
-            var _this = this;
-            //fmt.Println("PrepareStartGame", opInfo)
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomPrepareRoomStartGame, reqData, fsync.roomserver.TReqStartGame, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TRespStartGameResult);
-                call(result);
-            });
-        };
-        /**
-         * 广播房间消息
-         * @param reqData
-         * @param call
-         */
-        RoomClient.prototype.broadCastRoomMessage = function (reqData, call) {
-            var _this = this;
-            this.roomClient.SendReqPB(fsync.ReqId.RoomBroadCastClientMessage, reqData, fsync.roomserver.TReqBroadCastClientMessage, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 广播帧同步消息
-         * @param reqData
-         * @param call
-         */
-        RoomClient.prototype.broadCastFrameSyncMessage = function (reqData, call) {
-            var _this = this;
-            this.roomClient.SendReqPB(fsync.ReqId.RoomFrameSync, reqData, fsync.roomserver.TReqBroadCastFrameSyncReq, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听帧同步广播
-         * @param call
-         */
-        RoomClient.prototype.listenFrameSyncBroadCast = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.RespId.RoomNotifyFrameSync, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TReqBroadCastFrameSyncReq);
-                call(result);
-            });
-        };
-        /**
-         * 监听房间内广播消息
-         * @param call
-         */
-        RoomClient.prototype.listenRoomBroadCast = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.RespId.RoomNotifyClientMessage, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TReqBroadCastClientMessage);
-                call(result);
-            });
-        };
-        /**
-         * 监听成员离开房间
-         * @param call
-         */
-        RoomClient.prototype.listenExitRoom = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomExitRoom), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听成员进入房间
-         * @param call
-         */
-        RoomClient.prototype.listenEnterRoom = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomEnterRoom), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听成员设置房间
-         * @param call
-         */
-        RoomClient.prototype.listenSetRoomInfo = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomSetRoomInfo), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听成员进入准备状态
-         * @param call
-         */
-        RoomClient.prototype.listenPrepareStartGame = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomPrepareRoomStartGame), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听游戏开始
-         * @param call
-         */
-        RoomClient.prototype.listenStartGame = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomStartGame), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TRespStartGameResult);
-                call(result);
-            });
-        };
-        /**
-         * 监听同步游戏记录
-         * @param call
-         */
-        RoomClient.prototype.listenFetchGameOpRecords = function (call) {
-            var _this = this;
-            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomFetchGameOpRecords), function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TFetchGameOpRecordsResult);
-                call(result);
-            });
-        };
-        /**
-         * 验证房间
-         * @param call
-         */
-        RoomClient.prototype.validateRoom = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomIsRoomValid, reqData, fsync.roomserver.TReqValidateRoom, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 设置房间信息
-         * @param call
-         */
-        RoomClient.prototype.setRoomInfo = function (opInfo, roomInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-                roomInfo: roomInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomSetRoomInfo, reqData, fsync.roomserver.TReqSetRoomInfo, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 放逐成员（未实现）
-         * @param call
-         */
-        RoomClient.prototype.banishMember = function (opInfo, roles, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-                roles: roles,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomBanishMember, reqData, fsync.roomserver.TReqBanishMember, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
-                call(result);
-            });
-        };
-        /**
-         * 获取房间信息（未实现）
-         * @param call
-         */
-        RoomClient.prototype.getRoomInfo = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomGetRoomInfo, reqData, fsync.roomserver.TReqGetRoomInfo, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TGetRoomInfoResult);
-                call(result);
-            });
-        };
-        /**
-         * 获取游戏操作记录（未实现）
-         * @param call
-         */
-        RoomClient.prototype.fetchGameOpRecords = function (opInfo, call) {
-            var _this = this;
-            var reqData = {
-                opInfo: opInfo,
-            };
-            this.roomClient.SendReqPB(fsync.ReqId.RoomFetchGameOpRecords, reqData, fsync.roomserver.TReqFetchGameOpRecords, function (sessionInfo) {
-                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TFetchGameOpRecordsResult);
-                call(result);
-            });
-        };
-        return RoomClient;
-    }());
-    fsync.RoomClient = RoomClient;
+                /**
+                 * 创建房间客户端
+                 * - mgobe 腾讯
+                 * @param techSource 所使用的技术来源
+                 */
+                RoomClientFactory.createClient = function (techSource) {
+                    switch (techSource) {
+                        case "mgobe": {
+                            var client = new roomclient.mgobe.RoomClient().init();
+                            return client;
+                        }
+                        case "glee": {
+                            var client = new roomclient.glee.v1.RoomClient().init();
+                            return client;
+                        }
+                        default: {
+                            throw new Error("invalid techSource");
+                        }
+                    }
+                };
+                return RoomClientFactory;
+            }());
+            roomclient.RoomClientFactory = RoomClientFactory;
+        })(roomclient = network.roomclient || (network.roomclient = {}));
+    })(network = fsync.network || (fsync.network = {}));
+})(fsync || (fsync = {}));
+var fsync;
+(function (fsync) {
+    var roomserver;
+    (function (roomserver) {
+        /** TRolePlayState enum. */
+        var TRolePlayState;
+        (function (TRolePlayState) {
+            TRolePlayState[TRolePlayState["PENDING"] = 0] = "PENDING";
+            TRolePlayState[TRolePlayState["READY"] = 1] = "READY";
+            TRolePlayState[TRolePlayState["PLAYING"] = 2] = "PLAYING";
+        })(TRolePlayState = roomserver.TRolePlayState || (roomserver.TRolePlayState = {}));
+    })(roomserver = fsync.roomserver || (fsync.roomserver = {}));
+})(fsync || (fsync = {}));
+/**
+ * 基于腾讯云游戏的房间服务器
+ */
+(function (fsync) {
+    var network;
+    (function (network) {
+        var roomclient;
+        (function (roomclient) {
+            var TRoomClientConnectInfo = /** @class */ (function () {
+                function TRoomClientConnectInfo() {
+                }
+                return TRoomClientConnectInfo;
+            }());
+            roomclient.TRoomClientConnectInfo = TRoomClientConnectInfo;
+            var TRoomServerInfo = /** @class */ (function () {
+                function TRoomServerInfo() {
+                }
+                return TRoomServerInfo;
+            }());
+            roomclient.TRoomServerInfo = TRoomServerInfo;
+            var TRoomClientConnectResult = /** @class */ (function () {
+                function TRoomClientConnectResult() {
+                }
+                return TRoomClientConnectResult;
+            }());
+            roomclient.TRoomClientConnectResult = TRoomClientConnectResult;
+        })(roomclient = network.roomclient || (network.roomclient = {}));
+    })(network = fsync.network || (fsync.network = {}));
 })(fsync || (fsync = {}));
 var fsync;
 (function (fsync) {
@@ -10903,7 +11384,7 @@ var fsync;
     }
     fsync.toRespId = toRespId;
 })(fsync || (fsync = {}));
-var serverprotoSource = "\nsyntax = \"proto3\";\npackage roomserver;\n\n//type int64 int64\n//type int64 int64\n//type int64 int64\n\n//\u623F\u95F4id\u751F\u6210\u89C4\u5219: id:int64=parseInt64(timestamp+incr(0~99999))\n//type int64 int64\n//type int64 int64\n\n//type int64 int64\n//type int32 int32\n//type float float\n//type string string\n//type string string\n\nmessage TErrorInfo {\n  int32     code = 1;\n  string  reason = 2;\n  string  message = 3;\n}\nmessage TResultIndicate{\n  bool      ok = 1;\n  TErrorInfo err = 2;\n}\nmessage TNormalResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n}\n\nmessage TRoomBasic {\n  //\u623F\u95F4\u53F7\n  int64 room_id = 1;\n  //\u623F\u95F4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 2;\n  //uuid \u7528\u4E8E\u65E5\u5FD7\u67E5\u8BE2\u7B49\u529F\u80FD\n  string uuid = 3;\n  //\u623F\u95F4\u8FDE\u63A5\u5730\u5740\u914D\u7F6E\n  string conn_addr = 4;\n}\n\nmessage TRoomSettings {\n  int32   room_type = 1;\n  string       name = 2;\n  string   password = 3;\n}\n\nmessage TRoomGameInfo {\n  //  \u6E38\u620F\u6A21\u5F0F/\u7C7B\u578B\n  int32 game_mode = 1;\n  //  \u56FA\u5B9A\u5E27\u95F4\u9694\n  int64 frame_duration = 2;\n  //\u9700\u8981\u591A\u5C11\u89D2\u8272\u6765\u5339\u914D\n  int32 role_count = 3;\n  //\u5339\u914D\u65F6\u957F\n  float match_timeout = 4;\n}\n\nmessage TRoomGameState {\n  int64 game_session_id = 1;\n  int64 start_time = 2;\n  int32 random_seed = 3;\n  bool is_playing = 4;\n}\n\nmessage TServerInfo {\n  string address = 1;\n  string server_id = 2;\n}\n\nmessage TRoomInfo {\n  TRoomBasic    basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo     game_info = 3;\n  TServerInfo server_info = 4;\n}\n\nmessage TRoomModel {\n  TRoomBasic    basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo     game_info = 3;\n  TServerInfo server_info = 4;\n  TRoomGameState    game_state = 5;\n  repeated int64        roles = 6;\n}\n\nmessage TReqGetRoomInfo{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TGetRoomInfoResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomModel room_model = 3;\n}\n\nmessage TQueryRoomsResult {\n  TResultIndicate indicate = 1;\n  TRoomsInfo roomsInfo = 2;\n}\n\nmessage TRoomsInfo {\n  int32 count = 1;\n  repeated TRoomModel room_models = 2;\n}\n\nmessage TRoomUserOpInfo {\n  int64 room_id = 1;\n  int64 role_id = 2;\n}\n\nmessage TMatchJobResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomsInfo roomsInfo = 3;\n}\n\nmessage TUserInfo {\n  int64 user_id = 1;\n}\n\nmessage TRoleBasic {\n  int64 role_id = 1;\n  int32    sex = 2;\n}\n\nmessage TRoleGameInfo {\n  //\u5206\u6570\n  int32 score = 1;\n  //\u7B49\u7EA7\n  int32 level = 2;\n  //\u5BF9\u6218\u5C40\u6570\n  int32 battle_count = 3;\n  //\u80DC\u7387\n  float win_rate = 4;\n}\n\nmessage TRoleRoomState {\n  int64   room_id = 1;\n  int64  chair_no = 2;\n  //\u89D2\u8272\u5BA2\u6237\u7AEF\u548C\u670D\u52A1\u5668\u662F\u5426\u8FDE\u63A5\n  bool is_conn_active = 3;\n  bool is_master = 4;\n}\n\nenum TRolePlayState{\n  PENDING = 0;\n  READY = 1;\n  PLAYING = 2;\n}\n\nmessage TRoleGameState {\n  TRolePlayState state = 1;\n}\n\nmessage TRoleInfo {\n  TRoleBasic basic_info = 1;\n  TUserInfo  user_info = 2;\n  TRoleGameInfo  game_info = 3;\n  TRoleRoomState room_state = 4;\n}\n\nmessage TRoleModel {\n  TRoleBasic basic_info = 1;\n  TUserInfo  user_info = 2;\n  TRoleGameInfo  game_info = 3;\n  TRoleRoomState room_state = 4;\n  TRoleGameState game_state = 5;\n}\n\nmessage TRoomMemberFilterInfo {\n}\n\nmessage THandleResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomPlayerMessageOptions {\n\n}\nmessage TRoomPlayerMessage {\n  TRoomPlayerMessageOptions options = 1;\n}\n\nmessage TReqEnterRoom {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo       role_info = 2;\n  TRoomModel      room_info = 3;\n}\n\nmessage TReqExitRoom {\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqDestroyRoomForce {\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqRoleBroadOptions{\n  int64 role_id = 1;\n}\nmessage TFrameSyncInfo{\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 server_time = 1;\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u5DF2\u8FDB\u884C\u5E27\u6570\n  int64 server_frame_count = 2;\n  //\u5BA2\u6237\u7AEF\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 client_time = 3;\n}\n\nmessage TReqBroadCastFrameSyncReq{\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqBroadCastClientMessage{\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  //  \u6807\u8BB0\u63A5\u6536\u65B9\n  repeated TReqRoleBroadOptions targets = 3;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqValidateRoom{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqSetRoomInfo{\n  TRoomUserOpInfo op_info = 1;\n  TRoomSettings roomInfo = 2;\n}\n\nmessage TReqBanishMember{\n  TRoomUserOpInfo op_info = 1;\n  repeated int64 roles = 2;\n}\n\nmessage TReqSetSelfRoomChairNo{\n  TRoomUserOpInfo op_info = 1;\n  int64 chairNo = 2;\n}\n\nmessage TReqFilterMembers{\n  TRoomUserOpInfo op_info = 1;\n  TRoomMemberFilterInfo filterInfo = 2;\n}\n\nmessage TStartGameOptions{\n\n}\n\nmessage TReqStartGame{\n  TRoomUserOpInfo op_info = 1;\n  TStartGameOptions start_options = 2;\n}\n\nmessage TFrameSyncInitConfig{\n  int32 random_seed = 1;\n}\nmessage TRespStartGameResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TFrameSyncInitConfig frame_sync_init_config = 3;\n}\n\nmessage TReqSearchRoomById{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqGetRecommendRooms{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqMatchUsersWithDefaultRule{\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo roleInfo = 2;\n  TRoomInfo roomInfo = 3;\n}\n\nmessage TReqNotifyCreateRoom{\n  TRoomModel room_model = 1;\n}\n\nmessage TReqNotifyRemoveRoom{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TReqFetchGameOpRecords{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TFetchGameOpRecordsResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq sync_op_records = 3;\n}\n\nmessage TReqHeartBeat{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage THeartBeatResult{\n  TRoomUserOpInfo op_info = 1;\n}\n\nmessage TRoomServerRegisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string ServerId = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string ConnId = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string ClientConnAddr = 3;\n  //\u5F53\u524D\u623F\u95F4\u6570\u91CF\n  int64 RoomCount = 4;\n}\n\nmessage TRoomServerRegisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomServerUnregisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string ServerId = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string ConnId = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string ClientConnAddr = 3;\n}\n\nmessage TRoomServerUnregisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\n//string \u957F\u5EA6\u9700\u8981\u5C0F\u4E8E64MB\nmessage TReqDownloadProto{\n  //  \u5BA2\u6237\u7AEFproto\u7248\u672C\n  int32 proto_version = 1;\n  // \u662F\u5426\u5F3A\u5236\u66F4\u65B0\n  bool force = 2;\n}\n\nmessage TProtoInfo{\n  //  \u670D\u52A1\u7AEF\u4F20\u56DE\u7684proto\u7248\u672C\n  int32 version = 1;\n  //  \u5982\u679C\u5BA2\u6237\u7AEF\u7F13\u5B58\u7684\u534F\u8BAE\u7248\u672C\u548C\u670D\u52A1\u7AEF\u7684\u76F8\u540C\uFF0C\u5219\u4E0D\u9700\u8981\u91CD\u65B0\u4E0B\u8F7D proto_content\n  string content = 2;\n}\n\nmessage TDownloadProtoResult{\n  TResultIndicate indicate = 1;\n  TProtoInfo proto_info = 2;\n}\n\n";
+var serverprotoSource = "\nsyntax = \"proto3\";\npackage roomserver;\n\n// type int64 int64\n// type string string\n// type int64 int64\n// type string string\n// type string string\n\n//\u623F\u95F4id\u751F\u6210\u89C4\u5219: id:int64=parseInt64(timestamp+incr(0~99999))\n//type string string\n//type int64 int64\n\n// type int64 int64\n// type int32 int32\n// type float float\n// type string string\n// type string string\n// type string string\n// type int64 int64\n\nmessage TErrorInfo {\n  int32 code = 1;\n  string reason = 2;\n  string message = 3;\n}\nmessage TResultIndicate {\n  bool ok = 1;\n  TErrorInfo err = 2;\n}\nmessage TNormalResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n}\n\nmessage TRoomBasic {\n  //\u623F\u95F4\u53F7\n  string room_id = 1;\n  //\u623F\u95F4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 2;\n  // uuid \u7528\u4E8E\u65E5\u5FD7\u67E5\u8BE2\u7B49\u529F\u80FD\n  string uuid = 3;\n  //\u623F\u95F4\u8FDE\u63A5\u5730\u5740\u914D\u7F6E\n  string conn_addr = 4;\n  // \u521B\u5EFA\u623F\u95F4\u7684\u65B9\u5F0F\n  int64 create_type = 5;\n}\n\nmessage TRoomSettings {\n  string room_type = 1;\n  string name = 2;\n  string password = 3;\n  // \u623F\u4E3B\n  string owner_id = 4;\n  // \u662F\u5426\u7981\u6B62\u52A0\u5165\u623F\u95F4\n  bool is_forbid_join = 5;\n  // \u662F\u5426\u79C1\u6709, \u5C5E\u6027\u4E3A true \u8868\u793A\u8BE5\u623F\u95F4\u4E3A\u79C1\u6709\u623F\u95F4\uFF0C\u4E0D\u80FD\u88AB matchRoom \u63A5\u53E3\u5339\u914D\u5230\u3002\n  bool is_private = 6;\n}\n\nmessage TRoomGameInfo {\n  //  \u6E38\u620F\u6A21\u5F0F/\u7C7B\u578B\n  int32 game_mode = 1;\n  //  \u56FA\u5B9A\u5E27\u95F4\u9694\n  int64 frame_duration = 2;\n  //\u9700\u8981\u591A\u5C11\u89D2\u8272\u6765\u5339\u914D\n  int32 role_count = 3;\n  //\u5339\u914D\u65F6\u957F\n  float match_timeout = 4;\n}\n\nmessage TRoomGameState {\n  int64 game_session_id = 1;\n  int64 start_time = 2;\n  int32 random_seed = 3;\n  bool is_playing = 4;\n}\n\nmessage TServerInfo {\n  string address = 1;\n  string server_id = 2;\n}\n\nmessage TRoomInfo {\n  TRoomBasic basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo game_info = 3;\n  TServerInfo server_info = 4;\n}\n\nmessage TRoomModel {\n  TRoomBasic basic_info = 1;\n  TRoomSettings room_settings = 2;\n  TRoomGameInfo game_info = 3;\n  TServerInfo server_info = 4;\n  TRoomGameState game_state = 5;\n  repeated TRoleModel role_models = 6;\n}\n\nmessage TReqGetRoomInfo { TRoomUserOpInfo op_info = 1; }\n\nmessage TGetRoomInfoResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomModel room_model = 3;\n}\n\nmessage TQueryRoomsResult {\n  TResultIndicate indicate = 1;\n  TRoomsInfo rooms_info = 2;\n}\n\nmessage TRoomsInfo {\n  int32 count = 1;\n  repeated TRoomModel room_models = 2;\n}\n\nmessage TRoomUserOpInfo {\n  string room_id = 1;\n  string role_id = 2;\n  // \u7528\u4E8E\u5339\u914D\u81EA\u5E26\u89D2\u8272id\u751F\u6210\u529F\u80FD\u7684\u670D\u52A1\u5668\n  string role_token = 3;\n}\n\nmessage TMatchJobResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoomsInfo rooms_info = 3;\n}\n\nmessage TUserInfo { int64 user_id = 1; }\n\nmessage TRoleBasic {\n  // \u89D2\u8272id\n  string role_id = 1;\n  // \u89D2\u8272\u6027\u522B\n  int32 sex = 2;\n  // \u89D2\u8272\u540D\n  string role_name = 3;\n  // \u89D2\u8272\u5934\u50CFuri\n  string role_head_uri = 4;\n  // \u670D\u52A1\u5668\u751F\u6210\u7684roleId\n  string server_role_id = 5;\n  // \u662F\u5426\u4E3A\u4EBA\u673A\n  bool is_robot = 6;\n}\n\nmessage TRoleGameInfo {\n  //\u5206\u6570\n  int32 score = 1;\n  //\u7B49\u7EA7\n  int32 level = 2;\n  //\u5BF9\u6218\u5C40\u6570\n  int32 battle_count = 3;\n  //\u80DC\u7387\n  float win_rate = 4;\n}\n\nmessage TRoleRoomState {\n  string room_id = 1;\n  int64 chair_no = 2;\n  //\u89D2\u8272\u5BA2\u6237\u7AEF\u548C\u670D\u52A1\u5668\u662F\u5426\u8FDE\u63A5\n  bool is_conn_active = 3;\n  bool is_master = 4;\n}\n\nenum TRolePlayState {\n  PENDING = 0;\n  READY = 1;\n  PLAYING = 2;\n}\n\nmessage TRoleGameState { TRolePlayState state = 1; }\n\nmessage TRoleInfo {\n  TRoleBasic basic_info = 1;\n  TUserInfo user_info = 2;\n  TRoleGameInfo game_info = 3;\n  TRoleRoomState room_state = 4;\n}\n\nmessage TRoleModel {\n  TRoleBasic basic_info = 1;\n  TUserInfo user_info = 2;\n  TRoleGameInfo game_info = 3;\n  TRoleRoomState room_state = 4;\n  TRoleGameState game_state = 5;\n  TRoleNetworkInfo netwok_info = 6;\n}\n\nmessage TRoomMemberFilterInfo {}\n\nmessage THandleResult { TResultIndicate indicate = 1; }\n\nmessage TRoomPlayerMessageOptions {}\nmessage TRoomPlayerMessage { TRoomPlayerMessageOptions options = 1; }\n\nmessage TReqEnterRoom {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo role_info = 2;\n  TRoomModel room_info = 3;\n}\n\nmessage TReqExitRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqDestroyRoomForce { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqRoleBroadOptions { string role_id = 1; }\nmessage TFrameSyncInfo {\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 server_time = 1;\n  //  \u670D\u52A1\u5668\u5F53\u524D\u6E38\u620F\u5DF2\u8FDB\u884C\u5E27\u6570\n  int64 server_frame_count = 2;\n  //\u5BA2\u6237\u7AEF\u5F53\u524D\u6E38\u620F\u65F6\u95F4\n  int64 client_time = 3;\n  // \u5BA2\u6237\u7AEF\u62DF\u5408\u65F6\u95F4, \u5206\u5E03\u5C3D\u91CF\u5747\u5300\n  int64 client_lerp_time = 4;\n  // \u968F\u673A\u6570\u79CD\u5B50\n  int32 random_seed = 5;\n  // \u662F\u5426\u8865\u5E27\n  bool is_replay = 6;\n}\n\nmessage TReqBroadCastFrameSyncReq {\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  bytes msg_bytes = 4;\n}\n\nmessage TReqBroadCastClientMessage {\n  //  \u6807\u8BB0\u53D1\u9001\u65B9\n  TRoomUserOpInfo op_info = 1;\n  TFrameSyncInfo sync_info = 2;\n  //  \u6807\u8BB0\u63A5\u6536\u65B9\n  repeated TReqRoleBroadOptions targets = 3;\n  bytes msg_bytes = 4;\n  string msg_str = 5;\n}\n\nmessage TReqValidateRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqSetRoomInfo {\n  TRoomUserOpInfo op_info = 1;\n  TRoomSettings room_info = 2;\n}\n\nmessage TReqBanishMember {\n  TRoomUserOpInfo op_info = 1;\n  repeated string roles = 2;\n}\n\nmessage TReqSetSelfRoomChairNo {\n  TRoomUserOpInfo op_info = 1;\n  int64 chair_no = 2;\n}\n\nmessage TReqFilterMembers {\n  TRoomUserOpInfo op_info = 1;\n  TRoomMemberFilterInfo filter_info = 2;\n}\n\nmessage TStartGameOptions {}\n\nmessage TReqStartGame {\n  TRoomUserOpInfo op_info = 1;\n  TStartGameOptions start_options = 2;\n}\n\nmessage TFrameSyncInitConfig { int32 random_seed = 1; }\nmessage TRespStartGameResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TFrameSyncInitConfig frame_sync_init_config = 3;\n}\n\nmessage TReqSearchRoomById { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqGetRecommendRooms { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqMatchUsersWithDefaultRule {\n  TRoomUserOpInfo op_info = 1;\n  TRoleInfo role_info = 2;\n  TRoomInfo room_info = 3;\n}\n\nmessage TReqNotifyCreateRoom { TRoomModel room_model = 1; }\n\nmessage TReqNotifyRemoveRoom { TRoomUserOpInfo op_info = 1; }\n\nmessage TReqFetchGameOpRecords { TRoomUserOpInfo op_info = 1; }\n\nmessage TFetchGameOpRecordsResult {\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq sync_op_records = 3;\n}\n\nmessage TReqHeartBeat { TRoomUserOpInfo op_info = 1; }\n\nmessage THeartBeatResult { TRoomUserOpInfo op_info = 1; }\n\nmessage TRoomServerRegisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string server_id = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string conn_id = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string client_conn_addr = 3;\n  //\u5F53\u524D\u623F\u95F4\u6570\u91CF\n  int64 room_count = 4;\n}\n\nmessage TRoomServerRegisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\nmessage TRoomServerUnregisterForMatcherServerInfo {\n  //\u670D\u52A1\u5668ID\n  string server_id = 1;\n  //\u623F\u95F4\u670D\u52A1\u5668\u8FDE\u63A5ID\n  string conn_id = 2;\n  //\u623F\u95F4\u670D\u8FDE\u63A5\u5730\u5740\uFF08\u7ED9\u5BA2\u6237\u7AEF\u7528\uFF09\n  string client_conn_addr = 3;\n}\n\nmessage TRoomServerUnregisterForMatcherServerResult {\n  TResultIndicate indicate = 1;\n}\n\n// string \u957F\u5EA6\u9700\u8981\u5C0F\u4E8E64MB\nmessage TReqDownloadProto {\n  //  \u5BA2\u6237\u7AEFproto\u7248\u672C\n  int32 proto_version = 1;\n  // \u662F\u5426\u5F3A\u5236\u66F4\u65B0\n  bool force = 2;\n}\n\nmessage TProtoInfo {\n  //  \u670D\u52A1\u7AEF\u4F20\u56DE\u7684proto\u7248\u672C\n  int32 version = 1;\n  //  \u5982\u679C\u5BA2\u6237\u7AEF\u7F13\u5B58\u7684\u534F\u8BAE\u7248\u672C\u548C\u670D\u52A1\u7AEF\u7684\u76F8\u540C\uFF0C\u5219\u4E0D\u9700\u8981\u91CD\u65B0\u4E0B\u8F7D proto_content\n  string content = 2;\n}\n\nmessage TDownloadProtoResult {\n  TResultIndicate indicate = 1;\n  TProtoInfo proto_info = 2;\n}\n\nmessage TRoleNetworkInfo{\n  int32 room_network_state = 1;\n  int32 relay_network_state = 2;\n}\n\nmessage TChangeMemberNetworkStateResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  TRoleNetworkInfo network_info = 3;\n}\n\nmessage TChangeCustomPlayerStatus{\n\n}\n\nmessage TReqFrameRecordsInfo{\n  int32 begin_frame = 1;\n  int32 end_frame = 2;\n}\n\nmessage TReqFrameRecordsResult{\n  TResultIndicate indicate = 1;\n  TRoomUserOpInfo op_info = 2;\n  repeated TReqBroadCastFrameSyncReq messages = 3;\n}\n\n// \u79FB\u52A8\u65B9\u5411\u4FE1\u606F\nmessage TActorMoveInfo{\n  int32 x = 1;\n  int32 y = 2;\n  string actor_id = 3;\n}\n\n// RPG\u63A7\u5236\u547D\u4EE4\u4FE1\u606F\nmessage TRPGPlayerCmd {\n  // \u89D2\u8272id\n  int32 role_id = 1;\n  // \u547D\u4EE4\u552F\u4E00Id\n  int32 cmd_id = 2;\n  // \u547D\u4EE4\u521B\u5EFA\u65F6\u95F4\n  int64 create_time = 3;\n  // \u547D\u4EE4\u521B\u5EFA\u6240\u5728\u5E27\n  int32 create_frame_count = 4;\n  // \u547D\u4EE4\u5B9E\u9645\u9700\u8981\u5728\u90A3\u4E00\u5E27\u6267\u884C\n  int32 frame_count = 5;\n  // \u547D\u4EE4\u5E8F\u53F7\n  int32 cmd_index = 6;\n  // // \u547D\u4EE4\u7C7B\u578B,false \u8868\u793A\u7A7A\u547D\u4EE4,true \u8868\u793A\u89D2\u8272\u547D\u4EE4\n  // bool cmd_type = 7;\n  // // \u8BE5\u547D\u4EE4\u662F\u5426\u53EF\u89E6\u53D1\u540C\u6B65\n  // bool need_sync = 8;\n  // // \u662F\u5426\u89E6\u53D1\u4F7F\u7528\u6280\u80FD\n  // bool use_skill = 9;\n  // \u5E03\u5C14\u503C\u6570\u636E\u96C6\u5408\n  int64 cmd_flags = 7;\n  // \u89D2\u8272\u79FB\u52A8\u4FE1\u606F\n  TActorMoveInfo move = 8;\n}\n\n";
 var fileBaseName = 'serverproto';
 var srcFile = "./src/protos/" + fileBaseName + ".proto";
 fsync.protoPool.put(srcFile, serverprotoSource);
@@ -11333,7 +11814,1369 @@ var fsync;
             return TDownloadProtoResult;
         }());
         roomserver.TDownloadProtoResult = TDownloadProtoResult;
+        /** Represents a TRoleNetworkInfo. */
+        var TRoleNetworkInfo = /** @class */ (function () {
+            function TRoleNetworkInfo() {
+            }
+            return TRoleNetworkInfo;
+        }());
+        roomserver.TRoleNetworkInfo = TRoleNetworkInfo;
+        /** Represents a TChangeMemberNetworkStateResult. */
+        var TChangeMemberNetworkStateResult = /** @class */ (function () {
+            function TChangeMemberNetworkStateResult() {
+            }
+            return TChangeMemberNetworkStateResult;
+        }());
+        roomserver.TChangeMemberNetworkStateResult = TChangeMemberNetworkStateResult;
+        /** Represents a TChangeCustomPlayerStatus. */
+        var TChangeCustomPlayerStatus = /** @class */ (function () {
+            function TChangeCustomPlayerStatus() {
+            }
+            return TChangeCustomPlayerStatus;
+        }());
+        roomserver.TChangeCustomPlayerStatus = TChangeCustomPlayerStatus;
+        /** Represents a TReqFrameRecordsInfo. */
+        var TReqFrameRecordsInfo = /** @class */ (function () {
+            function TReqFrameRecordsInfo() {
+            }
+            return TReqFrameRecordsInfo;
+        }());
+        roomserver.TReqFrameRecordsInfo = TReqFrameRecordsInfo;
+        /** Represents a TReqFrameRecordsResult. */
+        var TReqFrameRecordsResult = /** @class */ (function () {
+            function TReqFrameRecordsResult() {
+            }
+            return TReqFrameRecordsResult;
+        }());
+        roomserver.TReqFrameRecordsResult = TReqFrameRecordsResult;
+        /** Represents a TActorMoveInfo. */
+        var TActorMoveInfo = /** @class */ (function () {
+            function TActorMoveInfo() {
+            }
+            return TActorMoveInfo;
+        }());
+        roomserver.TActorMoveInfo = TActorMoveInfo;
+        /** Represents a TRPGPlayerCmd. */
+        var TRPGPlayerCmd = /** @class */ (function () {
+            function TRPGPlayerCmd() {
+            }
+            return TRPGPlayerCmd;
+        }());
+        roomserver.TRPGPlayerCmd = TRPGPlayerCmd;
     })(roomserver = fsync.roomserver || (fsync.roomserver = {}));
+})(fsync || (fsync = {}));
+var fsync;
+(function (fsync) {
+    var network;
+    (function (network) {
+        var roomclient;
+        (function (roomclient) {
+            var mgobe;
+            (function (mgobe) {
+                var TRoomMsgEnum;
+                (function (TRoomMsgEnum) {
+                    TRoomMsgEnum["roommsg"] = "roommsg";
+                    TRoomMsgEnum["leaveroom"] = "leaveroom";
+                    TRoomMsgEnum["enterroom"] = "enterroom";
+                    TRoomMsgEnum["changeroom"] = "changeroom";
+                    TRoomMsgEnum["prepareready"] = "prepareready";
+                    TRoomMsgEnum["startgame"] = "startgame";
+                    TRoomMsgEnum["detoryroom"] = "detoryroom";
+                    TRoomMsgEnum["changedmembernetowrk"] = "changedmembernetowrk";
+                    TRoomMsgEnum["framemsg"] = "framemsg";
+                    TRoomMsgEnum["startframesync"] = "startframesync";
+                    TRoomMsgEnum["stopframesync"] = "stopframesync";
+                })(TRoomMsgEnum = mgobe.TRoomMsgEnum || (mgobe.TRoomMsgEnum = {}));
+                var TRoomProtoHelper = /** @class */ (function () {
+                    function TRoomProtoHelper() {
+                    }
+                    TRoomProtoHelper.prototype.getLocalPlayerIdInRoom = function (roomInfo, serverRoleId) {
+                        if (!roomInfo) {
+                            return "";
+                        }
+                        var playerInfo = roomInfo.playerList.find(function (player) { return player.id == serverRoleId; });
+                        var roleId = playerInfo ? playerInfo.customProfile : "";
+                        return roleId;
+                    };
+                    TRoomProtoHelper.prototype.getFrameInfo = function (frame, item) {
+                        var result = new fsync.roomserver.TReqBroadCastFrameSyncReq();
+                        result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                        result.opInfo.serverRoleId = item.playerId;
+                        result.opInfo.roomId = frame.roomId;
+                        result.syncInfo = new fsync.roomserver.TFrameSyncInfo();
+                        result.syncInfo.clientTime = item.timestamp;
+                        result.syncInfo.serverTime = frame.time;
+                        result.syncInfo.clientLerpTime = frame.time;
+                        result.syncInfo.serverFrameCount = frame.id;
+                        result.syncInfo.randomSeed = frame.ext.seed;
+                        result.syncInfo.isReplay = frame.isReplay;
+                        // console.log("frame.seed:", frame.ext.seed)
+                        // console.log("frame:", frame.time, frame.id)
+                        var frameData = item.data;
+                        var str = frameData.m;
+                        var head = str[0];
+                        var bodyStr = str.slice(1);
+                        var bodyBytes = base91.decode(bodyStr);
+                        var realMsgBytes = bodyBytes;
+                        if (head == 'e') {
+                            realMsgBytes = pako.inflateRaw(bodyBytes);
+                        }
+                        result.msgBytes = realMsgBytes;
+                        // const bs = []
+                        // for (let key in frameData.msgBytes) {
+                        // 	if (key != null) {
+                        // 		bs.push(frameData.msgBytes[key])
+                        // 	}
+                        // }
+                        // const bs2 = Uint8Array.from(bs)
+                        // result.msgBytes = bs2
+                        return result;
+                    };
+                    TRoomProtoHelper.prototype.getIndicate = function (evt) {
+                        var indicate = new fsync.roomserver.TResultIndicate();
+                        indicate.ok = (evt.code == MGOBE.ErrCode.EC_OK);
+                        indicate.err = new fsync.roomserver.TErrorInfo();
+                        indicate.err.code = evt.code;
+                        indicate.err.message = evt.msg;
+                        indicate.err.reason = evt.msg;
+                        return indicate;
+                    };
+                    TRoomProtoHelper.prototype.getOkIndicate = function () {
+                        var indicate = new fsync.roomserver.TResultIndicate();
+                        indicate.ok = true;
+                        indicate.err = new fsync.roomserver.TErrorInfo();
+                        indicate.err.code = MGOBE.ErrCode.EC_OK;
+                        indicate.err.message = "";
+                        indicate.err.reason = "";
+                        return indicate;
+                    };
+                    TRoomProtoHelper.prototype.getOpInfo = function (roleInfo, roomInfo) {
+                        var opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                        opInfo.serverRoleId = roleInfo.basicInfo.serverRoleId;
+                        opInfo.roleId = mgobe.RoomProtoHelper.getLocalPlayerIdInRoom(roomInfo, roleInfo.basicInfo.serverRoleId);
+                        if (roomInfo) {
+                            opInfo.roomId = roomInfo.id;
+                        }
+                        return opInfo;
+                    };
+                    TRoomProtoHelper.prototype.cloneOpInfo = function (opInfo) {
+                        var opInfo2 = new fsync.roomserver.TRoomUserOpInfo();
+                        opInfo2.serverRoleId = opInfo.serverRoleId;
+                        opInfo2.roomId = opInfo.roomId;
+                        opInfo2.roleId = opInfo.roleId;
+                        return opInfo2;
+                    };
+                    TRoomProtoHelper.prototype.getRoomInfo = function (roomInfoRaw) {
+                        var roomModel = new fsync.roomserver.TRoomModel();
+                        roomModel.basicInfo = new fsync.roomserver.TRoomBasic();
+                        roomModel.basicInfo.roomId = roomInfoRaw.id;
+                        roomModel.basicInfo.createTime = roomInfoRaw.createTime;
+                        roomModel.basicInfo.connAddr = "";
+                        roomModel.basicInfo.uuid = "";
+                        roomModel.basicInfo.createType = roomInfoRaw.createType;
+                        roomModel.gameState = new fsync.roomserver.TRoomGameState();
+                        roomModel.gameState.startTime = roomInfoRaw.startGameTime * 1000;
+                        roomModel.gameState.gameSessionId = 0;
+                        roomModel.gameState.isPlaying = (roomInfoRaw.frameSyncState == MGOBE.types.FrameSyncState.START);
+                        roomModel.gameState.randomSeed = roomModel.basicInfo.createTime * 1000;
+                        roomModel.gameInfo = new fsync.roomserver.TRoomGameInfo();
+                        roomModel.gameInfo.frameDuration = 1 / roomInfoRaw.frameRate;
+                        roomModel.gameInfo.gameMode = -1;
+                        roomModel.gameInfo.matchTimeout = 0;
+                        roomModel.gameInfo.roleCount = roomInfoRaw.maxPlayers;
+                        roomModel.roomSettings = new fsync.roomserver.TRoomSettings();
+                        roomModel.roomSettings.name = roomInfoRaw.name;
+                        roomModel.roomSettings.password = "";
+                        roomModel.roomSettings.roomType = roomInfoRaw.type;
+                        roomModel.roomSettings.ownerId = roomInfoRaw.owner;
+                        roomModel.roomSettings.isForbidJoin = roomInfoRaw.isForbidJoin;
+                        roomModel.roomSettings.isPrivate = roomInfoRaw.isPrivate;
+                        roomModel.serverInfo = new fsync.roomserver.TServerInfo();
+                        roomModel.serverInfo.serverId = roomInfoRaw.routeId;
+                        roomModel.serverInfo.address = "";
+                        roomModel.roleModels = [];
+                        roomInfoRaw.playerList.forEach(function (player) {
+                            var roleModel = new fsync.roomserver.TRoleModel();
+                            roleModel.basicInfo = new fsync.roomserver.TRoleBasic();
+                            roleModel.basicInfo.isRobot = player.isRobot;
+                            // 由于player.id是腾讯服务器自己生成的, 和游戏的roleid无法直接对应, 直接使用 customProfile
+                            roleModel.basicInfo.serverRoleId = player.id;
+                            roleModel.basicInfo.roleName = player.name;
+                            roleModel.basicInfo.roleId = player.customProfile;
+                            roleModel.netwokInfo = new fsync.roomserver.TRoleNetworkInfo();
+                            roleModel.netwokInfo.relayNetworkState = player.relayNetworkState;
+                            roleModel.netwokInfo.roomNetworkState = player.commonNetworkState;
+                            roleModel.gameInfo = new fsync.roomserver.TRoleGameInfo();
+                            roleModel.gameState = new fsync.roomserver.TRoleGameState();
+                            roleModel.gameState.state = fsync.roomserver.TRolePlayState.READY;
+                            roleModel.roomState = new fsync.roomserver.TRoleRoomState();
+                            roleModel.roomState.isMaster = player.id == roomInfoRaw.owner;
+                            roleModel.userInfo = new fsync.roomserver.TUserInfo();
+                            // roleModel.userInfo.userId = player.id
+                            roomModel.roleModels.push(roleModel);
+                        });
+                        return roomModel;
+                    };
+                    TRoomProtoHelper.prototype.getTheOnlyRoomsInfo = function (roomInfoRaw) {
+                        var roomsInfo = new fsync.roomserver.TRoomsInfo();
+                        roomsInfo.count = 1;
+                        roomsInfo.roomModels = [];
+                        roomsInfo.roomModels[0] = mgobe.RoomProtoHelper.getRoomInfo(roomInfoRaw);
+                        return roomsInfo;
+                    };
+                    TRoomProtoHelper.prototype.getNormalResult = function (opInfo, evt) {
+                        var result = new fsync.roomserver.TNormalResult();
+                        result.indicate = this.getIndicate(evt);
+                        result.opInfo = this.cloneOpInfo(opInfo);
+                        return result;
+                    };
+                    TRoomProtoHelper.prototype.getOkNormalResult = function (opInfo) {
+                        var result = new fsync.roomserver.TNormalResult();
+                        result.indicate = this.getOkIndicate();
+                        result.opInfo = this.cloneOpInfo(opInfo);
+                        return result;
+                    };
+                    return TRoomProtoHelper;
+                }());
+                mgobe.TRoomProtoHelper = TRoomProtoHelper;
+                mgobe.RoomProtoHelper = new TRoomProtoHelper();
+                var RoomClient = /** @class */ (function () {
+                    function RoomClient() {
+                        this.frameEvent = new slib.SEvent();
+                        this.roomEvent = new slib.SEvent();
+                    }
+                    RoomClient.prototype.init = function () {
+                        this.stopHeartBeat = false;
+                        return this;
+                    };
+                    RoomClient.prototype.setProto = function (proto) {
+                        this.proto = proto;
+                    };
+                    /**
+                     * 初始化连接
+                     * @param call
+                     */
+                    RoomClient.prototype.connectAsync = function (info, call) {
+                        var _this = this;
+                        if (RoomClient.isNetworkInited) {
+                            var result = new roomclient.TRoomClientConnectResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.indicate.ok = true;
+                            this.setupRoomInstanceApi();
+                            call(result);
+                        }
+                        else {
+                            MGOBE.Listener.init(info.gameInfo, info.config, function (evt) {
+                                var result = new roomclient.TRoomClientConnectResult();
+                                result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                                if (result.indicate.ok) {
+                                    RoomClient.isNetworkInited = true;
+                                    result.serverInfo = new roomclient.TRoomServerInfo();
+                                    result.serverInfo.serverTime = evt.data.serverTime;
+                                    _this.setupRoomInstanceApi();
+                                }
+                                call(result);
+                            });
+                        }
+                    };
+                    RoomClient.prototype.setupRoomInstanceApi = function () {
+                        var room = new MGOBE.Room();
+                        this.matcherClient = room;
+                        this.roomClient = room;
+                        MGOBE.Listener.add(this.roomClient);
+                        this.initFrameMsgListener();
+                        this.initRoomClientMsgListener();
+                    };
+                    RoomClient.prototype.close = function () {
+                        this.intervals && this.intervals.clearAllTimer();
+                        if (this.roomClient) {
+                            MGOBE.Listener.remove(this.roomClient);
+                        }
+                    };
+                    /**
+                     * 更新 protobuf 协议文件
+                     * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
+                     * - 如果客户端版本较旧，则服务器返回新协议文件内容
+                     * @param info
+                     * @param call
+                     */
+                    RoomClient.prototype.checkoutProto = function (info, call) {
+                    };
+                    /**
+                     * 通过房间匹配服匹配房间
+                     * @param roleInfo
+                     * @param roomInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.matchRoom = function (roleInfo, roomInfo, call) {
+                        var _this = this;
+                        this.roomClient.matchRoom({
+                            maxPlayers: roomInfo.gameInfo.roleCount,
+                            roomType: "" + roomInfo.roomSettings.roomType,
+                            playerInfo: {
+                                customPlayerStatus: 1,
+                                customProfile: roleInfo.basicInfo.roleId,
+                                name: roleInfo.basicInfo.roleName,
+                            }
+                        }, function (evt) {
+                            var roomInfoRaw = evt.data.roomInfo;
+                            var result = new fsync.roomserver.TMatchJobResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = roleInfo.basicInfo.serverRoleId;
+                            result.opInfo.roleId = roleInfo.basicInfo.roleId;
+                            if (roomInfoRaw) {
+                                result.opInfo.roomId = roomInfoRaw.id;
+                                if (result.indicate.ok) {
+                                    result.roomsInfo = mgobe.RoomProtoHelper.getTheOnlyRoomsInfo(roomInfoRaw);
+                                }
+                            }
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 通过ID搜索房间
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.searchRoomById = function (opInfo, call) {
+                        var _this = this;
+                        MGOBE.Room.getRoomByRoomId({
+                            roomId: "" + opInfo.roomId,
+                        }, function (evt) {
+                            var result = new fsync.roomserver.TQueryRoomsResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            if (result.indicate.ok) {
+                                result.roomsInfo = mgobe.RoomProtoHelper.getTheOnlyRoomsInfo(evt.data.roomInfo);
+                            }
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 发送房间服心跳
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.sendRoomHeartBeat = function (opInfo, call) {
+                        // if (!this.roomClient.isConnected) {
+                        // 	return
+                        // }
+                        // let reqData: roomserver.TReqHeartBeat = {
+                        // 	opInfo: opInfo,
+                        // }
+                        // this.roomClient.SendReqPB(ReqId.BasicHeartBeat, reqData, roomserver.TReqHeartBeat, (sessionInfo: SessionInfo) => {
+                        // 	let result = this.proto.decode(sessionInfo.data, roomserver.THeartBeatResult)
+                        // 	call(result)
+                        // })
+                    };
+                    /**
+                     * 发送房间匹配服心跳
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.sendMatcherHeartBeat = function (opInfo, call) {
+                    };
+                    RoomClient.prototype.sendHeartBeat = function (opInfo) {
+                        this.sendRoomHeartBeat(opInfo, function (result) {
+                            //fmt.Println("SendRoomHeartBeat:", result)
+                        });
+                        this.sendMatcherHeartBeat(opInfo, function (result) {
+                            //fmt.Println("SendMatcherHeartBeat:", result)
+                        });
+                    };
+                    /**
+                     * 维持心跳
+                     * @param opInfo
+                     */
+                    RoomClient.prototype.startHeartBeatProcess = function (opInfo) {
+                        var _this = this;
+                        var id;
+                        id = this.intervals.setInterval(function () {
+                            if (_this.stopHeartBeat) {
+                                clearInterval(id);
+                                return;
+                            }
+                            _this.sendHeartBeat(opInfo);
+                        }, 1e3);
+                    };
+                    /**
+                     * 停止心跳
+                     */
+                    RoomClient.prototype.stopHeartBeatProcess = function () {
+                        this.stopHeartBeat = true;
+                    };
+                    RoomClient.prototype._updateRoomInfo = function (roomInfo) {
+                        if (roomInfo) {
+                            this.cachedRoomInfo = mgobe.RoomProtoHelper.getRoomInfo(roomInfo);
+                        }
+                    };
+                    RoomClient.prototype.getLocalRoomInfo = function () {
+                        return this.cachedRoomInfo;
+                    };
+                    /**
+                     * 进入房间
+                     * @param roleInfo
+                     * @param roomInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.enterRoom = function (roleInfo, roomInfo, call) {
+                        var _this = this;
+                        this.roomClient.joinRoom({
+                            playerInfo: {
+                                name: roleInfo.basicInfo.roleName,
+                                customPlayerStatus: 1,
+                                customProfile: roleInfo.basicInfo.roleId,
+                            }
+                        }, function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            result.opInfo = mgobe.RoomProtoHelper.getOpInfo(roleInfo, evt.data.roomInfo);
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 退出房间
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.exitRoom = function (opInfo, call) {
+                        var _this = this;
+                        this.roomClient.leaveRoom({}, function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            result.opInfo = mgobe.RoomProtoHelper.cloneOpInfo(opInfo);
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 强制销毁房间
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.destoryRoomForce = function (opInfo, call) {
+                        this.roomClient.dismissRoom({}, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(opInfo, evt);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 进入准备状态
+                     * - 所有玩家进入准备状态之后，即可开始游戏
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.prepareStartGame = function (opInfo, call) {
+                        var result = new fsync.roomserver.TRespStartGameResult();
+                        result.opInfo = mgobe.RoomProtoHelper.cloneOpInfo(opInfo);
+                        result.indicate = new fsync.roomserver.TResultIndicate();
+                        result.indicate.ok = true;
+                        result.indicate.err = new fsync.roomserver.TErrorInfo();
+                        result.indicate.err.code = MGOBE.ErrCode.EC_OK;
+                        result.indicate.err.message = "";
+                        result.indicate.err.reason = "";
+                        result.frameSyncInitConfig = {
+                            randomSeed: 1,
+                        };
+                        call(result);
+                        this.roomEvent.emit(TRoomMsgEnum.prepareready, result);
+                        this.roomEvent.emit(TRoomMsgEnum.startgame, result);
+                    };
+                    RoomClient.prototype.initFrameMsgListener = function () {
+                        var _this = this;
+                        this.roomClient.onRecvFrame = function (evt) {
+                            var frame = evt.data.frame;
+                            // const dt = Math.random() * 500 + 500
+                            // setTimeout(() => {
+                            frame.items.forEach(function (item, index) {
+                                var result = mgobe.RoomProtoHelper.getFrameInfo(frame, item);
+                                _this.frameEvent.emit(TRoomMsgEnum.framemsg, result);
+                            });
+                            // }, dt)
+                        };
+                    };
+                    /**
+                     * 监听帧同步广播
+                     * @param call
+                     */
+                    RoomClient.prototype.listenFrameSyncBroadCast = function (call) {
+                        this.frameEvent.on(TRoomMsgEnum.framemsg, call);
+                    };
+                    RoomClient.prototype.offFrameSyncBroadCast = function (call) {
+                        this.frameEvent.off(TRoomMsgEnum.framemsg, call);
+                    };
+                    /**
+                     * 广播房间消息
+                     * @param reqData
+                     * @param call
+                     */
+                    RoomClient.prototype.broadCastRoomMessage = function (reqData, call) {
+                        this.roomClient.sendToClient({
+                            msg: reqData.msgStr,
+                            recvPlayerList: reqData.targets.map(function (target) { return target.roleId; }),
+                            recvType: MGOBE.types.RecvType.ROOM_SOME,
+                        }, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(reqData.opInfo, evt);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 广播帧同步消息
+                     * @param reqData
+                     * @param call
+                     */
+                    RoomClient.prototype.broadCastFrameSyncMessage = function (reqData, call) {
+                        // e表示经过压缩, d表示未经压缩
+                        // 实际是否经过zip
+                        var isCompressed = false;
+                        // zip后的数据
+                        var zstr;
+                        // 经观察, 大小小于40的数据很少能压缩
+                        var needCompress = reqData.msgBytes.byteLength > 40;
+                        if (needCompress) {
+                            var zdata = pako.deflateRaw(reqData.msgBytes);
+                            isCompressed = zdata.byteLength < reqData.msgBytes.byteLength;
+                            if (isCompressed) {
+                                zstr = "e" + base91.encode(zdata);
+                            }
+                            // console.log("compressedMSG:", zdata.byteLength, reqData.msgBytes.byteLength)
+                        }
+                        if (!isCompressed) {
+                            zstr = "d" + base91.encode(reqData.msgBytes);
+                        }
+                        this.roomClient.sendFrame({
+                            data: {
+                                m: zstr,
+                            },
+                        }, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(reqData.opInfo, evt);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 请求补帧
+                     */
+                    RoomClient.prototype.requestFrameSyncMessages = function (opInfo, paras, call) {
+                        var _this = this;
+                        this.roomClient.requestFrame({
+                            beginFrameId: paras.beginFrame,
+                            endFrameId: paras.endFrame,
+                        }, function (evt) {
+                            var result = new fsync.roomserver.TReqFrameRecordsResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            result.opInfo = mgobe.RoomProtoHelper.cloneOpInfo(opInfo);
+                            result.messages = [];
+                            if (result.indicate.ok) {
+                                evt.data.frames.forEach(function (frame) {
+                                    frame.items.forEach(function (item) {
+                                        result.messages.push(mgobe.RoomProtoHelper.getFrameInfo(frame, item));
+                                    });
+                                });
+                            }
+                            call(result);
+                            result.messages.forEach(function (message) {
+                                _this.frameEvent.emit(TRoomMsgEnum.framemsg, message);
+                            });
+                        });
+                    };
+                    RoomClient.prototype.initRoomClientMsgListener = function () {
+                        var _this = this;
+                        this.roomClient.onRecvFromClient = function (evt) {
+                            var result = new fsync.roomserver.TReqBroadCastClientMessage();
+                            var info = evt.data;
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = info.sendPlayerId;
+                            result.opInfo.roleId = "";
+                            result.opInfo.roomId = info.roomId;
+                            result.msgStr = info.msg;
+                            _this.roomEvent.emit(TRoomMsgEnum.roommsg, result);
+                        };
+                    };
+                    /**
+                     * 监听房间内广播消息
+                     * @param call
+                     */
+                    RoomClient.prototype.listenRoomBroadCast = function (call) {
+                        this.roomEvent.on(TRoomMsgEnum.roommsg, function (result) {
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 监听成员离开房间
+                     * @param call
+                     */
+                    RoomClient.prototype.listenExitRoom = function (call) {
+                        var _this = this;
+                        this.roomClient.onLeaveRoom = this.roomClient.onLeaveRoom || (function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = evt.data.leavePlayerId;
+                            result.opInfo.roleId = "";
+                            result.opInfo.roomId = evt.data.roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.leaveroom, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.leaveroom, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听成员进入房间
+                     * @param call
+                     */
+                    RoomClient.prototype.listenEnterRoom = function (call) {
+                        var _this = this;
+                        this.roomClient.onJoinRoom = this.roomClient.onJoinRoom || (function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = evt.data.joinPlayerId;
+                            result.opInfo.roleId = mgobe.RoomProtoHelper.getLocalPlayerIdInRoom(evt.data.roomInfo, evt.data.joinPlayerId);
+                            result.opInfo.roomId = evt.data.roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.enterroom, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.enterroom, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听成员设置房间
+                     * @param call
+                     */
+                    RoomClient.prototype.listenSetRoomInfo = function (call) {
+                        var _this = this;
+                        this.roomClient.onChangeRoom = this.roomClient.onChangeRoom || (function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = evt.data.roomInfo.owner;
+                            result.opInfo.roleId = mgobe.RoomProtoHelper.getLocalPlayerIdInRoom(evt.data.roomInfo, evt.data.roomInfo.owner);
+                            result.opInfo.roomId = evt.data.roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.changeroom, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.changeroom, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听成员进入准备状态
+                     * @param call
+                     */
+                    RoomClient.prototype.listenPrepareStartGame = function (call) {
+                        this.roomEvent.on(TRoomMsgEnum.prepareready, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听游戏开始
+                     * @param call
+                     */
+                    RoomClient.prototype.listenStartGame = function (call) {
+                        this.roomEvent.on(TRoomMsgEnum.startgame, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听同步游戏记录
+                     * @param call
+                     */
+                    RoomClient.prototype.listenFetchGameOpRecords = function (call) {
+                        throw new Error("not implemented.");
+                    };
+                    /**
+                     * 房间销毁
+                     * @param call
+                     */
+                    RoomClient.prototype.listenDestoryRoom = function (call) {
+                        var _this = this;
+                        this.roomClient.onDismissRoom = this.roomClient.onDismissRoom || (function (evt) {
+                            var roomInfo = evt.data.roomInfo;
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = roomInfo.owner;
+                            result.opInfo.roleId = mgobe.RoomProtoHelper.getLocalPlayerIdInRoom(roomInfo, roomInfo.owner);
+                            result.opInfo.roomId = roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.detoryroom, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.detoryroom, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 验证房间
+                     * @param call
+                     */
+                    RoomClient.prototype.validateRoom = function (opInfo, call) {
+                        var result = mgobe.RoomProtoHelper.getOkNormalResult(opInfo);
+                        call(result);
+                    };
+                    /**
+                     * 设置房间信息
+                     * @param call
+                     */
+                    RoomClient.prototype.setRoomInfo = function (opInfo, roomInfo, call) {
+                        var _this = this;
+                        this.roomClient.changeRoom({
+                            roomName: roomInfo.name,
+                            isForbidJoin: roomInfo.isForbidJoin,
+                            isPrivate: roomInfo.isPrivate,
+                            owner: roomInfo.ownerId,
+                        }, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(opInfo, evt);
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 放逐成员（未实现）
+                     * @param call
+                     */
+                    RoomClient.prototype.banishMember = function (opInfo, roles, call) {
+                        var _this = this;
+                        this.roomClient.removePlayer({
+                            removePlayerId: roles[0],
+                        }, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(opInfo, evt);
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 获取房间信息（未实现）
+                     * @param call
+                     */
+                    RoomClient.prototype.getRoomInfo = function (opInfo, call) {
+                        var _this = this;
+                        this.roomClient.getRoomDetail(function (evt) {
+                            var result = new fsync.roomserver.TGetRoomInfoResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt);
+                            result.opInfo = mgobe.RoomProtoHelper.cloneOpInfo(opInfo);
+                            var roomInfoRaw = evt.data.roomInfo;
+                            if (roomInfoRaw) {
+                                result.opInfo.roomId = roomInfoRaw.id;
+                                if (result.indicate.ok) {
+                                    result.roomModel = mgobe.RoomProtoHelper.getRoomInfo(roomInfoRaw);
+                                }
+                            }
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 获取游戏操作记录（未实现）
+                     * @param call
+                     */
+                    RoomClient.prototype.fetchGameOpRecords = function (opInfo, call) {
+                        throw new Error("not implemented.");
+                    };
+                    /**
+                     * 监听成员网络状态变化
+                     * @param call
+                     */
+                    RoomClient.prototype.listenChangedMemberNetworkState = function (call) {
+                        var _this = this;
+                        this.roomClient.onChangePlayerNetworkState = this.roomClient.onChangePlayerNetworkState || (function (evt) {
+                            var info = evt.data;
+                            var result = new fsync.roomserver.TChangeMemberNetworkStateResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = info.changePlayerId;
+                            result.opInfo.roleId = mgobe.RoomProtoHelper.getLocalPlayerIdInRoom(info.roomInfo, info.changePlayerId);
+                            result.opInfo.roomId = info.roomInfo.id;
+                            result.networkInfo = new fsync.roomserver.TRoleNetworkInfo();
+                            result.networkInfo.roomNetworkState = info.networkState;
+                            result.networkInfo.relayNetworkState = info.networkState;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.changedmembernetowrk, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.changedmembernetowrk, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 监听玩家信息变化
+                     * @param call
+                     */
+                    RoomClient.prototype.listenChangeCustomPlayerStatus = function (call) {
+                        throw new Error("not implemented: 暂时没啥用,不实现.");
+                    };
+                    /**
+                     * 开始帧同步
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.startFrameSync = function (opInfo, call) {
+                        this.roomClient.startFrameSync({}, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(opInfo, evt);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 停止帧同步
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.stopFrameSync = function (opInfo, call) {
+                        this.roomClient.stopFrameSync({}, function (evt) {
+                            var result = mgobe.RoomProtoHelper.getNormalResult(opInfo, evt);
+                            call(result);
+                        });
+                    };
+                    /**
+                     * 开始帧同步广播回调接口
+                     * @param call
+                     */
+                    RoomClient.prototype.onStartFrameSync = function (call) {
+                        var _this = this;
+                        this.roomClient.onStartFrameSync = this.roomClient.onStartFrameSync || (function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = "";
+                            result.opInfo.roleId = "";
+                            result.opInfo.roomId = evt.data.roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.startframesync, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.startframesync, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 停止帧同步广播回调接口
+                     */
+                    RoomClient.prototype.onStopFrameSync = function (call) {
+                        var _this = this;
+                        this.roomClient.onStopFrameSync = this.roomClient.onStopFrameSync || (function (evt) {
+                            var result = new fsync.roomserver.TNormalResult();
+                            result.indicate = mgobe.RoomProtoHelper.getOkIndicate();
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.opInfo.serverRoleId = "";
+                            result.opInfo.roleId = "";
+                            result.opInfo.roomId = evt.data.roomInfo.id;
+                            _this._updateRoomInfo(evt.data.roomInfo);
+                            _this.roomEvent.emit(TRoomMsgEnum.stopframesync, result);
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.stopframesync, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 自动补帧失败回调接口
+                     */
+                    RoomClient.prototype.onAutoRequestFrameError = function (call) {
+                        var _this = this;
+                        this.roomClient.onAutoRequestFrameError = this.roomClient.onAutoRequestFrameError || (function (evt) {
+                            var result = new fsync.roomserver.TReqFrameRecordsResult();
+                            result.indicate = mgobe.RoomProtoHelper.getIndicate(evt.data);
+                            result.opInfo = new fsync.roomserver.TRoomUserOpInfo();
+                            result.messages = [];
+                            if (result.indicate.ok) {
+                                var framesData = evt.data.data;
+                                if (framesData) {
+                                    framesData.frames.forEach(function (frame) {
+                                        result.opInfo.roomId = frame.roomId;
+                                        frame.items.forEach(function (item) {
+                                            result.messages.push(mgobe.RoomProtoHelper.getFrameInfo(frame, item));
+                                        });
+                                    });
+                                }
+                            }
+                            call(result);
+                            result.messages.forEach(function (message) {
+                                _this.frameEvent.emit(TRoomMsgEnum.framemsg, message);
+                            });
+                        });
+                        this.roomEvent.on(TRoomMsgEnum.stopframesync, function (evt) {
+                            call(evt);
+                        });
+                    };
+                    /**
+                     * 重试自动补帧
+                     * @param opInfo
+                     * @param call
+                     */
+                    RoomClient.prototype.retryAutoRequestFrame = function (opInfo, call) {
+                        this.roomClient.retryAutoRequestFrame();
+                        var result = mgobe.RoomProtoHelper.getOkNormalResult(opInfo);
+                        call(result);
+                    };
+                    // setPerformRecordContainer(performer: PerformRecordContainer) {
+                    // this.MatcherClient.SetPerformRecordContainer(performer)
+                    // this.RoomClient.SetPerformRecordContainer(performer)
+                    // }
+                    RoomClient.isNetworkInited = false;
+                    return RoomClient;
+                }());
+                mgobe.RoomClient = RoomClient;
+            })(mgobe = roomclient.mgobe || (roomclient.mgobe = {}));
+        })(roomclient = network.roomclient || (network.roomclient = {}));
+    })(network = fsync.network || (fsync.network = {}));
+})(fsync || (fsync = {}));
+var fsync;
+(function (fsync) {
+    var network;
+    (function (network) {
+        var roomclient;
+        (function (roomclient) {
+            var glee;
+            (function (glee) {
+                var v1;
+                (function (v1) {
+                    var RoomClient = /** @class */ (function () {
+                        function RoomClient() {
+                        }
+                        RoomClient.prototype.getLocalRoomInfo = function () {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.offFrameSyncBroadCast = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.connectAsync = function (info, call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.requestFrameSyncMessages = function (opInfo, paras, call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.listenDestoryRoom = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.listenChangedMemberNetworkState = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.listenChangeCustomPlayerStatus = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.startFrameSync = function (opInfo, call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.stopFrameSync = function (opInfo, call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.onStartFrameSync = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.onStopFrameSync = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.onAutoRequestFrameError = function (call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.retryAutoRequestFrame = function (opInfo, call) {
+                            throw new Error("Method not implemented.");
+                        };
+                        RoomClient.prototype.init = function () {
+                            this.stopHeartBeat = false;
+                            this.matcherClient = new fsync.PBClient().init(fsync.ClientFactory.createClient("websocket"));
+                            this.roomClient = new fsync.PBClient().init(fsync.ClientFactory.createClient("websocket"));
+                            var onClose = function () {
+                                console.warn("client disconnected");
+                            };
+                            this.matcherClient.onclose = onClose;
+                            this.roomClient.onclose = onClose;
+                            return this;
+                        };
+                        RoomClient.prototype.setProto = function (proto) {
+                            this.proto = proto;
+                            this.matcherClient.proto = proto;
+                            this.roomClient.proto = proto;
+                        };
+                        // setPerformRecordContainer(performer: PerformRecordContainer) {
+                        // this.MatcherClient.SetPerformRecordContainer(performer)
+                        // this.RoomClient.SetPerformRecordContainer(performer)
+                        // }
+                        RoomClient.prototype.close = function () {
+                            this.matcherClient.close();
+                            this.roomClient.close();
+                        };
+                        /**
+                         * 更新 protobuf 协议文件
+                         * - 如果客户端版本较新，则服务器只返回服务器上协议版本号
+                         * - 如果客户端版本较旧，则服务器返回新协议文件内容
+                         * @param info
+                         * @param call
+                         */
+                        RoomClient.prototype.checkoutProto = function (info, call) {
+                            var _this = this;
+                            var reqData = {
+                                protoVersion: info.clientProtoVersion,
+                                force: false,
+                            };
+                            this.matcherClient.SendReqPB(fsync.ReqId.BasicCheckoutProto, reqData, fsync.roomserver.TReqDownloadProto, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TDownloadProtoResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 通过房间匹配服匹配房间
+                         * @param roleInfo
+                         * @param roomInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.matchRoom = function (roleInfo, roomInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: {
+                                    roleId: roleInfo.basicInfo.roleId,
+                                    roomId: roomInfo.basicInfo.roomId,
+                                },
+                                roleInfo: roleInfo,
+                                roomInfo: roomInfo,
+                            };
+                            this.matcherClient.SendReqPB(fsync.ReqId.RoomMatchUsersWithDefaultRule, reqData, fsync.roomserver.TReqMatchUsersWithDefaultRule, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TMatchJobResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 通过ID搜索房间
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.searchRoomById = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.matcherClient.SendReqPB(fsync.ReqId.RoomSearchRoomById, reqData, fsync.roomserver.TReqSearchRoomById, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TQueryRoomsResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 发送房间服心跳
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.sendRoomHeartBeat = function (opInfo, call) {
+                            var _this = this;
+                            if (!this.roomClient.isConnected) {
+                                return;
+                            }
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.BasicHeartBeat, reqData, fsync.roomserver.TReqHeartBeat, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.THeartBeatResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 发送房间匹配服心跳
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.sendMatcherHeartBeat = function (opInfo, call) {
+                            var _this = this;
+                            if (!this.matcherClient.isConnected) {
+                                return;
+                            }
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.matcherClient.SendReqPB(fsync.ReqId.BasicHeartBeat, reqData, fsync.roomserver.TReqHeartBeat, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.THeartBeatResult);
+                                call(result);
+                            });
+                        };
+                        RoomClient.prototype.sendHeartBeat = function (opInfo) {
+                            this.sendRoomHeartBeat(opInfo, function (result) {
+                                //fmt.Println("SendRoomHeartBeat:", result)
+                            });
+                            this.sendMatcherHeartBeat(opInfo, function (result) {
+                                //fmt.Println("SendMatcherHeartBeat:", result)
+                            });
+                        };
+                        /**
+                         * 维持心跳
+                         * @param opInfo
+                         */
+                        RoomClient.prototype.startHeartBeatProcess = function (opInfo) {
+                            var _this = this;
+                            var id;
+                            id = this.intervals.setInterval(function () {
+                                if (_this.stopHeartBeat) {
+                                    clearInterval(id);
+                                    return;
+                                }
+                                _this.sendHeartBeat(opInfo);
+                            }, 1e3);
+                        };
+                        /**
+                         * 停止心跳
+                         */
+                        RoomClient.prototype.stopHeartBeatProcess = function () {
+                            this.stopHeartBeat = true;
+                        };
+                        /**
+                         * 进入房间
+                         * @param roleInfo
+                         * @param roomInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.enterRoom = function (roleInfo, roomInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: {
+                                    roleId: roleInfo.basicInfo.roleId,
+                                    roomId: roomInfo.basicInfo.roomId,
+                                },
+                                roleInfo: roleInfo,
+                                roomInfo: roomInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomEnterRoom, reqData, fsync.roomserver.TReqEnterRoom, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 退出房间
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.exitRoom = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomExitRoom, reqData, fsync.roomserver.TReqExitRoom, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 强制销毁房间
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.destoryRoomForce = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomDestroyRoomForce, reqData, fsync.roomserver.TReqDestroyRoomForce, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 进入准备状态
+                         * - 所有玩家进入准备状态之后，即可开始游戏
+                         * @param opInfo
+                         * @param call
+                         */
+                        RoomClient.prototype.prepareStartGame = function (opInfo, call) {
+                            var _this = this;
+                            //fmt.Println("PrepareStartGame", opInfo)
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomPrepareRoomStartGame, reqData, fsync.roomserver.TReqStartGame, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TRespStartGameResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 广播房间消息
+                         * @param reqData
+                         * @param call
+                         */
+                        RoomClient.prototype.broadCastRoomMessage = function (reqData, call) {
+                            var _this = this;
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomBroadCastClientMessage, reqData, fsync.roomserver.TReqBroadCastClientMessage, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 广播帧同步消息
+                         * @param reqData
+                         * @param call
+                         */
+                        RoomClient.prototype.broadCastFrameSyncMessage = function (reqData, call) {
+                            var _this = this;
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomFrameSync, reqData, fsync.roomserver.TReqBroadCastFrameSyncReq, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听帧同步广播
+                         * @param call
+                         */
+                        RoomClient.prototype.listenFrameSyncBroadCast = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.RespId.RoomNotifyFrameSync, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TReqBroadCastFrameSyncReq);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听房间内广播消息
+                         * @param call
+                         */
+                        RoomClient.prototype.listenRoomBroadCast = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.RespId.RoomNotifyClientMessage, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TReqBroadCastClientMessage);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听成员离开房间
+                         * @param call
+                         */
+                        RoomClient.prototype.listenExitRoom = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomExitRoom), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听成员进入房间
+                         * @param call
+                         */
+                        RoomClient.prototype.listenEnterRoom = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomEnterRoom), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听成员设置房间
+                         * @param call
+                         */
+                        RoomClient.prototype.listenSetRoomInfo = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomSetRoomInfo), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听成员进入准备状态
+                         * @param call
+                         */
+                        RoomClient.prototype.listenPrepareStartGame = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomPrepareRoomStartGame), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听游戏开始
+                         * @param call
+                         */
+                        RoomClient.prototype.listenStartGame = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomStartGame), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TRespStartGameResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 监听同步游戏记录
+                         * @param call
+                         */
+                        RoomClient.prototype.listenFetchGameOpRecords = function (call) {
+                            var _this = this;
+                            this.roomClient.SubEvent(fsync.toRespId(fsync.ReqId.RoomFetchGameOpRecords), function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TFetchGameOpRecordsResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 验证房间
+                         * @param call
+                         */
+                        RoomClient.prototype.validateRoom = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomIsRoomValid, reqData, fsync.roomserver.TReqValidateRoom, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 设置房间信息
+                         * @param call
+                         */
+                        RoomClient.prototype.setRoomInfo = function (opInfo, roomInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                                roomInfo: roomInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomSetRoomInfo, reqData, fsync.roomserver.TReqSetRoomInfo, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 放逐成员（未实现）
+                         * @param call
+                         * @deprecated
+                         */
+                        RoomClient.prototype.banishMember = function (opInfo, roles, call) {
+                            var _this = this;
+                            var roles2 = roles.map(function (v) { return "" + v; });
+                            var reqData = {
+                                opInfo: opInfo,
+                                roles: roles2,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomBanishMember, reqData, fsync.roomserver.TReqBanishMember, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TNormalResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 获取房间信息（未实现）
+                         * @param call
+                         */
+                        RoomClient.prototype.getRoomInfo = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomGetRoomInfo, reqData, fsync.roomserver.TReqGetRoomInfo, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TGetRoomInfoResult);
+                                call(result);
+                            });
+                        };
+                        /**
+                         * 获取游戏操作记录（未实现）
+                         * @param call
+                         */
+                        RoomClient.prototype.fetchGameOpRecords = function (opInfo, call) {
+                            var _this = this;
+                            var reqData = {
+                                opInfo: opInfo,
+                            };
+                            this.roomClient.SendReqPB(fsync.ReqId.RoomFetchGameOpRecords, reqData, fsync.roomserver.TReqFetchGameOpRecords, function (sessionInfo) {
+                                var result = _this.proto.decode(sessionInfo.data, fsync.roomserver.TFetchGameOpRecordsResult);
+                                call(result);
+                            });
+                        };
+                        return RoomClient;
+                    }());
+                    v1.RoomClient = RoomClient;
+                })(v1 = glee.v1 || (glee.v1 = {}));
+            })(glee = roomclient.glee || (roomclient.glee = {}));
+        })(roomclient = network.roomclient || (network.roomclient = {}));
+    })(network = fsync.network || (fsync.network = {}));
 })(fsync || (fsync = {}));
 var fsync;
 (function (fsync) {

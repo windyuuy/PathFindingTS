@@ -32,7 +32,7 @@
         return sum;
     })
     define("pushList", function(array) {
-        this.push.apply(this, array)
+        this.push(...array)
         return this;
     })
     define("unpack", function() {
@@ -44,8 +44,17 @@
         }
         return a;
     })
-    define("find", function(callback) {
-        return this.where(callback).single
+    define("find", function(callback, thisArg) {
+        for (var i = 1; i < this.length; i++) {
+            var e = callback(this[i], i, this)
+            if (typeof(e) == "undefined") {
+                e = thisArg
+            }
+            if (!!e) {
+                return this[i]
+            }
+        }
+        return undefined
     })
     define("clear", function() {
         return this.length = 0
