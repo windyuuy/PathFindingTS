@@ -27,7 +27,7 @@
         "__id__": 12
       },
       {
-        "__id__": 37
+        "__id__": 42
       }
     ],
     "_active": true,
@@ -35,7 +35,7 @@
     "_prefab": null,
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 39
+      "__id__": 44
     },
     "_id": "ea92b794-e3d2-44bc-aa3b-529d1507d0bc"
   },
@@ -131,7 +131,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": -6.402,
-      "y": 49.39,
+      "y": 35.594,
       "z": 112.654
     },
     "_lrot": {
@@ -375,6 +375,9 @@
       },
       {
         "__id__": 32
+      },
+      {
+        "__id__": 37
       }
     ],
     "_active": true,
@@ -796,7 +799,7 @@
     "node": {
       "__id__": 27
     },
-    "_enabled": false,
+    "_enabled": true,
     "__prefab": {
       "__id__": 29
     },
@@ -917,7 +920,7 @@
     "node": {
       "__id__": 32
     },
-    "_enabled": false,
+    "_enabled": true,
     "__prefab": {
       "__id__": 34
     },
@@ -987,6 +990,127 @@
   },
   {
     "__type__": "cc.Node",
+    "_name": "Cube-003",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 12
+    },
+    "_children": [],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 38
+      },
+      {
+        "__id__": 41
+      }
+    ],
+    "_prefab": null,
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "x": 19.088,
+      "y": 1,
+      "z": 22.196
+    },
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "x": 11,
+      "y": 4,
+      "z": 11
+    },
+    "_layer": 1073741824,
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": "faTCIJKRVER48d6jC4c7G2"
+  },
+  {
+    "__type__": "cc.MeshRenderer",
+    "_name": "Cube<ModelComponent>",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 37
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 39
+    },
+    "_materials": [
+      {
+        "__uuid__": "e50c79dc-2c3e-4794-8ad6-54331594d8f1",
+        "__expectedType__": "cc.Material"
+      }
+    ],
+    "_visFlags": 0,
+    "lightmapSettings": {
+      "__id__": 40
+    },
+    "_mesh": {
+      "__uuid__": "1263d74c-8167-4928-91a6-4e2672411f47@a804a",
+      "__expectedType__": "cc.Mesh"
+    },
+    "_shadowCastingMode": 0,
+    "_shadowReceivingMode": 1,
+    "_enableMorph": true,
+    "_id": "909kZJyjNBjKegshz8a6HS"
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "e8DOT5UJ1F/ZgplWYyCxRs"
+  },
+  {
+    "__type__": "cc.ModelLightmapSettings",
+    "texture": null,
+    "uvParam": {
+      "__type__": "cc.Vec4",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 0
+    },
+    "_bakeable": false,
+    "_castShadow": false,
+    "_receiveShadow": false,
+    "_recieveShadow": false,
+    "_lightmapSize": 64
+  },
+  {
+    "__type__": "cc.BoxCollider",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 37
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_material": null,
+    "_isTrigger": false,
+    "_center": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_size": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_id": "d00J2+rXpA3qvgrJ1nMYtx"
+  },
+  {
+    "__type__": "cc.Node",
     "_name": "Test",
     "_objFlags": 0,
     "_parent": {
@@ -996,7 +1120,7 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 38
+        "__id__": 43
       }
     ],
     "_prefab": null,
@@ -1033,7 +1157,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 37
+      "__id__": 42
     },
     "_enabled": true,
     "__prefab": null,
@@ -1042,16 +1166,16 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 40
+      "__id__": 45
     },
     "shadows": {
-      "__id__": 41
+      "__id__": 46
     },
     "_skybox": {
-      "__id__": 42
+      "__id__": 47
     },
     "fog": {
-      "__id__": 43
+      "__id__": 48
     }
   },
   {
