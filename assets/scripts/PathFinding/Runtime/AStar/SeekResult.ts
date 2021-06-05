@@ -19,6 +19,7 @@ export class SeekResult {
 
 	public graphNodes: cc.Node[] = []
 	public drawBatchId: number = 0
+	public static drawBatchIdAcc: number = 0
 
 	get graphic() {
 		return AstarPath.active.graphic
@@ -28,10 +29,10 @@ export class SeekResult {
 		return AstarPath.active.graphicRoot
 	}
 
-	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number, up: cc.Vec3, options: PathFinderDebugDrawOptions) {
+	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number, up: cc.Vec3,
+		options: PathFinderDebugDrawOptions, drawBatchId: number) {
 		// start.y = 0
 		// end.y = 0
-		var drawBatchId = this.drawBatchId
 		var scale = lineWidth
 		var upOffset = options.upOffset
 		MyNodePool.load("PathHint", (node, err) => {
@@ -94,21 +95,24 @@ export class SeekResult {
 			return
 		}
 
-		this.drawBatchId++
+		this.drawBatchId = (++SeekResult.drawBatchIdAcc)
+		let drawBatchId = this.drawBatchId
 
-		var up = this.graph.up
-		if (this.vectorPath.length >= 2) {
-			var first = this.vectorPath[0]
-			for (var i = 1; i < this.vectorPath.length; i++) {
-				var next = this.vectorPath[i]
-				this.setCylinder(i - 1, first.clone(), next.clone(), lineWidth, up, options)
-				first = next
+		setTimeout(() => {
+			var up = this.graph.up
+			if (this.vectorPath.length >= 2) {
+				var first = this.vectorPath[0]
+				for (var i = 1; i < this.vectorPath.length; i++) {
+					var next = this.vectorPath[i]
+					this.setCylinder(i - 1, first.clone(), next.clone(), lineWidth, up, options, drawBatchId)
+					first = next
+				}
 			}
-		}
+		}, 1)
 	}
 
 	clearDebug() {
-		this.drawBatchId++
+		this.drawBatchId = -1
 		for (let node of this.graphNodes) {
 			MyNodePool.put(node)
 		}

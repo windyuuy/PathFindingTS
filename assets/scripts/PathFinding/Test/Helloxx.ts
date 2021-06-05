@@ -13,7 +13,7 @@ const { ccclass, property } = _decorator;
 export class Helloxx extends Component {
     start() {
         (async () => {
-            await WaitForSeconds(1);
+            await WaitForSeconds(0.1);
             var pathFinder = find("Nav")!.getComponent(PathFinder)!
             console.log("init")
             pathFinder.init()
@@ -35,15 +35,24 @@ export class Helloxx extends Component {
                 // new TestCase(new Vec3(0, 0, 0), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, -10)),
                 // new TestCase(new Vec3(10, 0, 10), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(10, 0, 10), new Vec3(10, 0, -10)),
+                // new TestCase(new Vec3(10, 0, 10), new Vec3(-10, 0, 10)),
+                // new TestCase(new Vec3(10, 0, 10), new Vec3(10, 0, 10)),
                 // new TestCase(new Vec3(-10, 0, -10), new Vec3(-10, 0, -10)),
-                // new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(-10, 0, -10), new Vec3(10, 0, 10)),
+                // new TestCase(new Vec3(-10, 0, -10), new Vec3(-10, 0, 10)),
+                // new TestCase(new Vec3(-10, 0, -10), new Vec3(10, 0, -10)),
                 // new TestCase(new Vec3(40, 0, 4), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(4, 0, 4), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(4, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(0, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(40, 0, 0), new Vec3(-10, 0, -10)),
-                new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 15)),
-                new TestCase(new Vec3(4, 0, 4), new Vec3(10, 0, 15)),
+                // new TestCase(new Vec3(0, 0, 0), new Vec3(10, 0, 15)),
+                // new TestCase(new Vec3(4, 0, 4), new Vec3(10, 0, 15)),
+                // new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -10)),
+                // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -60)),
+                new TestCase(new Vec3(60, 0, 60), new Vec3(-60, 0, -10)),
             ]
             for (var c of poses) {
                 var result = await seek.startPath(c.start, c.end, (path) => {

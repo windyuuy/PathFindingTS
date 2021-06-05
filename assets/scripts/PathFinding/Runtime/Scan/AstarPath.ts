@@ -10,6 +10,28 @@ export class AstarPath {
 	public static readonly active: AstarPath = new AstarPath();
 	readonly workItems: WorkItemProcessor = new WorkItemProcessor();
 
+	/// <summary>
+	/// Maximum distance to search for nodes.
+	/// When searching for the nearest node to a point, this is the limit (in world units) for how far away it is allowed to be.
+	///
+	/// This is relevant if you try to request a path to a point that cannot be reached and it thus has to search for
+	/// the closest node to that point which can be reached (which might be far away). If it cannot find a node within this distance
+	/// then the path will fail.
+	///
+	/// [Open online documentation to see images]
+	///
+	/// See: Pathfinding.NNConstraint.constrainDistance
+	/// </summary>
+	public maxNearestNodeDistance: number = 100;
+
+	/// <summary>
+	/// Max Nearest Node Distance Squared.
+	/// See: <see cref="maxNearestNodeDistance"/>
+	/// </summary>
+	public get maxNearestNodeDistanceSqr(): number {
+		return this.maxNearestNodeDistance * this.maxNearestNodeDistance;
+	}
+
 	protected _AddWorkItem(item: AstarWorkItem) {
 		this.workItems.AddWorkItem(item);
 	}

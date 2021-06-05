@@ -31,6 +31,7 @@ export class Seeker extends Component {
 
 		if (this.result != null) {
 			this.result.clearDebug()
+			this.result = undefined
 		}
 
 		var result = AstarPath.active.seeker.StartPath(start, end, call)

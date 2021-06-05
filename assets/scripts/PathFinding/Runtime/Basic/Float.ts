@@ -1,6 +1,8 @@
 
 export class Float {
-	static Clamp(i: number, min: number, max: number): number {
+	public static PositiveInfinity: number = Number.POSITIVE_INFINITY
+	public static NegativeInfinity: number = Number.NEGATIVE_INFINITY
+	public static Clamp(i: number, min: number, max: number): number {
 		if (i < min) {
 			return min;
 		}

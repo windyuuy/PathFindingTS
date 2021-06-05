@@ -29,6 +29,7 @@ export class GridNode extends ANode {
 
 	Penalty: number = 0
 	Tag: number = 0
+	Area!: number
 
 	Walkable: boolean = false
 	WalkableErosion: boolean = false
