@@ -197,7 +197,9 @@ export class PathFinderOptions {
 	})
 	heuristic: Heuristic = Heuristic.Euclidean
 
-	@property
+	@property({
+		displayName: "权重",
+	})
 	heuristicScale: number = 1
 
 	@property
