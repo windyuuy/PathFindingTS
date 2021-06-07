@@ -7,15 +7,15 @@ import { GridNode } from "./GridNode";
 import { Int3 } from "./Int3";
 import { AstarPath } from "./AstarPath";
 import { ANode } from "../AStar/AStarLib/core/node";
-import { Vector } from "../Basic/Vector";
+import { Vector, Vector3 } from "../Basic/Vector";
 import * as cc from "cc"
 import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
 import { MyNodePool } from "../Basic/NodePool/MyNodePool";
 import { NNConstraint, NNInfoInternal } from "./NNInfo/astarclasses";
-import { Action, float, GraphNode, Vector3 } from "./CompatDef";
+import { Action, float, GraphNode } from "./CompatDef";
 
 export class GridGraph {
-
+	// Diagonals normally cost sqrt(2) (approx 1.41) times more
 	constructor() {
 		this._index = GridGraph._indexAcc++
 		AstarPath.active.graphs.push(this);
@@ -470,6 +470,39 @@ export class GridGraph {
 		}
 	}
 
+	/// <summary>
+	/// Calculates the grid connections for a cell as well as its neighbours.
+	/// This is a useful utility function if you want to modify the walkability of a single node in the graph.
+	///
+	/// <code>
+	/// AstarPath.active.AddWorkItem(ctx => {
+	///     var grid = AstarPath.active.data.gridGraph;
+	///     int x = 5;
+	///     int z = 7;
+	///
+	///     // Mark a single node as unwalkable
+	///     grid.GetNode(x, z).Walkable = false;
+	///
+	///     // Recalculate the connections for that node as well as its neighbours
+	///     grid.CalculateConnectionsForCellAndNeighbours(x, z);
+	/// });
+	/// </code>
+	/// </summary>
+	CalculateConnectionsForCellAndNeighbours(x: number, z: number) {
+		this.CalculateConnections(x, z);
+		for (let i = 0; i < 8; i++) {
+			let nx: number = x + this.neighbourXOffsets[i];
+			let nz: number = z + this.neighbourZOffsets[i];
+
+			// Check if the new position is inside the grid
+			// Bitwise AND (&) is measurably faster than &&
+			// (not much, but this code is hot)
+			if (nx >= 0 && nz >= 0 && nx < this.width && nz < this.depth) {
+				this.CalculateConnections(nx, nz);
+			}
+		}
+	}
+
 	public SetDimensions(width: number, depth: number, nodeSize: number) {
 		this.unclampedSize = new Vec2(width, depth).multiplyScalar(nodeSize);
 		this.nodeSize = nodeSize;
@@ -565,10 +598,11 @@ export class GridGraph {
 	}
 
 	// TODO: 需要结合终点改进索引顺序
-	public findClosestSuitableNode(nearList: GridNode[], position: Vec3, end: Vec3, constraint?: NNConstraint, calcTh?: (start: Vec3, end2: Vec3) => number): GridNode | null {
+	public findClosestSuitableNode(nearList: GridNode[], position: Vec3, end?: Vec3, constraint?: NNConstraint, calcTh?: (start: Vec3, end2: Vec3) => number): GridNode | null {
 		constraint = constraint ?? NNConstraint.SharedNone
 
 		if (calcTh == null) {
+			if (end != null) {
 			var offset = end.clone().subtract(position).normalize()
 			var offsetStart = new Vec3()
 			calcTh = (start: Vec3, end2: Vec3) => {
@@ -578,6 +612,11 @@ export class GridGraph {
 				offsetStart.normalize()
 				var th = offset.dot(offsetStart)
 				return th
+			}
+			} else {
+				calcTh = (start: Vec3, end2: Vec3) => {
+					return -10
+				}
 			}
 		}
 
@@ -618,7 +657,7 @@ export class GridGraph {
 		return nearNode
 	}
 
-	public GetNearestNode(position: Vec3, end: Vec3, constraint?: NNConstraint): GridNode | null {
+	public GetNearestNode(position: Vec3, end?: Vec3, constraint?: NNConstraint): GridNode | null {
 		constraint = constraint ?? NNConstraint.SharedNone
 
 		var gpos = this.WorldPointToGraph(position)
@@ -632,15 +671,20 @@ export class GridGraph {
 			nearList.push(nodes[index])
 		}
 
+		let calcTh = (start: Vec3, end2: Vec3) => {
+			return -10
+		}
+		if (end != null) {
 		var offset = end.clone().subtract(position).normalize()
 		var offsetStart = new Vec3()
-		const calcTh = (start: Vec3, end2: Vec3) => {
+			calcTh = (start: Vec3, end2: Vec3) => {
 			offsetStart.x = end2.x - start.x
 			offsetStart.y = end2.y - start.y
 			offsetStart.z = end2.z - start.z
 			offsetStart.normalize()
 			var th = offset.dot(offsetStart)
 			return th
+		}
 		}
 
 		var node = nodes[index]

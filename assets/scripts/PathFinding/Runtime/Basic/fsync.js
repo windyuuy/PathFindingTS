@@ -292,6 +292,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -4200,6 +4202,74 @@ var fsync;
     }());
     fsync.Intervals = Intervals;
 })(fsync || (fsync = {}));
+(function () {
+    var p = Array.prototype;
+    function define(name, func) {
+        if (p[name] != null) {
+            return;
+        }
+        try {
+            Object.defineProperty(p, name, {
+                value: func,
+                enumerable: false
+            });
+        }
+        catch (e) {
+        }
+    }
+    define("remove", function (value) {
+        var index = this.indexOf(value);
+        if (index != -1) {
+            this.splice(index, 1);
+        }
+        return this;
+    });
+    define("sum", function (callback) {
+        var sum = 0;
+        for (var i = 0; i < this.length; i++) {
+            var element = this[i];
+            var value = callback(element);
+            sum += value;
+        }
+        return sum;
+    });
+    define("pushList", function (array) {
+        this.push.apply(this, array);
+        return this;
+    });
+    define("unpack", function () {
+        if (this[0] instanceof Array == false)
+            return this;
+        var a = this[0];
+        for (var i = 1; i < this.length; i++) {
+            a = a.concat(this[i]);
+        }
+        return a;
+    });
+    define("find", function (callback, thisArg) {
+        for (var i = 1; i < this.length; i++) {
+            var e = callback(this[i], i, this);
+            if (typeof (e) == "undefined") {
+                e = thisArg;
+            }
+            if (!!e) {
+                return this[i];
+            }
+        }
+        return undefined;
+    });
+    define("clear", function () {
+        return this.length = 0;
+    });
+    define("contains", function (e) {
+        return this.indexOf(e) != -1;
+    });
+    define("copyTo", function (e, start) {
+        for (var i = 0; i < this.length; i++) {
+            e[start + i] = this[i];
+        }
+    });
+})();
 var fsync;
 (function (fsync) {
     /**
@@ -4932,12 +5002,10 @@ var fsync;
         eds.DataQuery = DataQuery;
     })(eds = fsync.eds || (fsync.eds = {}));
 })(fsync || (fsync = {}));
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 var fsync;
 (function (fsync) {
@@ -5050,7 +5118,7 @@ var fsync;
                         else {
                             if (data instanceof Array) {
                                 // 仅简单支持基础类型数组复制
-                                copy[key] = __spreadArrays(data);
+                                copy[key] = __spreadArray([], data);
                             }
                             else {
                                 throw new Error("unsupport data type to clone");
@@ -5175,7 +5243,7 @@ var fsync;
             else {
                 if (data instanceof Array) {
                     // 仅简单支持基础类型数组复制
-                    return __spreadArrays(data);
+                    return __spreadArray([], data);
                 }
                 else {
                     throw new Error("unsupport data type to clone");
@@ -5245,7 +5313,7 @@ var fsync;
                 else {
                     if (data instanceof Array) {
                         // 仅简单支持基础类型数组复制
-                        copy[key] = __spreadArrays(data);
+                        copy[key] = __spreadArray([], data);
                     }
                     else {
                         throw new Error("unsupport data type to clone");
@@ -5861,7 +5929,7 @@ var fsync;
             var entityManager = this.entityManager;
             entityManager.entityContainer.forEachEntities(this.componentTypes, this.withoutComponentTypes, function (entity) {
                 var comps = _this.componentTypes.map(function (t) { return entityManager.getComponentByType(entity, t); });
-                call.apply(void 0, __spreadArrays([entity], comps));
+                call.apply(void 0, __spreadArray([entity], comps));
             });
             return this;
         };
@@ -10265,7 +10333,7 @@ var lang;
                 // if (this.time) {
                 //     args.push(new Date().getTime())
                 // }
-                console.log.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+                console.log.apply(console, __spreadArray([' -', this.getTagsStamp()], args));
             };
             /**
              * 将消息打印到控制台，并储至日志文件
@@ -10281,7 +10349,7 @@ var lang;
                 // if (this.time) {
                 //     args.push(new Date().getTime())
                 // }
-                console.warn.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+                console.warn.apply(console, __spreadArray([' -', this.getTagsStamp()], args));
             };
             /**
              * 将消息打印到控制台，并储至日志文件
@@ -10297,7 +10365,7 @@ var lang;
                 // if (this.time) {
                 //     args.push(new Date().getTime())
                 // }
-                console.error.apply(console, __spreadArrays([' -', this.getTagsStamp()], args));
+                console.error.apply(console, __spreadArray([' -', this.getTagsStamp()], args));
                 for (var _a = 0, args_2 = args; _a < args_2.length; _a++) {
                     var p = args_2[_a];
                     if (p instanceof Error) {
@@ -12350,6 +12418,7 @@ var fsync;
                         this.roomClient.sendFrame({
                             data: {
                                 m: zstr,
+                                // opInfo: reqData.opInfo,
                             },
                         }, function (evt) {
                             var result = mgobe.RoomProtoHelper.getNormalResult(reqData.opInfo, evt);

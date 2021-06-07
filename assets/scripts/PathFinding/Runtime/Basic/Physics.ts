@@ -1,7 +1,9 @@
 import { geometry, PhysicsRayResult, PhysicsSystem, Vec3 } from "cc";
+import { bool, int, TSVector } from "../Scan/CompatDef";
 import { BuiltinSharedBody } from "./BuiltinShapeBody";
 
 export type RaycastHit = PhysicsRayResult
+export const RaycastHit = PhysicsRayResult
 
 //
 // 摘要:
@@ -29,8 +31,8 @@ export class Physics {
 	public static Raycast(origin: Vec3, direction: Vec3, outs: { hitInfo: RaycastHit }, maxDistance: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
 		var ray = new geometry.Ray();
 		// geometry.Ray.fromPoints(ray, origin, direction);
-		ray.o = origin
-		ray.d = direction
+		ray.o = origin.clone()
+		ray.d = direction.clone()
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, queryTriggerInteraction != QueryTriggerInteraction.Ignore)
 		if (ret) {
 			var result = PhysicsSystem.instance.raycastClosestResult
@@ -64,7 +66,19 @@ export class Physics {
 
 	}
 
-	public static CheckSphere(position: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
+	public static CheckSphere(position: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
 		return true;
+	}
+
+	public static Linecast(start: TSVector, end: TSVector, layerMask: int): bool {
+		var direction = end.clone().subtract(start)
+		var maxDistance = direction.length()
+		direction.normalize()
+
+		var ray = new geometry.Ray();
+		ray.o = start.clone()
+		ray.d = direction.clone()
+		var ret = this.RaycastRaw(ray, layerMask, maxDistance, false)
+		return ret
 	}
 }

@@ -24,6 +24,28 @@ export class GridNode extends ANode {
 		this.nodeIndex = GridNode.genIndex()
 	}
 
+
+	/// <summary>
+	/// X coordinate of the node in the grid.
+	/// The node in the bottom left corner has (x,z) = (0,0) and the one in the opposite
+	/// corner has (x,z) = (width-1, depth-1)
+	/// See: ZCoordInGrid
+	/// See: NodeInGridIndex
+	/// </summary>
+	get XCoordinateInGrid(): number {
+		return this.ipos.x
+	}
+	/// <summary>
+	/// Z coordinate of the node in the grid.
+	/// The node in the bottom left corner has (x,z) = (0,0) and the one in the opposite
+	/// corner has (x,z) = (width-1, depth-1)
+	/// See: XCoordInGrid
+	/// See: NodeInGridIndex
+	/// </summary>
+	get ZCoordinateInGrid(): number {
+		return this.ipos.y
+	}
+
 	protected static _indexAcc = 0
 	protected static genIndex() {
 		return this._indexAcc++;

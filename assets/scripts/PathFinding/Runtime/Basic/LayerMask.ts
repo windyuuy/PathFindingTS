@@ -1,6 +1,7 @@
 
 import * as cc from "cc"
 import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
+import { int } from "../Scan/CompatDef";
 import { IS_CC_EDITOR } from "./Macro";
 const { ccclass, property } = _decorator;
 
@@ -82,4 +83,16 @@ export class LayerMask {
 		}
 		return null
 	}
+
+	public static GetMask(...layerNames: string[]): int {
+		var mask = 0
+		for (let name of layerNames) {
+			let code = this.nameToLayer(name)
+			mask |= code
+		}
+
+		return mask
+	}
+
+
 }

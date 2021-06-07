@@ -318,18 +318,20 @@ export class NNInfoInternal {
 	public constrainedNode?: GraphNode;
 
 	/// <summary>The position clamped to the closest point on the <see cref="node"/>.</summary>
-	public clampedPosition!: Vector3;
+	public clampedPosition: Vector3 = new Vector3();
 
 	/// <summary>Clamped position for the optional constrainedNode</summary>
-	public constClampedPosition!: Vector3;
+	public constClampedPosition: Vector3 = new Vector3();
 
-	public constructor(node: GraphNode) {
+	public constructor(node?: GraphNode) {
+		if (node != null) {
 		this.node = node;
 		this.constrainedNode = undefined;
 		this.clampedPosition = Vector3.ZERO.clone();
 		this.constClampedPosition = Vector3.ZERO.clone();
 
 		this.UpdateInfo();
+	}
 	}
 
 	/// <summary>Updates <see cref="clampedPosition"/> and <see cref="constClampedPosition"/> from node positions</summary>
@@ -356,7 +358,8 @@ export class NNInfo {
 	/// </summary>
 	public readonly position: Vector3 = new Vector3();
 
-	public constructor(internalInfo: NNInfoInternal | NNInfo) {
+	public constructor(internalInfo?: NNInfoInternal | NNInfo) {
+		if (internalInfo != null) {
 		if (internalInfo instanceof NNInfoInternal) {
 			this.node = internalInfo.node;
 			this.position = internalInfo.clampedPosition;
@@ -364,6 +367,7 @@ export class NNInfo {
 			this.node = internalInfo.node;
 			this.position = internalInfo.position;
 		}
+	}
 	}
 
 	public static asVec3(ob: NNInfo) {

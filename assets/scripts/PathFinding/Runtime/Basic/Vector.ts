@@ -1,4 +1,5 @@
-import { Vec3 } from "cc";
+import { Mat4, Quat, Vec3 } from "cc";
+import { FP } from "../Scan/CompatDef";
 
 export class Vector {
 	public static distance(start: Vec3, end: Vec3) {
@@ -6,5 +7,46 @@ export class Vector {
 	}
 	public static distanceSQ(start: Vec3, end: Vec3) {
 		return start.clone().subtract(end).lengthSqr()
+	}
+}
+
+const sharedVec3 = new Vec3()
+const sharedMat4 = new Mat4()
+const sharedQuat = new Quat()
+export class Vector3 extends Vec3 {
+	static RotateTowards(out: Vec3, forward: Vec3, pos: Vec3, arg2: number, arg3: number): Vec3 {
+		out.x = forward.x
+		out.y = forward.y
+		out.z = forward.z
+		return out
+	}
+	// static RotateTowards(forward: Vec3, pos: Vec3, maxRadiansDelta: FP, maxMagnitudeDelta: FP): Vec3 {
+	// 	let axis = forward.clone()
+	// 	axis.normalize()
+	// 	var axism = new Vec3(axis.z, axis.x, axis.y);
+	// 	var axis1 = axis.clone().cross(axism)
+	// 	var axis2 = axis.clone().cross(axis1)
+	// 	Quat.fromAxes(sharedQuat, axis, axis1, axis2)
+	// }
+	public static rotate(out: Vec3, quat: Quaternion, vec3: Vec3) {
+		sharedMat4.fromQuat(quat)
+		this.transformMat4Normal(sharedVec3, vec3, sharedMat4)
+		out.x = sharedVec3.x
+		out.y = sharedVec3.y
+		out.z = sharedVec3.z
+
+		return out
+	}
+}
+
+export class Quaternion extends Quat {
+	public static AngleAxis(out: Quaternion, angle: FP, axis: Vector3) {
+		return Quaternion.fromAxisAngle(out, axis, angle)
+	}
+
+	public static RotateByAxis(out: Vector3, angle: FP, axis: Vector3, direct: Vector3): Vector3 {
+		this.AngleAxis(sharedQuat, angle, axis)
+		Vector3.rotate(out, sharedQuat, direct)
+		return out
 	}
 }
