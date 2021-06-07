@@ -333,7 +333,7 @@
     "thickRaycastDiameter": 1,
     "maxNearestNodeDistance": 100,
     "heuristic": 2,
-    "heuristicScale": 2,
+    "heuristicScale": 1,
     "penaltyAngle": false,
     "penaltyAngleFactor": 100,
     "penaltyAnglePower": 1,

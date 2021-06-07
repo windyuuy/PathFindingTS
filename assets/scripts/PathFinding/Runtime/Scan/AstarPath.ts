@@ -2,35 +2,27 @@ import { Graphics, Node } from "cc";
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AStarSeeker } from "../AStar/AStarSeeker";
 import { AstarWorkItem, TWorkItemInit, TWorkItemUpdater } from "./AstarWorkItem";
+import { GraphNode } from "./CompatDef";
 import { GridGraph } from "./GridGenerator";
+import { HierarchicalGraph } from "./HierarchicalGraph";
+import { PathProcessor } from "./PathProcessor";
 import { ProceduralGridMover } from "./ProceduralGridMover";
 import { WorkItemProcessor } from "./WorkItemProcessor";
 
 export class AstarPath {
-	public static readonly active: AstarPath = new AstarPath();
+	private static _active: AstarPath;
+	public static get active(): AstarPath {
+		if (this._active == null) {
+			this._active = new AstarPath();
+		}
+		return this._active;
+	}
+
+	public readonly hierarchicalGraph: HierarchicalGraph = new HierarchicalGraph();
+
 	readonly workItems: WorkItemProcessor = new WorkItemProcessor();
 
-	/// <summary>
-	/// Maximum distance to search for nodes.
-	/// When searching for the nearest node to a point, this is the limit (in world units) for how far away it is allowed to be.
-	///
-	/// This is relevant if you try to request a path to a point that cannot be reached and it thus has to search for
-	/// the closest node to that point which can be reached (which might be far away). If it cannot find a node within this distance
-	/// then the path will fail.
-	///
-	/// [Open online documentation to see images]
-	///
-	/// See: Pathfinding.NNConstraint.constrainDistance
-	/// </summary>
-	public maxNearestNodeDistance: number = 100;
-
-	/// <summary>
-	/// Max Nearest Node Distance Squared.
-	/// See: <see cref="maxNearestNodeDistance"/>
-	/// </summary>
-	public get maxNearestNodeDistanceSqr(): number {
-		return this.maxNearestNodeDistance * this.maxNearestNodeDistance;
-	}
+	protected pathProcessor: PathProcessor = new PathProcessor(this);
 
 	protected _AddWorkItem(item: AstarWorkItem) {
 		this.workItems.AddWorkItem(item);
@@ -61,6 +53,17 @@ export class AstarPath {
 			gridMovers.push(gridMover);
 		}
 	}
+
+	GetNodes(call: (node: any) => void) {
+		for (let i = 0; i < this.graphs.length; i++) {
+			if (this.graphs[i] != null) this.graphs[i].GetNodes(call);
+		}
+	}
+
+	public DestroyNode(node: GraphNode): void {
+		this.pathProcessor.DestroyNode(node);
+	}
+
 	/**
 	 * 扫描地图
 	 */

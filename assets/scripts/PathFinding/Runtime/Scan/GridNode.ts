@@ -11,6 +11,8 @@ type Vector3 = Vec3
 const Vector3 = Vec3
 type int = number
 type float = number
+type bool = boolean
+type uint = number
 
 export class GridNode extends ANode {
 	constructor(id: number, x: number, y: number) {
@@ -18,21 +20,187 @@ export class GridNode extends ANode {
 			id: id,
 			ipos: { x, y },
 		})
+
+		this.nodeIndex = GridNode.genIndex()
 	}
 
 	protected static _indexAcc = 0
-	public static genIndex() {
+	protected static genIndex() {
 		return this._indexAcc++;
+	}
+
+	public Destroy(): void {
+		if (this.Destroyed) return;
+
+		this.ClearConnections(true);
+
+		if (AstarPath.active != null) {
+			AstarPath.active.DestroyNode(this);
+		}
+		this.NodeIndex = this.DestroyedNodeIndex;
+	}
+
+	public get Destroyed(): bool {
+		return this.NodeIndex == this.DestroyedNodeIndex;
 	}
 
 	position: Int3 = new Int3()
 
-	Penalty: number = 0
+	protected penalty: uint = 0
+	/// <summary>
+	/// Penalty cost for walking on this node.
+	/// This can be used to make it harder/slower to walk over certain nodes.
+	/// A cost of 1000 (<see cref="Pathfinding.Int3.Precision"/>) corresponds to the cost of moving 1 world unit.
+	///
+	/// See: graph-updates (view in online documentation for working links)
+	/// </summary>
+	public get Penalty(): uint {
+		return this.penalty;
+	}
+	public set Penalty(value: uint) {
+		if (value > 0xFFFFFF) {
+			console.warn("Very high penalty applied. Are you sure negative values haven't underflowed?\n" +
+				"Penalty values this high could with long paths cause overflows and in some cases infinity loops because of that.\n" +
+				"Penalty value applied: " + value);
+		}
+		this.penalty = value;
+	}
+
 	Tag: number = 0
 	Area!: number
 
-	Walkable: boolean = false
-	WalkableErosion: boolean = false
+	// Walkable: boolean = false
+
+	protected flags: uint = 0;
+
+	// If anyone creates more than about 200 million nodes then things will not go so well, however at that point one will certainly have more pressing problems, such as having run out of RAM
+	readonly NodeIndexMask: int = 0xFFFFFFF;
+	readonly DestroyedNodeIndex: int = this.NodeIndexMask - 1;
+	readonly TemporaryFlag1Mask: int = 0x10000000;
+	readonly TemporaryFlag2Mask: int = 0x20000000;
+
+	private nodeIndex: int = 0;
+	public get NodeIndex(): int {
+		return this.nodeIndex & this.NodeIndexMask;
+	}
+	public set NodeIndex(value: int) {
+		this.nodeIndex = (this.nodeIndex & ~this.NodeIndexMask) | value;
+	}
+
+	// #region Constants
+	/// <summary>Position of the walkable bit. See: <see cref="Walkable"/></summary>
+	/**const */
+	public readonly FlagsWalkableOffset: int = 0;
+	/// <summary>Mask of the walkable bit. See: <see cref="Walkable"/></summary>
+	/**const */
+	public readonly FlagsWalkableMask: uint = 1 << this.FlagsWalkableOffset;
+
+	/// <summary>Start of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
+	/**const */
+	public readonly FlagsHierarchicalIndexOffset: int = 1;
+	/// <summary>Mask of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
+	/**const */
+	public readonly HierarchicalIndexMask: uint = (131072 - 1) << this.FlagsHierarchicalIndexOffset;
+
+	/// <summary>Start of <see cref="IsHierarchicalNodeDirty"/> bits. See: <see cref="IsHierarchicalNodeDirty"/></summary>
+	/**const */
+	public readonly HierarchicalDirtyOffset: int = 18;
+
+	/// <summary>Mask of the <see cref="IsHierarchicalNodeDirty"/> bit. See: <see cref="IsHierarchicalNodeDirty"/></summary>
+	/**const */
+	public readonly HierarchicalDirtyMask: uint = 1 << this.HierarchicalDirtyOffset;
+
+	/// <summary>Start of graph index bits. See: <see cref="GraphIndex"/></summary>
+	/**const */
+	public readonly FlagsGraphOffset: int = 24;
+	/// <summary>Mask of graph index bits. See: <see cref="GraphIndex"/></summary>
+	/**const */
+	public readonly FlagsGraphMask: uint = (256 - 1) << this.FlagsGraphOffset;
+
+	/**const */
+	public readonly MaxHierarchicalNodeIndex: uint = this.HierarchicalIndexMask >> this.FlagsHierarchicalIndexOffset;
+
+	/// <summary>Max number of graphs-1</summary>
+	/**const */
+	public readonly MaxGraphIndex: uint = this.FlagsGraphMask >> this.FlagsGraphOffset;
+
+	/// <summary>Start of tag bits. See: <see cref="Tag"/></summary>
+	/**const */
+	public readonly FlagsTagOffset: int = 19;
+	/// <summary>Mask of tag bits. See: <see cref="Tag"/></summary>
+	/**const */
+	public readonly FlagsTagMask: uint = (32 - 1) << this.FlagsTagOffset;
+
+	// #endregion
+
+	/// <summary>
+	/// Holds various bitpacked variables.
+	///
+	/// Bit 0: <see cref="Walkable"/>
+	/// Bits 1 through 17: <see cref="HierarchicalNodeIndex"/>
+	/// Bit 18: <see cref="IsHierarchicalNodeDirty"/>
+	/// Bits 19 through 23: <see cref="Tag"/>
+	/// Bits 24 through 31: <see cref="GraphIndex"/>
+	///
+	/// Warning: You should pretty much never modify this property directly. Use the other properties instead.
+	/// </summary>
+	public get Flags(): uint {
+		return this.flags;
+	}
+	public set Flags(value: uint) {
+		this.flags = value;
+	}
+
+	/// <summary>
+	/// True if the node is traversable.
+	///
+	/// See: graph-updates (view in online documentation for working links)
+	/// </summary>
+	public get Walkable(): bool {
+		return (this.flags & this.FlagsWalkableMask) != 0;
+	}
+	public set Walkable(value: bool) {
+		this.flags = this.flags & ~this.FlagsWalkableMask | (value ? 1 : 0) << this.FlagsWalkableOffset;
+		// AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
+	}
+
+	/// <summary>
+	/// Stores walkability before erosion is applied.
+	/// Used internally when updating the graph.
+	/// </summary>
+	public get WalkableErosion(): bool {
+		return (this.gridFlags & this.GridFlagsWalkableErosionMask) != 0;
+	}
+	public set WalkableErosion(value: bool) {
+		// unchecked
+		{
+			this.gridFlags = (this.gridFlags & ~this.GridFlagsWalkableErosionMask | (value ? this.GridFlagsWalkableErosionMask : 0));
+		}
+	}
+
+	/// <summary>
+	/// Hierarchical Node that contains this node.
+	/// The graph is divided into clusters of small hierarchical nodes in which there is a path from every node to every other node.
+	/// This structure is used to speed up connected component calculations which is used to quickly determine if a node is reachable from another node.
+	///
+	/// See: <see cref="Pathfinding.HierarchicalGraph"/>
+	///
+	/// Warning: This is an internal property and you should most likely not change it.
+	/// </summary>
+	get HierarchicalNodeIndex(): int {
+		return ((this.flags & this.HierarchicalIndexMask) >> this.FlagsHierarchicalIndexOffset);
+	}
+	set HierarchicalNodeIndex(value: int) {
+		this.flags = (this.flags & ~this.HierarchicalIndexMask) | (value << this.FlagsHierarchicalIndexOffset);
+	}
+
+	/// <summary>Some internal bookkeeping</summary>
+	public get IsHierarchicalNodeDirty(): bool {
+		return (this.flags & this.HierarchicalDirtyMask) != 0;
+	}
+	public set IsHierarchicalNodeDirty(value: bool) {
+		this.flags = this.flags & ~this.HierarchicalDirtyMask | (value ? 1 : 0) << this.HierarchicalDirtyOffset;
+	}
 
 	protected static hashCodeAcc: number = 1
 	protected hashCode: number = 0;
@@ -56,6 +224,14 @@ export class GridNode extends ANode {
 	public GetGridGraph(graphIndex: number): GridGraph {
 		return GridNode.GetGridGraph(graphIndex)
 	}
+
+	protected readonly GridFlagsWalkableErosionOffset: int = 8;
+	protected readonly GridFlagsWalkableErosionMask: int = 1 << this.GridFlagsWalkableErosionOffset;
+
+	protected readonly GridFlagsWalkableTmpOffset: int = 9;
+	protected readonly GridFlagsWalkableTmpMask: int = 1 << this.GridFlagsWalkableTmpOffset;
+
+	protected readonly NodeInGridIndexLayerOffset: int = 24;
 
 	protected static NodeInGridIndexMask = 0xFFFFFF;
 	protected get NodeInGridIndexMask() {

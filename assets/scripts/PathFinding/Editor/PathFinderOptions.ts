@@ -4,6 +4,21 @@ import { LayerMask } from "../Runtime/Basic/LayerMask";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
 
+/// <summary>Number of threads to use</summary>
+export enum ThreadCount {
+	AutomaticLowLoad = -1,
+	AutomaticHighLoad = -2,
+	None = 0,
+	One = 1,
+	Two,
+	Three,
+	Four,
+	Five,
+	Six,
+	Seven,
+	Eight
+}
+
 /**
  * 图类型
  */
@@ -188,6 +203,12 @@ export class PathFinderOptions {
 
 	@property
 	thickRaycastDiameter: number = 1
+
+	@property({
+		visible: false,
+		type: Enum(ThreadCount),
+	})
+	threadCount: ThreadCount = ThreadCount.One
 
 	@property
 	maxNearestNodeDistance: number = 100

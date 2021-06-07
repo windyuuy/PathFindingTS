@@ -8,11 +8,6 @@ import { GridNode } from "./GridNode";
 import { NNConstraint, NNInfoInternal } from "./NNInfo/astarclasses";
 type Vector3 = Vec3;
 const Vector3 = Vec3;
-type GraphNode = GridNode
-type int = number
-type long = number
-type float = number
-type Action<T> = (p: T) => void
 
 export class GraphCollision {
 	width: number = 40
@@ -191,64 +186,5 @@ export class GraphCollision {
 		return position;
 	}
 
-
-	public GetNodes(action: Action<GraphNode>) {
-
-	}
-
-	/// <summary>Returns the nearest node to a position using the specified NNConstraint.</summary>
-	/// <param name="position">The position to try to find a close node to</param>
-	/// <param name="hint">Can be passed to enable some graph generators to find the nearest node faster.</param>
-	/// <param name="constraint">Can for example tell the function to try to return a walkable node. If you do not get a good node back, consider calling GetNearestForce.</param>
-	public GetNearest(position: Vector3, constraint?: NNConstraint, hint?: GraphNode): NNInfoInternal {
-		position = position.clone()
-		// This is a default implementation and it is pretty slow
-		// Graphs usually override this to provide faster and more specialised implementations
-
-		var maxDistSqr: number = constraint == null || constraint.constrainDistance ? AstarPath.active.maxNearestNodeDistanceSqr : Float.PositiveInfinity;
-
-		var minDist: number = Float.PositiveInfinity;
-		var minNode!: GraphNode
-
-		var minConstDist: number = Float.PositiveInfinity;
-		var minConstNode!: GraphNode
-
-		// Loop through all nodes and find the closest suitable node
-		this.GetNodes((node) => {
-			var dist: float = (position.clone().subtract(node.position.asVec3())).lengthSqr();
-			var dist: float = (position.clone().subtract(node.position.asVec3())).lengthSqr();
-
-			if (dist < minDist) {
-				minDist = dist;
-				minNode = node;
-			}
-
-			if (dist < minConstDist && dist < maxDistSqr && (constraint == null || constraint.Suitable(node))) {
-				minConstDist = dist;
-				minConstNode = node;
-			}
-		});
-
-		var nnInfo = new NNInfoInternal(minNode);
-
-		nnInfo.constrainedNode = minConstNode;
-
-		if (minConstNode != null) {
-			nnInfo.constClampedPosition = minConstNode.position.asVec3();
-		} else if (minNode != null) {
-			nnInfo.constrainedNode = minNode;
-			nnInfo.constClampedPosition = minNode.position.asVec3();
-		}
-
-		return nnInfo;
-	}
-
-	/// <summary>
-	/// Returns the nearest node to a position using the specified \link Pathfinding.NNConstraint constraint \endlink.
-	/// Returns: an NNInfo. This method will only return an empty NNInfo if there are no nodes which comply with the specified constraint.
-	/// </summary>
-	public GetNearestForce(position: Vector3, constraint: NNConstraint): NNInfoInternal {
-		return this.GetNearest(position, constraint);
-	}
 
 }

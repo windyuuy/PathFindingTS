@@ -26,4 +26,17 @@ interface Array<T> {
 	 * 清空元素, 容量清零
 	 */
 	clear(): void
+
+	/**
+	 * 判断是否包含元素
+	 * @param item 
+	 */
+	contains<T>(item: T): boolean;
+
+	/**
+	 * 复制元素
+	 * @param array 
+	 * @param index 
+	 */
+	copyTo(array: T[], index: number): void;
 }

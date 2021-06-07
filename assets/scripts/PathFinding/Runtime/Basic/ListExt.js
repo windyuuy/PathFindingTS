@@ -59,4 +59,12 @@
     define("clear", function() {
         return this.length = 0
     })
+    define("contains", function(e) {
+        return this.indexOf(e) != -1
+    })
+    define("copyTo", function(e, start) {
+        for (var i = 0; i < this.length; i++) {
+            e[start + i] = this[i]
+        }
+    })
 })();
