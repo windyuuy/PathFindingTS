@@ -75,7 +75,7 @@ export class SeekResult {
 
 			var rot = new cc.Quat()
 			axis.normalize()
-			var axism = new cc.Vec3(axis.z, axis.y, axis.x);
+			var axism = new cc.Vec3(axis.z, axis.x, axis.y);
 			var axis1 = axis.clone().cross(axism)
 			var axis2 = axis.clone().cross(axis1)
 			// cc.Quat.fromViewUp(rot, axis, axis1)

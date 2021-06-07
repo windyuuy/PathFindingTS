@@ -23,6 +23,8 @@ export class Seeker extends Component {
 
 	result?: SeekResult
 
+	pathCallback?: OnPathDelegate
+
 	public async startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): Promise<SeekResult> {
 		var task = AstarPath.active.awaitScanGraphTask
 		if (task != null) {
@@ -34,7 +36,10 @@ export class Seeker extends Component {
 			this.result = undefined
 		}
 
-		var result = AstarPath.active.seeker.StartPath(start, end, call)
+		var result = AstarPath.active.seeker.StartPath(start, end, (path) => {
+			this.pathCallback ?? (path)
+			call ?? (path)
+		})
 		if (this.needDrawDebug) {
 			result?.drawDebug(this.lineWidth)
 		}
