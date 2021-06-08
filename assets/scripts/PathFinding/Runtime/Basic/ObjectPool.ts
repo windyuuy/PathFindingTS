@@ -58,7 +58,7 @@ class ObjectPool<T>{
 	protected releaseTimerId: any
 	protected obtainOnceList: T[] = []
 
-	protected enableRecord: boolean = true
+	protected enableRecord: boolean = false
 	tempNow(): T {
 		var ret = this.obtain();
 		(ret as any)["__$tmp"] = true;
