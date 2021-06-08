@@ -1,4 +1,5 @@
 import { Vec3 } from "cc";
+import { int3Pool, vec3Pool } from "../Basic/ObjectPool";
 
 
 export class Int3 {
@@ -23,15 +24,38 @@ export class Int3 {
 	public static PrecisionFactor: number = 0.001;
 
 	public static fromVec3(ob: Vec3): Int3 {
-		var int3 = new Int3()
+		// var int3 = new Int3()
+		var int3 = int3Pool.tempNow()
 		int3.x = Math.round(ob.x * Int3.FloatPrecision)
 		int3.y = Math.round(ob.y * Int3.FloatPrecision)
 		int3.z = Math.round(ob.z * Int3.FloatPrecision)
 		return int3
 	}
 
+	public reset(): Int3 {
+		this.x = 0
+		this.y = 0
+		this.z = 0
+		return this
+	}
+
+	public set(ob: Int3): Int3 {
+		this.x = ob.x
+		this.y = ob.y
+		this.z = ob.z
+		return this
+	}
+
+	public setVec3(ob: Vec3): Int3 {
+		this.x = Math.round(ob.x * Int3.FloatPrecision)
+		this.y = Math.round(ob.y * Int3.FloatPrecision)
+		this.z = Math.round(ob.z * Int3.FloatPrecision)
+		return this
+	}
+
 	public asVec3() {
-		var vec3 = new Vec3()
+		// var vec3 = new Vec3()
+		var vec3 = vec3Pool.tempNow()
 		vec3.x = this.x * Int3.PrecisionFactor
 		vec3.y = this.y * Int3.PrecisionFactor
 		vec3.z = this.z * Int3.PrecisionFactor
@@ -58,5 +82,10 @@ export class Int3 {
 		vec.y = this.y
 		vec.z = this.z
 		return vec
+	}
+
+	recycle() {
+		this.reset()
+		int3Pool.recycle(this)
 	}
 }

@@ -1,6 +1,7 @@
 import { Vec3 } from "cc";
 import { ANode } from "../AStar/AStarLib/core/node";
 import { Float } from "../Basic/Float";
+import { vec3Pool, withVec3 } from "../Basic/ObjectPool";
 import { AstarPath } from "./AstarPath";
 import { Connection } from "./Connection";
 import { GridGraph } from "./GridGenerator";
@@ -426,23 +427,27 @@ export class GridNode extends ANode {
 		// #endif
 	}
 
-	public ClosestPointOnNode(p: Vector3): Vector3 {
-		var gg = this.GetGridGraph(this.GraphIndex);
+	public ClosestPointOnNode(out: Vec3, p0: Vec3): Vector3 {
+		return withVec3((cv1, cv2) => {
+			var gg = this.GetGridGraph(this.GraphIndex);
 
-		// Convert to graph space
-		p = gg.transform.InverseTransform(p);
+			// Convert to graph space
+			let p = gg.transform.InverseTransform(cv1, p0);
 
-		// Calculate graph position of this node
-		var x: int = this.NodeInGridIndex % gg.width;
-		var z: int = this.NodeInGridIndex / gg.width;
+			// Calculate graph position of this node
+			var x: int = this.NodeInGridIndex % gg.width;
+			var z: int = this.NodeInGridIndex / gg.width;
 
-		// Handle the y coordinate separately
-		var y: float = gg.transform.InverseTransform(this.position.asVec3()).y;
+			// Handle the y coordinate separately
+			var nodePos = this.position.asVec3()
+			var y: float = withVec3(cv1 => gg.transform.InverseTransform(cv1, nodePos).y);
+			nodePos.recycle()
 
-		var closestInGraphSpace = new Vector3(Float.Clamp(p.x, x, x + 1), y, Float.Clamp(p.z, z, z + 1));
+			var closestInGraphSpace = cv2.set(Float.Clamp(p.x, x, x + 1), y, Float.Clamp(p.z, z, z + 1));
 
-		// Convert to world space
-		return gg.transform.Transform(closestInGraphSpace);
+			// Convert to world space
+			return gg.transform.Transform(out, closestInGraphSpace);
+		})
 	}
 
 	get id() {

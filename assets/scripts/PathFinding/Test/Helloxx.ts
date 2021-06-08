@@ -18,9 +18,11 @@ export class Helloxx extends Component {
             console.log("init")
             pathFinder.init()
             console.log("scanGraph")
-            // pathFinder.scanGraph()
             // await pathFinder.scanGraphAsync()
-            pathFinder.scanGraphAsync()
+            // pathFinder.scanGraphAsync()
+            pathFinder.scanGraph()
+            // this.node.position = new Vec3(1, 1, 1)
+            // pathFinder.scanGraph()
             AstarPath.active.AddWorkItem(() => {
                 console.log("work item done")
             })

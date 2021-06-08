@@ -28,10 +28,10 @@ export class Transform {
 		this.node.scale = value
 	}
 
-	public Transform(point: Vec3 | Readonly<Vec3>): Vec3 {
-		var ret = point.clone();
-		ret.transformMat4(this.node.matrix);
-		return ret;
+	public Transform(out: Vec3, point: Vec3 | Readonly<Vec3>): Vec3 {
+		out.set(point)
+		out.transformMat4(this.node.matrix);
+		return out;
 	}
 
 }

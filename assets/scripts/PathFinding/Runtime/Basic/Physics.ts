@@ -23,16 +23,18 @@ export enum QueryTriggerInteraction {
 	Collide = 2
 }
 
+const sharedRay = new geometry.Ray()
+const sharedVec3 = new Vec3()
 export class Physics {
 	public static RaycastRaw(worldRay: geometry.Ray, mask?: number, maxDistance?: number, queryTrigger?: boolean): boolean {
 		return PhysicsSystem.instance.raycastClosest(worldRay, mask, maxDistance, queryTrigger);
 	}
 
 	public static Raycast(origin: Vec3, direction: Vec3, outs: { hitInfo: RaycastHit }, maxDistance: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
-		var ray = new geometry.Ray();
+		var ray = sharedRay
 		// geometry.Ray.fromPoints(ray, origin, direction);
-		ray.o = origin.clone()
-		ray.d = direction.clone()
+		ray.o.set(origin)
+		ray.d.set(direction)
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, queryTriggerInteraction != QueryTriggerInteraction.Ignore)
 		if (ret) {
 			var result = PhysicsSystem.instance.raycastClosestResult
@@ -71,13 +73,13 @@ export class Physics {
 	}
 
 	public static Linecast(start: TSVector, end: TSVector, layerMask: int): bool {
-		var direction = end.clone().subtract(start)
+		var direction = sharedVec3.set(end).subtract(start)
 		var maxDistance = direction.length()
 		direction.normalize()
 
-		var ray = new geometry.Ray();
-		ray.o = start.clone()
-		ray.d = direction.clone()
+		var ray = sharedRay
+		ray.o.set(start)
+		ray.d.set(direction)
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, false)
 		return ret
 	}

@@ -58,7 +58,7 @@ export class GraphSeeker {
 		if (start.equals(end)) {
 			var result = this.createSeekResult()
 			result.isOk = true
-			result.vectorPath = [start.clone()]
+			result.vectorPath = [start.alloc()]
 			return result
 		}
 
@@ -106,7 +106,7 @@ export class GraphSeeker {
 			// var node = this.graph.nodes[index]
 			var node = grid.getNodeAt({ x: pn[0], y: pn[1] })
 			result.nodes.push(node)
-			result.vectorPathRaw.push(node.position.asVec3())
+			result.vectorPathRaw.push(node.position.asVec3().alloc())
 		}
 		result.vectorPath = result.vectorPathRaw.slice()
 		// 处理起点终点不在网格中心的细节

@@ -7,9 +7,6 @@ export class GraphTransform {
 		this.matrix = m;
 		Mat4.invert(this.inverseMatrix, this.matrix)
 
-		// var upM = new Mat4()
-		// var up = Vec3.UP.clone().transformMat4(m)
-		// this.up = .normalize()
 		Matrix4.MultiplyVector(this.up, m, Vec3.UP);
 	}
 
@@ -18,27 +15,26 @@ export class GraphTransform {
 	matrix: Mat4 = new Mat4()
 	inverseMatrix: Mat4 = new Mat4()
 
-	public Transform(point: Vec3 | Readonly<Vec3>): Vec3 {
-		var ret = point.clone();
-		ret.transformMat4(this.matrix);
-		return ret;
+	public Transform(out: Vec3, point: Vec3 | Readonly<Vec3>): Vec3 {
+		out.set(point)
+		out.transformMat4(this.matrix);
+		return out;
 	}
 
 	up: Vec3 = new Vec3();
 	public WorldUpAtGraphPosition(point: Vec3): Vec3 {
-		return this.up.clone();
+		return this.up.tempClone()
 	}
 
-	public InverseTransform(point: Vec3): Vec3 {
-		var ret = point.clone();
-		ret.transformMat4(this.inverseMatrix);
-		return ret;
+	public InverseTransform(out: Vec3, point: Vec3): Vec3 {
+		out.set(point)
+		out.transformMat4(this.inverseMatrix);
+		return out;
 	}
 
-	public TransformVector(point: Vec3): Vec3 {
-		var ret = new Vec3()
-		Matrix4.MultiplyVector(ret, this.matrix, point);
-		return ret;
+	public TransformVector(out: Vec3, point: Vec3): Vec3 {
+		Matrix4.MultiplyVector(out, this.matrix, point);
+		return out;
 	}
 
 }

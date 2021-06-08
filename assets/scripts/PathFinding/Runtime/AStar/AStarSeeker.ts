@@ -1,5 +1,6 @@
 import { Vec3 } from "cc";
 import { Heuristic } from "../../Editor/PathFinderOptions";
+import { MyProfiler } from "../Basic/Profiler";
 import { AstarPath } from "../Scan/AstarPath";
 import { GridGraph } from "../Scan/GridGenerator";
 import { AStarFinder } from "./AStarLib/astar";
@@ -26,6 +27,13 @@ export class AStarSeeker {
 	}
 
 	public StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult {
+		MyProfiler.BeginSample("StartPath")
+		let ret = this._StartPath(start, end, call)
+		MyProfiler.EndSample()
+		MyProfiler.TypeCurCost()
+		return ret
+	}
+	protected _StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult {
 		for (var seek of this.graphSeekers) {
 			let result = seek.StartPath(start, end)
 			if (result.isOk) {

@@ -9,6 +9,7 @@ import { GridNode } from "./GridNode";
 import { IntRect } from "./IntRect";
 import { Int2 } from "./Int2";
 import { WaitNull, WaitForSeconds } from "../Basic/WaitForSeconds";
+import { vec3Pool, withVec3 } from "../Basic/ObjectPool";
 
 export class ProceduralGridMover {
 
@@ -61,7 +62,7 @@ export class ProceduralGridMover {
 	PointToGraphSpace(p: Vec3): Vec3 {
 		// Multiply with the inverse matrix of the graph
 		// to get the point in graph space
-		return this.graph.transform.InverseTransform(p);
+		return this.graph.transform.InverseTransform(vec3Pool.tempNow(), p);
 	}
 
 	public target!: Transform;
@@ -100,7 +101,7 @@ export class ProceduralGridMover {
 		var offset = new Int2(-Math.round(dir.x), -Math.round(dir.z));
 
 		// Move the center (this is in world units, so we need to convert it back from graph space)
-		this.graph.center.add(this.graph.transform.TransformVector(dir));
+		withVec3(cv1 => this.graph.center.add(this.graph.transform.TransformVector(cv1, dir)));
 		this.graph.UpdateTransform();
 
 		// Cache some variables for easier access

@@ -13,6 +13,11 @@ import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOpti
 import { MyNodePool } from "../Basic/NodePool/MyNodePool";
 import { NNConstraint, NNInfoInternal } from "./NNInfo/astarclasses";
 import { Action, float, GraphNode } from "./CompatDef";
+import { mat4Pool, quatPool, vec3Pool, withMat4, withVec3 } from "../Basic/ObjectPool";
+
+var sharedQuat = new Quat();
+var sharedMat4 = new Mat4()
+var sharedVec = new Vec3()
 
 export class GridGraph {
 	// Diagonals normally cost sqrt(2) (approx 1.41) times more
@@ -75,7 +80,7 @@ export class GridGraph {
 		return Math.abs(90 - this.maxSlope) > Float.Epsilon;
 	}
 
-	public center: Vec3 = Vec3.ZERO.clone()
+	public center: Vec3 = Vec3.ZERO.alloc()
 
 	unclampedSize: Vec2 = new Vec2(10, 10)
 	nodeSize: number = 1
@@ -257,11 +262,11 @@ export class GridGraph {
 	/// if it is at the specified height above the base of the graph.
 	/// </summary>
 	public GraphPointToWorld(x: number, z: number, height: number): Int3 {
-		return Int3.fromVec3(this.transform.Transform(new Vec3(x + 0.5, height, z + 0.5)))
+		return withVec3((out, pos) => Int3.fromVec3(this.transform.Transform(out, pos.set(x + 0.5, height, z + 0.5))))
 	}
 
 	public WorldPointToGraph(position: Vec3): Vec3 {
-		var gpos = this.transform.InverseTransform(position)
+		var gpos = this.transform.InverseTransform(vec3Pool.tempNow(), position)
 		gpos.x -= 0.5
 		gpos.z -= 0.5
 		gpos.x = Math.floor(gpos.x)
@@ -273,7 +278,9 @@ export class GridGraph {
 		var node = this.nodes[z * this.width + x];
 
 		// Set the node's initial position with a y-offset of zero
-		node.position = this.GraphPointToWorld(x, z, 0);
+		var worldPos = this.GraphPointToWorld(x, z, 0)
+		node.position.set(worldPos);
+		worldPos.recycle()
 
 		var out: {
 			hitInfo: PhysicsRayResult,
@@ -285,8 +292,9 @@ export class GridGraph {
 
 		// Calculate the actual position using physics raycasting (if enabled)
 		// walkable will be set to false if no ground was found (unless that setting has been disabled)
-		var position: Vec3 = this.collision.CheckHeight(node.position.asVec3(), out);
-		node.position = Int3.fromVec3(position);
+		var nodePos = node.position.asVec3()
+		var position: Vec3 = this.collision.CheckHeight(nodePos, out);
+		node.position.setVec3(position)
 
 		if (resetPenalties) {
 			node.Penalty = this.initialPenalty;
@@ -303,9 +311,13 @@ export class GridGraph {
 
 		// Check if the node is on a slope steeper than permitted
 		if (out.walkable && this.useRaycastNormal && this.collision.heightCheck) {
-			if (out.hitInfo!.hitNormal.equals(Vec3.ZERO)) {
+			if (out.hitInfo.hitNormal.equals(Vec3.ZERO)) {
 				// Take the dot product to find out the cosinus of the angle it has (faster than Vector3.Angle)
-				var angle: number = Vec3.dot(out.hitInfo.hitNormal.clone().normalize(), this.collision.up);
+				let angle = withVec3(hitNormal => {
+					hitNormal.set(out.hitInfo.hitNormal).normalize()
+					let angle: number = Vec3.dot(hitNormal, this.collision.up);
+					return angle
+				})
 
 				// Add penalty based on normal
 				if (this.penaltyAngle && resetPenalties) {
@@ -324,10 +336,12 @@ export class GridGraph {
 
 		// If the walkable flag has already been set to false, there is no point in checking for it again
 		// Check for obstacles
-		node.Walkable = out.walkable && this.collision.Check(node.position.asVec3());
+		node.Walkable = out.walkable && this.collision.Check(nodePos);
 
 		// Store walkability before erosion is applied. Used for graph updates
 		node.WalkableErosion = node.Walkable;
+
+		nodePos.recycle()
 	}
 
 	public readonly neighbourXOffsets: number[] = [0, 0, 0, 0, 0, 0, 0, 0,]
@@ -357,7 +371,11 @@ export class GridGraph {
 			var p1 = node1.position.asVec3();
 			var p2 = node2.position.asVec3();
 			var up = this.transform.WorldUpAtGraphPosition(p1);
-			return Math.abs(Vec3.dot(up, p1) - Vec3.dot(up, p2)) <= this.maxClimb;
+			var ret = Math.abs(Vec3.dot(up, p1) - Vec3.dot(up, p2)) <= this.maxClimb;
+			p1.recycle()
+			p2.recycle()
+			up.recycle()
+			return ret
 		}
 	}
 
@@ -564,196 +582,197 @@ export class GridGraph {
 
 		// Generate a matrix which shrinks the graph along one of the diagonals
 		// corresponding to the isometricAngle
-		var sharedQuat = new Quat();
-		var sharedMat4 = new Mat4()
-		var sharedVec = new Vec3()
 
-		var isometricMatrix = new Mat4()
-		Mat4.fromRTS(isometricMatrix, Quat.fromEuler(sharedQuat, 0, 45, 0), Vec3.ZERO, Vec3.ONE);
-		Mat4.identity(sharedMat4);
-		Mat4.scale(sharedMat4, sharedMat4, new Vec3(Math.cos(Float.Deg2Rad * this.isometricAngle), 1, 1));
-		Mat4.multiply(isometricMatrix, sharedMat4, isometricMatrix);
+		return withMat4((isometricMatrix, boundsMatrix, m) => {
+			Mat4.fromRTS(isometricMatrix, Quat.fromEuler(sharedQuat, 0, 45, 0), Vec3.ZERO, Vec3.ONE);
+			Mat4.identity(sharedMat4);
+			Mat4.scale(sharedMat4, sharedMat4, new Vec3(Math.cos(Float.Deg2Rad * this.isometricAngle), 1, 1));
+			Mat4.multiply(isometricMatrix, sharedMat4, isometricMatrix);
 
-		Mat4.multiply(isometricMatrix, Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, 0, -45, 0), Vec3.ZERO, Vec3.ONE), isometricMatrix);
+			Mat4.multiply(isometricMatrix, Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, 0, -45, 0), Vec3.ZERO, Vec3.ONE), isometricMatrix);
 
-		// Generate a matrix for the bounds of the graph
-		// This moves a point to the correct offset in the world and the correct rotation and the aspect ratio and isometric angle is taken into account
-		// The unit is still world units however
-		var boundsMatrix = new Mat4();
-		Mat4.fromRTS(boundsMatrix, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, new Vec3(this.aspectRatio, 1, 1));
-		Mat4.multiply(isometricMatrix, boundsMatrix, isometricMatrix);
+			// Generate a matrix for the bounds of the graph
+			// This moves a point to the correct offset in the world and the correct rotation and the aspect ratio and isometric angle is taken into account
+			// The unit is still world units however
+			Mat4.fromRTS(boundsMatrix, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, new Vec3(this.aspectRatio, 1, 1));
+			Mat4.multiply(isometricMatrix, boundsMatrix, isometricMatrix);
 
-		// Generate a matrix where Vector3.zero is the corner of the graph instead of the center
-		// The unit is nodes here (so (0.5,0,0.5) is the position of the first node and (1.5,0,0.5) is the position of the second node)
-		// 0.5 is added since this is the node center, not its corner. In graph space a node has a size of 1
-		sharedVec = new Vec3(out.width * out.nodeSize, 0, out.depth * out.nodeSize)
-		sharedVec.negative().multiplyScalar(0.5)
-		Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), new Vec3(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
-		var m = new Mat4()
-		Mat4.multiply(m, sharedMat4, isometricMatrix);
+			// Generate a matrix where Vector3.zero is the corner of the graph instead of the center
+			// The unit is nodes here (so (0.5,0,0.5) is the position of the first node and (1.5,0,0.5) is the position of the second node)
+			// 0.5 is added since this is the node center, not its corner. In graph space a node has a size of 1
+			sharedVec = new Vec3(out.width * out.nodeSize, 0, out.depth * out.nodeSize)
+			sharedVec.negative().multiplyScalar(0.5)
+			Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), new Vec3(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
+			Mat4.multiply(m, sharedMat4, isometricMatrix);
 
-		// Set the matrix of the graph
-		// This will also set inverseMatrix
-		return new GraphTransform(m);
+			// Set the matrix of the graph
+			// This will also set inverseMatrix
+			return new GraphTransform(m);
+		})
 	}
 
 	// TODO: 需要结合终点改进索引顺序
 	public findClosestSuitableNode(nearList: GridNode[], position: Vec3, end?: Vec3, constraint?: NNConstraint, calcTh?: (start: Vec3, end2: Vec3) => number): GridNode | null {
-		constraint = constraint ?? NNConstraint.SharedNone
 
-		if (calcTh == null) {
-			if (end != null) {
-			var offset = end.clone().subtract(position).normalize()
-			var offsetStart = new Vec3()
-			calcTh = (start: Vec3, end2: Vec3) => {
-				offsetStart.x = end2.x - start.x
-				offsetStart.y = end2.y - start.y
-				offsetStart.z = end2.z - start.z
-				offsetStart.normalize()
-				var th = offset.dot(offsetStart)
-				return th
+		return withVec3((offset, offsetStart) => {
+			constraint = constraint ?? NNConstraint.SharedNone
+			if (calcTh == null) {
+				if (end != null) {
+					offset.set(end).subtract(position).normalize()
+					// offsetStart = offsetStart
+					calcTh = (start: Vec3, end2: Vec3) => {
+						offsetStart.x = end2.x - start.x
+						offsetStart.y = end2.y - start.y
+						offsetStart.z = end2.z - start.z
+						offsetStart.normalize()
+						var th = offset.dot(offsetStart)
+						return th
+					}
+				} else {
+					calcTh = (start: Vec3, end2: Vec3) => {
+						return -10
+					}
+				}
 			}
+
+			var minDistSq!: number
+			var nearNode: GridNode | null = null
+			var nearTh = -10
+			if ((!constraint.constrainWalkability) && constraint.preferWalkability) {
+				for (var node of nearList) {
+					if (constraint == NNConstraint.SharedNone || constraint.Suitable(node)) {
+						var targetPos = node.position.asVec3()
+						var dist = Vector.distanceSQ(targetPos, position)
+						var th: number | null = null
+
+						if (nearNode == null || dist < minDistSq || (node.Walkable && !nearNode.Walkable) || (node.Walkable == nearNode.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+							nearNode = node
+							minDistSq = dist
+							nearTh = th != null ? th : calcTh(position, targetPos)
+						}
+					}
+				}
 			} else {
-				calcTh = (start: Vec3, end2: Vec3) => {
-					return -10
-				}
-			}
-		}
+				for (var node of nearList) {
+					// 需要约束可见性
+					if (constraint == NNConstraint.SharedNone || constraint.Suitable(node)) {
+						var targetPos = node.position.asVec3()
+						var dist = Vector.distanceSQ(targetPos, position)
+						var th: number | null = null
 
-		var minDistSq!: number
-		var nearNode: GridNode | null = null
-		var nearTh = -10
-		if ((!constraint.constrainWalkability) && constraint.preferWalkability) {
-			for (var node of nearList) {
-				if (constraint == NNConstraint.SharedNone || constraint.Suitable(node)) {
-					var targetPos = node.position.asVec3()
-					var dist = Vector.distanceSQ(targetPos, position)
-					var th: number | null = null
-
-					if (nearNode == null || dist < minDistSq || (node.Walkable && !nearNode.Walkable) || (node.Walkable == nearNode.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
-						nearNode = node
-						minDistSq = dist
-						nearTh = th != null ? th : calcTh(position, targetPos)
+						if (nearNode == null || dist < minDistSq || (dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+							nearNode = node
+							minDistSq = dist
+							nearTh = th != null ? th : calcTh(position, targetPos)
+						}
 					}
 				}
 			}
-		} else {
-			for (var node of nearList) {
-				// 需要约束可见性
-				if (constraint == NNConstraint.SharedNone || constraint.Suitable(node)) {
-					var targetPos = node.position.asVec3()
-					var dist = Vector.distanceSQ(targetPos, position)
-					var th: number | null = null
 
-					if (nearNode == null || dist < minDistSq || (dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
-						nearNode = node
-						minDistSq = dist
-						nearTh = th != null ? th : calcTh(position, targetPos)
-					}
-				}
-			}
-		}
+			return nearNode
 
-		return nearNode
+		})
 	}
 
 	public GetNearestNode(position: Vec3, end?: Vec3, constraint?: NNConstraint): GridNode | null {
-		constraint = constraint ?? NNConstraint.SharedNone
+		return withVec3((offset, offsetStart) => {
+			constraint = constraint ?? NNConstraint.SharedNone
 
-		var gpos = this.WorldPointToGraph(position)
-		var index = this.toIndex(gpos.x, gpos.z)
+			var gpos = this.WorldPointToGraph(position)
+			var index = this.toIndex(gpos.x, gpos.z)
 
-		var nodes: GridNode[] = this.nodes;
+			var nodes: GridNode[] = this.nodes;
 
-		var nearList: GridNode[] = []
-		const addIndexA = (x: number, y: number) => {
-			var index = this.toIndex(x, y)
-			nearList.push(nodes[index])
-		}
+			var nearList: GridNode[] = []
+			const addIndexA = (x: number, y: number) => {
+				var index = this.toIndex(x, y)
+				nearList.push(nodes[index])
+			}
 
-		let calcTh = (start: Vec3, end2: Vec3) => {
-			return -10
-		}
-		if (end != null) {
-		var offset = end.clone().subtract(position).normalize()
-		var offsetStart = new Vec3()
-			calcTh = (start: Vec3, end2: Vec3) => {
-			offsetStart.x = end2.x - start.x
-			offsetStart.y = end2.y - start.y
-			offsetStart.z = end2.z - start.z
-			offsetStart.normalize()
-			var th = offset.dot(offsetStart)
-			return th
-		}
-		}
-
-		var node = nodes[index]
-		if (node != null) {
-			nearList.push(node)
-		}
-
-		let nearNode: GridNode | null = null
-		{
-			let width = this.width
-			let depth = this.depth
-			let gposx = gpos.x
-			let gposz = gpos.z
-			gposx = Float.Clamp(gposx, 0, width)
-			gposz = Float.Clamp(gposz, 0, depth)
-			let addIndex = addIndexA
-
-			var fx = Math.max(gposx, width - gposx)
-			var fy = Math.max(gposz, depth - gposz)
-			var fm = Math.max(fx, fy)
-
-			let index2 = this.toIndex(gposx, gposz)
-			if (index2 != index) {
-				let node2 = nodes[index2]
-				if (node2 != null) {
-					nearList.push(node2)
+			let calcTh = (start: Vec3, end2: Vec3) => {
+				return -10
+			}
+			if (end != null) {
+				offset.set(end).subtract(position).normalize()
+				// offsetStart = offsetStart
+				calcTh = (start: Vec3, end2: Vec3) => {
+					offsetStart.x = end2.x - start.x
+					offsetStart.y = end2.y - start.y
+					offsetStart.z = end2.z - start.z
+					offsetStart.normalize()
+					var th = offset.dot(offsetStart)
+					return th
 				}
 			}
 
-			for (let ia = 1; ia < fm; ia++) {
-				var xl = gposx - ia
-				var xh = gposx + ia
-				var zl = gposz - ia
-				var zh = gposz + ia
-
-				let xlMin = Math.max(xl, 0)
-				let xhMin = Math.min(xh, width - 1)
-				let zlMin = Math.max(zl, 0)
-				let zhMin = Math.min(zh, depth - 1)
-
-				if (zl == zlMin) {
-					for (let ix = xlMin; ix <= xhMin; ix++) {
-						addIndex(ix, zl)
-					}
-				}
-				if (zh == zhMin) {
-					for (let ix = xlMin; ix <= xhMin; ix++) {
-						addIndex(ix, zh)
-					}
-				}
-				if (xl == xlMin) {
-					for (let iz = zlMin + 1; iz <= zhMin - 1; iz++) {
-						addIndex(xl, iz)
-					}
-				}
-				if (xh == xhMin) {
-					for (let iz = zlMin + 1; iz <= zhMin - 1; iz++) {
-						addIndex(xh, iz)
-					}
-				}
-				nearNode = this.findClosestSuitableNode(nearList, position, end, constraint, calcTh);
-				if (nearNode != null) {
-					return nearNode
-				}
+			var node = nodes[index]
+			if (node != null) {
+				nearList.push(node)
 			}
 
-		}
+			let nearNode: GridNode | null = null
+			{
+				let width = this.width
+				let depth = this.depth
+				let gposx = gpos.x
+				let gposz = gpos.z
+				gposx = Float.Clamp(gposx, 0, width)
+				gposz = Float.Clamp(gposz, 0, depth)
+				let addIndex = addIndexA
 
-		return nearNode
+				var fx = Math.max(gposx, width - gposx)
+				var fy = Math.max(gposz, depth - gposz)
+				var fm = Math.max(fx, fy)
+
+				let index2 = this.toIndex(gposx, gposz)
+				if (index2 != index) {
+					let node2 = nodes[index2]
+					if (node2 != null) {
+						nearList.push(node2)
+					}
+				}
+
+				for (let ia = 1; ia < fm; ia++) {
+					var xl = gposx - ia
+					var xh = gposx + ia
+					var zl = gposz - ia
+					var zh = gposz + ia
+
+					let xlMin = Math.max(xl, 0)
+					let xhMin = Math.min(xh, width - 1)
+					let zlMin = Math.max(zl, 0)
+					let zhMin = Math.min(zh, depth - 1)
+
+					if (zl == zlMin) {
+						for (let ix = xlMin; ix <= xhMin; ix++) {
+							addIndex(ix, zl)
+						}
+					}
+					if (zh == zhMin) {
+						for (let ix = xlMin; ix <= xhMin; ix++) {
+							addIndex(ix, zh)
+						}
+					}
+					if (xl == xlMin) {
+						for (let iz = zlMin + 1; iz <= zhMin - 1; iz++) {
+							addIndex(xl, iz)
+						}
+					}
+					if (xh == xhMin) {
+						for (let iz = zlMin + 1; iz <= zhMin - 1; iz++) {
+							addIndex(xh, iz)
+						}
+					}
+					nearNode = this.findClosestSuitableNode(nearList, position, end, constraint, calcTh);
+					if (nearNode != null) {
+						return nearNode
+					}
+				}
+
+			}
+
+			return nearNode
+		})
 	}
 
 	public GetNodes(action: Action<GraphNode>) {
@@ -767,7 +786,7 @@ export class GridGraph {
 	/// <param name="hint">Can be passed to enable some graph generators to find the nearest node faster.</param>
 	/// <param name="constraint">Can for example tell the function to try to return a walkable node. If you do not get a good node back, consider calling GetNearestForce.</param>
 	public GetNearest(position: Vector3, constraint?: NNConstraint, hint?: GraphNode): NNInfoInternal {
-		position = position.clone()
+		// position = position.tempClone()
 		// This is a default implementation and it is pretty slow
 		// Graphs usually override this to provide faster and more specialised implementations
 
@@ -781,8 +800,9 @@ export class GridGraph {
 
 		// Loop through all nodes and find the closest suitable node
 		this.GetNodes((node) => {
-			var dist: float = (position.clone().subtract(node.position.asVec3())).lengthSqr();
-			var dist: float = (position.clone().subtract(node.position.asVec3())).lengthSqr();
+			var nodePos = node.position.asVec3()
+			var dist: float = withVec3(cv1 => (cv1.set(position).subtract(nodePos)).lengthSqr())
+			nodePos.recycle()
 
 			if (dist < minDist) {
 				minDist = dist;
@@ -800,10 +820,10 @@ export class GridGraph {
 		nnInfo.constrainedNode = minConstNode;
 
 		if (minConstNode != null) {
-			nnInfo.constClampedPosition = minConstNode.position.asVec3();
+			nnInfo.constClampedPosition.set(minConstNode.position.asVec3())
 		} else if (minNode != null) {
 			nnInfo.constrainedNode = minNode;
-			nnInfo.constClampedPosition = minNode.position.asVec3();
+			nnInfo.constClampedPosition.set(minNode.position.asVec3())
 		}
 
 		return nnInfo;
@@ -829,10 +849,19 @@ export class GridGraph {
 		var drawBatchId = this.drawBatchId
 
 		var pos = gridNode.position.asVec3()
+		var nodePos = pos.alloc()
 		var upOffsetN = options.upOffset
-		var upOffset = up.clone()
-		upOffset.multiplyScalar(upOffsetN)
+		if (upOffsetN != 0) {
+			withVec3(upOffset => {
+				upOffset.set(up)
+				upOffset.multiplyScalar(upOffsetN)
+				nodePos.add(upOffset)
+			})
+		}
+
 		MyNodePool.load("GridHint", (node) => {
+			nodePos.autorecycle()
+
 			if (drawBatchId != this.drawBatchId) {
 				MyNodePool.put(node)
 				return
@@ -841,10 +870,6 @@ export class GridGraph {
 			node.name = "GridNode"
 			this.graphNodes.push(node)
 
-			var nodePos = pos.clone()
-			if (upOffsetN != 0) {
-				nodePos.add(upOffset)
-			}
 			node.position = nodePos
 			node.parent = this.graphicRoot
 
@@ -875,7 +900,7 @@ export class GridGraph {
 				}
 
 				// 遍历节点绘制节点
-				var up = this.up.clone()
+				var up = this.up
 				var options = this.debugDrawOptions
 				for (var node of this.nodes) {
 					this.drawNode(node, up, options)

@@ -1,6 +1,7 @@
 import { PhysicsRayResult, Vec3 } from "cc"
 import { ColliderType, Heuristic, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions"
 import { Float } from "../Basic/Float";
+import { withVec3 } from "../Basic/ObjectPool";
 import { Physics, QueryTriggerInteraction } from "../Basic/Physics";
 import { AstarPath } from "./AstarPath";
 import { GraphTransform } from "./GraphTransform";
@@ -48,8 +49,8 @@ export class GraphCollision {
 	heuristicScale: number = 1
 
 
-	up: Vec3 = Vec3.ZERO.clone()
-	upheight: Vec3 = Vec3.ZERO.clone()
+	up: Vec3 = Vec3.ZERO.alloc()
+	upheight: Vec3 = Vec3.ZERO.alloc()
 	finalRadius: number = 0
 	finalRaycastRadius: number = 0
 
@@ -107,53 +108,59 @@ export class GraphCollision {
 		this.unwalkableWhenNoGround = options.unwalkableWhenNoGround
 
 
-		var _up = transform.Transform(Vector3.UP);
-		var _down = transform.Transform(Vector3.ZERO);
-		this.up = _up.clone().subtract(_down).normalize()
-		this.upheight = this.up.clone().multiplyScalar(this.height)
-		this.finalRadius = options.diameter * scale * 0.5;
-		this.finalRaycastRadius = options.thickRaycastDiameter * scale * 0.5;
+		withVec3((_up, _down) => {
+			transform.Transform(_up, Vector3.UP);
+			transform.Transform(_down, Vector3.ZERO);
+			this.up.set(_up.subtract(_down).normalize())
+			this.upheight.set(_up.multiplyScalar(this.height))
+			this.finalRadius = options.diameter * scale * 0.5;
+			this.finalRaycastRadius = options.thickRaycastDiameter * scale * 0.5;
+		})
 	}
 
 	/// <summary>
 	/// Returns if the position is obstructed.
 	/// If <see cref="collisionCheck"/> is false, this will always return true.\n
 	/// </summary>
-	public Check(position: Vec3): boolean {
-		if (!this.collisionCheck) {
-			return true;
-		}
+	public Check(_position: Vec3): boolean {
+		return withVec3(position => {
+			position.set(_position)
 
-		if (this.use2D) {
+			if (!this.collisionCheck) {
+				return true;
+			}
+
+			if (this.use2D) {
+				switch (this.colliderType) {
+					case ColliderType.Capsule:
+					case ColliderType.Sphere:
+						// return Physics2D.OverlapCircle(position, finalRadius, mask) == null;
+						throw new Error("not implement");
+					default:
+						// return Physics2D.OverlapPoint(position, mask) == null;
+						throw new Error("not implement");
+				}
+			}
+
+			withVec3(cv1 => position.add(cv1.set(this.up).multiplyScalar(this.collisionOffset)))
 			switch (this.colliderType) {
 				case ColliderType.Capsule:
+					var ret1 = withVec3(cv1 => !Physics.CheckCapsule(position, cv1.set(position).add(this.upheight), this.finalRadius, this.mask, QueryTriggerInteraction.Ignore));
+					return ret1;
 				case ColliderType.Sphere:
-					// return Physics2D.OverlapCircle(position, finalRadius, mask) == null;
-					throw new Error("not implement");
+					return !Physics.CheckSphere(position, this.finalRadius, this.mask, QueryTriggerInteraction.Ignore);
 				default:
-					// return Physics2D.OverlapPoint(position, mask) == null;
-					throw new Error("not implement");
+					// switch (this.rayDirection) {
+					// 	case RayDirection.Both:
+					// 		return !Physics.Raycast(position, this.up, this.height, this.mask, QueryTriggerInteraction.Ignore) && !Physics.Raycast(position.alloc().add(this.upheight), -this.up, this.height, this.mask, QueryTriggerInteraction.Ignore);
+					// 	case RayDirection.Up:
+					// 		return !Physics.Raycast(position, up, height, mask, QueryTriggerInteraction.Ignore);
+					// 	default:
+					// 		return !Physics.Raycast(position + upheight, -up, height, mask, QueryTriggerInteraction.Ignore);
+					// }
+					throw new Error("not implement")
 			}
-		}
-
-		position.add(this.up.clone().multiplyScalar(this.collisionOffset))
-		switch (this.colliderType) {
-			case ColliderType.Capsule:
-				var ret1 = !Physics.CheckCapsule(position, position.clone().add(this.upheight), this.finalRadius, this.mask, QueryTriggerInteraction.Ignore);
-				return ret1;
-			case ColliderType.Sphere:
-				return !Physics.CheckSphere(position, this.finalRadius, this.mask, QueryTriggerInteraction.Ignore);
-			default:
-				// switch (this.rayDirection) {
-				// 	case RayDirection.Both:
-				// 		return !Physics.Raycast(position, this.up, this.height, this.mask, QueryTriggerInteraction.Ignore) && !Physics.Raycast(position.clone().add(this.upheight), -this.up, this.height, this.mask, QueryTriggerInteraction.Ignore);
-				// 	case RayDirection.Up:
-				// 		return !Physics.Raycast(position, up, height, mask, QueryTriggerInteraction.Ignore);
-				// 	default:
-				// 		return !Physics.Raycast(position + upheight, -up, height, mask, QueryTriggerInteraction.Ignore);
-				// }
-				throw new Error("not implement")
-		}
+		})
 	}
 
 	public CheckHeight(position: Vec3, out: { hitInfo: PhysicsRayResult, walkable: boolean }): Vec3 {
@@ -174,9 +181,12 @@ export class GraphCollision {
 		} else {
 			// Cast a ray from above downwards to try to find the ground
 
-			var origin = position.clone().add(this.up.clone().multiplyScalar(this.fromHeight))
-			var up = this.up.clone().negative()
-			var ret2 = Physics.Raycast(origin, up, out, this.fromHeight + 0.005, this.heightMask, QueryTriggerInteraction.Ignore);
+			let ret2 = withVec3((cv1, up) => {
+				var origin = cv1.set(position).add(up.set(this.up).multiplyScalar(this.fromHeight))
+				up.set(this.up).negative()
+				let ret2 = Physics.Raycast(origin, up, out, this.fromHeight + 0.005, this.heightMask, QueryTriggerInteraction.Ignore);
+				return ret2;
+			})
 			if (ret2) {
 				return out.hitInfo.hitPoint;
 			}

@@ -325,19 +325,19 @@ export class NNInfoInternal {
 
 	public constructor(node?: GraphNode) {
 		if (node != null) {
-		this.node = node;
-		this.constrainedNode = undefined;
-		this.clampedPosition = Vector3.ZERO.clone();
-		this.constClampedPosition = Vector3.ZERO.clone();
+			this.node = node;
+			this.constrainedNode = undefined;
+			this.clampedPosition.reset();
+			this.constClampedPosition.reset();
 
-		this.UpdateInfo();
-	}
+			this.UpdateInfo();
+		}
 	}
 
 	/// <summary>Updates <see cref="clampedPosition"/> and <see cref="constClampedPosition"/> from node positions</summary>
 	public UpdateInfo(): void {
-		this.clampedPosition = this.node != null ? this.node.position.asVec3() : Vector3.ZERO.clone();
-		this.constClampedPosition = this.constrainedNode != null ? this.constrainedNode.position.asVec3() : Vector3.ZERO.clone();
+		this.clampedPosition.set(this.node != null ? this.node.position.asVec3() : Vector3.ZERO);
+		this.constClampedPosition.set(this.constrainedNode != null ? this.constrainedNode.position.asVec3() : Vector3.ZERO);
 	}
 }
 
@@ -360,18 +360,18 @@ export class NNInfo {
 
 	public constructor(internalInfo?: NNInfoInternal | NNInfo) {
 		if (internalInfo != null) {
-		if (internalInfo instanceof NNInfoInternal) {
-			this.node = internalInfo.node;
-			this.position = internalInfo.clampedPosition;
-		} else if (internalInfo instanceof NNInfo) {
-			this.node = internalInfo.node;
-			this.position = internalInfo.position;
+			if (internalInfo instanceof NNInfoInternal) {
+				this.node = internalInfo.node;
+				this.position = internalInfo.clampedPosition;
+			} else if (internalInfo instanceof NNInfo) {
+				this.node = internalInfo.node;
+				this.position = internalInfo.position;
+			}
 		}
-	}
 	}
 
 	public static asVec3(ob: NNInfo) {
-		return ob.position.clone();
+		return ob.position.tempClone();
 	}
 
 	public static asGraphNode(ob: NNInfo) {

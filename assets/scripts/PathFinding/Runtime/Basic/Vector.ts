@@ -1,12 +1,13 @@
 import { Mat4, Quat, Vec3 } from "cc";
 import { FP } from "../Scan/CompatDef";
+import { withVec3 } from "./ObjectPool";
 
 export class Vector {
 	public static distance(start: Vec3, end: Vec3) {
-		return start.clone().subtract(end).length()
+		return withVec3(cv1 => cv1.set(start).subtract(end).length())
 	}
 	public static distanceSQ(start: Vec3, end: Vec3) {
-		return start.clone().subtract(end).lengthSqr()
+		return withVec3(cv1 => cv1.set(start).subtract(end).lengthSqr())
 	}
 }
 
@@ -21,11 +22,11 @@ export class Vector3 extends Vec3 {
 		return out
 	}
 	// static RotateTowards(forward: Vec3, pos: Vec3, maxRadiansDelta: FP, maxMagnitudeDelta: FP): Vec3 {
-	// 	let axis = forward.clone()
+	// 	let axis = forward.alloc()
 	// 	axis.normalize()
 	// 	var axism = new Vec3(axis.z, axis.x, axis.y);
-	// 	var axis1 = axis.clone().cross(axism)
-	// 	var axis2 = axis.clone().cross(axis1)
+	// 	var axis1 = axis.alloc().cross(axism)
+	// 	var axis2 = axis.alloc().cross(axis1)
 	// 	Quat.fromAxes(sharedQuat, axis, axis1, axis2)
 	// }
 	public static rotate(out: Vec3, quat: Quaternion, vec3: Vec3) {

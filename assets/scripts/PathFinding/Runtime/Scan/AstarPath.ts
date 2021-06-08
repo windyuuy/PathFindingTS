@@ -2,6 +2,8 @@ import { Graphics, Node, Vec3 } from "cc";
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AStarSeeker } from "../AStar/AStarSeeker";
 import { Float } from "../Basic/Float";
+import { withVec3 } from "../Basic/ObjectPool";
+import { MyProfiler } from "../Basic/Profiler";
 import { Vector3 } from "../Basic/Vector";
 import { AstarWorkItem, TWorkItemInit, TWorkItemUpdater } from "./AstarWorkItem";
 import { bool, float, GraphNode, int, NavGraph } from "./CompatDef";
@@ -136,7 +138,7 @@ export class AstarPath {
 				}
 
 				// Distance to the closest point on the node from the requested position
-				var dist: float = (nnInfo.clampedPosition.clone().subtract(position)).length();
+				var dist: float = withVec3(cv1 => (cv1.set(nnInfo.clampedPosition).subtract(position)).length());
 
 				if (this.prioritizeGraphs && dist < this.prioritizeGraphsLimit) {
 					// The node is close enough, choose this graph and discard all others
@@ -175,7 +177,7 @@ export class AstarPath {
 			}
 		}
 
-		if (!constraint.Suitable(nearestNode.node) || (constraint.constrainDistance && (nearestNode.clampedPosition.clone().subtract(position)).lengthSqr() > this.maxNearestNodeDistanceSqr)) {
+		if (!constraint.Suitable(nearestNode.node) || (constraint.constrainDistance && withVec3(cv1 => cv1.set(nearestNode.clampedPosition).subtract(position).lengthSqr()) > this.maxNearestNodeDistanceSqr)) {
 			return new NNInfo();
 		}
 
@@ -218,6 +220,7 @@ export class AstarPath {
 	 * 扫描地图
 	 */
 	scanGraph() {
+		MyProfiler.BeginSample("scanGraph")
 		var gridMovers = this.gridMovers
 		for (var gridMover of gridMovers) {
 			gridMover.scan();
@@ -226,6 +229,8 @@ export class AstarPath {
 		this.seeker.UpdateGraph(this.graphs)
 
 		this.onWorkDone()
+		MyProfiler.EndSample()
+		MyProfiler.TypeCurCost()
 	}
 
 	protected onWorkDone() {
@@ -250,6 +255,7 @@ export class AstarPath {
 			return
 		}
 
+		MyProfiler.BeginSample("scanGraphAsync")
 		var gridMovers = this.gridMovers
 		var waitList: Promise<void>[] = []
 		for (var gridMover of gridMovers) {
@@ -268,6 +274,10 @@ export class AstarPath {
 
 		this.scanGraphAsyncTask = task2
 		await task2
+
+
+		MyProfiler.EndSample()
+		MyProfiler.TypeCurCost()
 
 	}
 

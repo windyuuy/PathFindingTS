@@ -1,6 +1,7 @@
 import * as cc from "cc";
 import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
 import { MyNodePool } from "../Basic/NodePool/MyNodePool";
+import { withQuat, withVec3 } from "../Basic/ObjectPool";
 import { AstarPath } from "../Scan/AstarPath";
 import { GridGraph } from "../Scan/GridGenerator";
 import { ANode } from "./AStarLib/core/node";
@@ -31,11 +32,14 @@ export class SeekResult {
 
 	setCylinder(index: number, start: cc.Vec3, end: cc.Vec3, lineWidth: number, up: cc.Vec3,
 		options: PathFinderDebugDrawOptions, drawBatchId: number) {
-		// start.y = 0
-		// end.y = 0
+		start = start.alloc()
+		end = end.alloc()
 		var scale = lineWidth
 		var upOffset = options.upOffset
 		MyNodePool.load("PathHint", (node, err) => {
+			start.autorecycle()
+			end.autorecycle()
+
 			if (drawBatchId != this.drawBatchId) {
 				MyNodePool.put(node)
 				return;
@@ -46,43 +50,48 @@ export class SeekResult {
 			node.name = "PathLine"
 			this.graphNodes.push(node)
 
-			var axis = end.clone().subtract(start)
+			withVec3(axis => {
+				axis.set(end).subtract(start)
 
-			var width = axis.length();
-			var bodyShape = cc.find("Body", node)!
-			bodyShape.scale = new cc.Vec3(width, scale, scale)
+				var width = axis.length();
+				var bodyShape = cc.find("Body", node)!
+				bodyShape.scale = new cc.Vec3(width, scale, scale)
 
-			var headShape = cc.find("Sphere1", node)!
-			var endShape = cc.find("Sphere2", node)!
-			headShape.position = new cc.Vec3(width / 2, 0, 0)
-			endShape.position = new cc.Vec3(-width / 2, 0, 0)
-			headShape.setScale(scale, scale, scale)
-			endShape.setScale(scale, scale, scale)
+				var headShape = cc.find("Sphere1", node)!
+				var endShape = cc.find("Sphere2", node)!
+				headShape.position = new cc.Vec3(width / 2, 0, 0)
+				endShape.position = new cc.Vec3(-width / 2, 0, 0)
+				headShape.setScale(scale, scale, scale)
+				endShape.setScale(scale, scale, scale)
 
-			// TODO: 需要根据镜头宽度智能调整尺寸
-			var headMark = cc.find("HeadMark", node)!
-			headMark.position = new cc.Vec3(-width / 2, 0, 0)
-			headMark.setScale(scale, scale, scale)
-			headMark.active = index == 0
+				// TODO: 需要根据镜头宽度智能调整尺寸
+				var headMark = cc.find("HeadMark", node)!
+				headMark.position = new cc.Vec3(-width / 2, 0, 0)
+				headMark.setScale(scale, scale, scale)
+				headMark.active = index == 0
 
-			var center = start.clone().add(end).multiplyScalar(0.5)
+				withVec3((cv1, cv2) => {
+					let center = cv1.set(start).add(end).multiplyScalar(0.5)
 
-			if (upOffset != 0) {
-				center.add(up.clone().multiplyScalar(upOffset))
-			}
+					if (upOffset != 0) {
+						center.add(cv2.set(up).multiplyScalar(upOffset))
+					}
 
-			node.position = center
+					node.position = center//.alloc()
+				})
 
-			var rot = new cc.Quat()
-			axis.normalize()
-			var axism = new cc.Vec3(axis.z, axis.x, axis.y);
-			var axis1 = axis.clone().cross(axism)
-			var axis2 = axis.clone().cross(axis1)
-			// cc.Quat.fromViewUp(rot, axis, axis1)
-			cc.Quat.fromAxes(rot, axis, axis1, axis2)
-			node.rotation = rot
+				withQuat(rot => withVec3((cv1, cv2) => {
+					axis.normalize()
+					var axism = new cc.Vec3(axis.z, axis.x, axis.y);
+					var axis1 = cv1.set(axis).cross(axism)
+					var axis2 = cv2.set(axis).cross(axis1)
+					// cc.Quat.fromViewUp(rot, axis, axis1)
+					cc.Quat.fromAxes(rot, axis, axis1, axis2)
+					node.rotation = rot
+				}))
 
-			node.parent = this.graphicRoot
+				node.parent = this.graphicRoot
+			})
 		})
 	}
 
@@ -104,7 +113,7 @@ export class SeekResult {
 				var first = this.vectorPath[0]
 				for (var i = 1; i < this.vectorPath.length; i++) {
 					var next = this.vectorPath[i]
-					this.setCylinder(i - 1, first.clone(), next.clone(), lineWidth, up, options, drawBatchId)
+					this.setCylinder(i - 1, first, next, lineWidth, up, options, drawBatchId)
 					first = next
 				}
 			}
