@@ -57,17 +57,24 @@ class ObjectPool<T>{
 
 	protected releaseTimerId: any
 	protected obtainOnceList: T[] = []
+
+	protected enableRecord: boolean = true
 	tempNow(): T {
 		var ret = this.obtain();
 		(ret as any)["__$tmp"] = true;
 		this.obtainOnceList.push(ret);
-		// (ret as any)["__$stack"] = new Error().stack!;
+
+		if (this.enableRecord) {
+			(ret as any)["__$stack"] = new Error().stack!;
+		}
 
 		if (this.releaseTimerId == null) {
 			this.releaseTimerId = setInterval(() => {
 				for (let o of this.obtainOnceList) {
 					if ((o as any)["__$tmp"]) {
-						// this._record((ret as any)["__$stack"])
+						if (this.enableRecord) {
+							this._record((ret as any)["__$stack"])
+						}
 						this.recycle(o)
 					}
 				}
