@@ -81,13 +81,30 @@ export class Physics {
 	protected static cannonOldcontacts: CANNON.ContactEquation[] = []
 	protected static cannonFrictionPool: CANNON.FrictionEquation[] = []
 
+	public static queriesHitTriggers: bool = false;
 	protected static CheckCannonBodies(colliders: cc.Collider[], cnWorld: CANNON.World, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore) {
+		let queriesHitTriggers = this.queriesHitTriggers
+		switch (queryTriggerInteraction) {
+			case QueryTriggerInteraction.Collide:
+				{
+					queriesHitTriggers = true
+					break;
+				}
+			case QueryTriggerInteraction.Ignore:
+				{
+					queriesHitTriggers = false
+					break;
+				}
+			default: {
+				break
+			}
+		}
 		let ret = withList((
 			testBodies: CANNON.Body[],
 			testLs1: CANNON.Body[],
 			testLs2: CANNON.Body[],
 			passedBodies: CANNON.Body[],
-			passedBodies2: CANNON.ContactEquation[],
+			contactResult: CANNON.ContactEquation[],
 			frictionResult: CANNON.FrictionEquation[],
 			adds: number[],
 			removals: number[],
@@ -96,7 +113,7 @@ export class Physics {
 				let sharedBody = (testCollider.shape as any)._sharedBody
 				sharedBody.syncSceneToPhysics()
 				let testBTbody = sharedBody.body as CANNON.Body
-				testBTbody.collisionResponse = false;
+				testBTbody.collisionResponse = queriesHitTriggers;
 				testBodies.push(testBTbody)
 			}
 
@@ -161,11 +178,15 @@ export class Physics {
 					for (let i = 0; i < passedBodies.length; i++) {
 						testLs2.push(testBTbody)
 					}
-					cnWorld.narrowphase.getContacts(testLs2, passedBodies, cnWorld, passedBodies2, this.cannonOldcontacts, frictionResult, this.cannonFrictionPool);
-					// let adds: number[] = []
-					// let removals: number[] = []
-					cnWorld.bodyOverlapKeeper.getDiff(adds, removals);
-					ret = adds.length > 0
+					cnWorld.narrowphase.getContacts(testLs2, passedBodies, cnWorld, contactResult, this.cannonOldcontacts, frictionResult, this.cannonFrictionPool);
+					if (queriesHitTriggers) {
+						ret = contactResult.length > 0
+					} else {
+						// let adds: number[] = []
+						// let removals: number[] = []
+						cnWorld.bodyOverlapKeeper.getDiff(adds, removals);
+						ret = adds.length > 0
+					}
 					if (ret) {
 						break
 					}
@@ -202,6 +223,7 @@ export class Physics {
 			sharedNode = new cc.Node()
 			sharedNode.parent = testNode
 			sharedNode.name = name
+			sharedNode.layer = -1
 		}
 
 		return sharedNode
