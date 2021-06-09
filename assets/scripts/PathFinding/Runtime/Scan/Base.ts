@@ -2,7 +2,7 @@ import { PhysicsRayResult, Vec3 } from "cc"
 import { ColliderType, Heuristic, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions"
 import { Float } from "../Basic/Float";
 import { withVec3 } from "../Basic/ObjectPool";
-import { Physics, QueryTriggerInteraction } from "../Basic/Physics";
+import { Physics, QueryTriggerInteraction } from "../Basic/Physics/Physics";
 import { AstarPath } from "./AstarPath";
 import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";

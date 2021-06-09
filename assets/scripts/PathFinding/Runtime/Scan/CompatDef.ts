@@ -1,7 +1,7 @@
 
 import * as cc from "cc"
 import { Float } from "../Basic/Float";
-import { Physics } from "../Basic/Physics";
+import { Physics } from "../Basic/Physics/Physics";
 import { GridGraph } from "./GridGenerator";
 import { GridNode } from "./GridNode";
 

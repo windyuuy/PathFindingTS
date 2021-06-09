@@ -1,11 +1,11 @@
 import { geometry, PhysicsRayResult, PhysicsSystem, Vec3 } from "cc";
-import { bool, int, TSVector } from "../Scan/CompatDef";
+import { bool, int, TSVector } from "../../Scan/CompatDef";
 import * as cc from "cc"
-import { LayerMask } from "./LayerMask";
+import { LayerMask } from "../LayerMask";
 
 // import * as AmmoJs from '@cocos/ammo';
 import * as CANNON from '@cocos/cannon'
-import { withList, withVec3 } from "./ObjectPool";
+import { withList, withVec3 } from "../ObjectPool";
 import { Quat } from "cc";
 
 export type RaycastHit = PhysicsRayResult
