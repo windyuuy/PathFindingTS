@@ -5,7 +5,7 @@ import { LayerMask } from "./LayerMask";
 
 // import * as AmmoJs from '@cocos/ammo';
 import * as CANNON from '@cocos/cannon'
-import { withVec3 } from "./ObjectPool";
+import { withList, withVec3 } from "./ObjectPool";
 import { Quat } from "cc";
 
 export type RaycastHit = PhysicsRayResult
@@ -64,6 +64,22 @@ export class Physics {
 		return (collider.shape as any)._sharedBody._bodyStruct.body as Ammo.btRigidBody
 	}
 
+	protected static cannonSharedKeeper: CANNON.OverlapKeeper
+	protected static getCannonSharedKeeper() {
+		if (this.cannonSharedKeeper == null) {
+			let physicsWorld = PhysicsSystem.instance.physicsWorld
+			let cnWorld = (physicsWorld as any)._world as CANNON.World
+			let originKeeper = cnWorld.bodyOverlapKeeper
+			this.cannonSharedKeeper = {
+				current: [],
+				previous: [],
+			} as any as CANNON.OverlapKeeper
+			Object.setPrototypeOf(this.cannonSharedKeeper, Object.getPrototypeOf(originKeeper))
+		}
+		return this.cannonSharedKeeper
+	}
+	protected static cannonOldcontacts: CANNON.ContactEquation[] = []
+	protected static cannonFrictionPool: CANNON.FrictionEquation[] = []
 	public static CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
 		// var bodies = (PhysicsSystem.instance.physicsWorld as any)["bodies"] as BuiltinSharedBody[]
 		// const max_d = options.maxDistance;
@@ -170,38 +186,53 @@ export class Physics {
 		})
 		testBodies.remove(testBTbody)
 
-		let testLs1: CANNON.Body[] = []
-		let passedBodies: CANNON.Body[] = []
-		for (let body of testBodies) {
-			cnWorld.broadphase.intersectionTest(testBTbody, body, testLs1, passedBodies)
-			cnWorld.broadphase.intersectionTest(testUpbody, body, testLs1, passedBodies)
-			cnWorld.broadphase.intersectionTest(testDownbody, body, testLs1, passedBodies)
-		}
-		if (passedBodies.length <= 0) {
-			return false;
-		}
+		let ret = withList((testLs1: CANNON.Body[],
+			passedBodies: CANNON.Body[],
+			passedBodies2: CANNON.ContactEquation[],
+			frictionResult: CANNON.FrictionEquation[],
+			adds: number[],
+			removals: number[],
+		) => {
+			// let testLs1: CANNON.Body[] = []
+			// let passedBodies: CANNON.Body[] = []
+			for (let body of testBodies) {
+				cnWorld.broadphase.intersectionTest(testBTbody, body, testLs1, passedBodies)
+				cnWorld.broadphase.intersectionTest(testUpbody, body, testLs1, passedBodies)
+				cnWorld.broadphase.intersectionTest(testDownbody, body, testLs1, passedBodies)
+			}
+			if (passedBodies.length <= 0) {
+				return false;
+			}
 
-		testLs1.length = 0
-		testLs1.push(testBTbody)
-		let passedBodies2: CANNON.ContactEquation[] = []
-		let frictionResult: CANNON.FrictionEquation[] = []
-		let originKeeper = cnWorld.bodyOverlapKeeper
-		let newKeeper = {
-			current: [],
-			previous: [],
-		} as any as CANNON.OverlapKeeper
-		Object.setPrototypeOf(newKeeper, Object.getPrototypeOf(originKeeper))
-		cnWorld.bodyOverlapKeeper = newKeeper
-		cnWorld.narrowphase.getContacts(testLs1, passedBodies, cnWorld, passedBodies2, [], frictionResult, []);
-		let adds: number[] = []
-		let removals: number[] = []
-		cnWorld.bodyOverlapKeeper.getDiff(adds, removals);
-		let ret = adds.length > 0
-		cnWorld.bodyOverlapKeeper = originKeeper
-		testNode.active = false
-		testCollider.enabled = false
-		testSphereUp.enabled = false
-		testSphereDown.enabled = false
+			testLs1.length = 0
+			testLs1.push(testBTbody)
+			// let passedBodies2: CANNON.ContactEquation[] = []
+			// let frictionResult: CANNON.FrictionEquation[] = []
+			let originKeeper = cnWorld.bodyOverlapKeeper
+			let newKeeper = this.getCannonSharedKeeper()
+			newKeeper.current.length = 0
+			newKeeper.previous.length = 0
+
+			cnWorld.bodyOverlapKeeper = newKeeper
+			let ret = false
+			try {
+				cnWorld.narrowphase.getContacts(testLs1, passedBodies, cnWorld, passedBodies2, this.cannonOldcontacts, frictionResult, this.cannonFrictionPool);
+				// let adds: number[] = []
+				// let removals: number[] = []
+				cnWorld.bodyOverlapKeeper.getDiff(adds, removals);
+				ret = adds.length > 0
+			} catch (e) {
+				throw e
+			} finally {
+				cnWorld.bodyOverlapKeeper = originKeeper
+			}
+			testNode.active = false
+			testCollider.enabled = false
+			testSphereUp.enabled = false
+			testSphereDown.enabled = false
+			return ret
+		})
+
 		return ret
 
 		//#endregion

@@ -21,6 +21,9 @@ class ObjectPool<T>{
 		if ((v as any)["__$tmp"]) {
 			(v as any)["__$tmp"] = false;
 		}
+		if (typeof ((v as any)["clear"]) == "function") {
+			(v as any).clear();
+		}
 		this.pool.push(v)
 	}
 
@@ -121,4 +124,8 @@ export function withQuat<T>(handle: (...value: Quat[]) => T) {
 
 export function withMat4<T>(handle: (...value: Mat4[]) => T) {
 	return mat4Pool.with(handle)
+}
+
+export function withList<T>(handle: (...value: Array<any>[]) => T) {
+	return listPool.with(handle)
 }
