@@ -4,7 +4,7 @@ import { AA } from "../../test/AA";
 import { PathFinder } from "../Editor/PathFinder";
 import { Seeker } from "../Runtime/AStar/Seeker";
 import { LayerMask } from "../Runtime/Basic/LayerMask";
-import { WaitForSeconds } from "../Runtime/Basic/WaitForSeconds";
+import { MyWaitForSeconds } from "../Runtime/Basic/WaitForSeconds";
 import { AstarPath } from "../Runtime/Scan/AstarPath";
 import { TestCase } from "./TestCase";
 const { ccclass, property } = _decorator;
@@ -18,7 +18,7 @@ export class Helloxx extends Component {
         // let col = wef.addComponent(SphereCollider)
 
         let _ = (async () => {
-            await WaitForSeconds(0.1);
+            await MyWaitForSeconds(0.1);
             var pathFinder = find("Nav")!.getComponent(PathFinder)!
             console.log("init")
             pathFinder.init()

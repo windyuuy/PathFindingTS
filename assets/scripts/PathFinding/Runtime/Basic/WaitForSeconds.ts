@@ -1,7 +1,7 @@
 
 import * as cc from "cc"
 
-export function WaitForSeconds(secs: number): Promise<void> {
+export function MyWaitForSeconds(secs: number): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
 		var id = setTimeout(() => {
 			clearTimeout(id)

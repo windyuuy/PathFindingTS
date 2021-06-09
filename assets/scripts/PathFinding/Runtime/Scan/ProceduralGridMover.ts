@@ -8,7 +8,7 @@ import { Int3 } from "./Int3";
 import { GridNode } from "./GridNode";
 import { IntRect } from "./IntRect";
 import { Int2 } from "./Int2";
-import { WaitNull, WaitForSeconds } from "../Basic/WaitForSeconds";
+import { WaitNull, MyWaitForSeconds } from "../Basic/WaitForSeconds";
 import { vec3Pool, withVec3 } from "../Basic/ObjectPool";
 
 export class ProceduralGridMover {
@@ -75,7 +75,7 @@ export class ProceduralGridMover {
 		if (waitDuration == 0) {
 			return WaitNull()
 		} else {
-			return WaitForSeconds(waitDuration)
+			return MyWaitForSeconds(waitDuration)
 		}
 	}
 
