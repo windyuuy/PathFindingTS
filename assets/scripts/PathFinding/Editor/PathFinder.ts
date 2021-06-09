@@ -1,4 +1,5 @@
 
+import { Vec3 } from "cc";
 import { _decorator, Component, Node, Graphics, resources, Prefab, NodePool, PrivateNode } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
 import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
@@ -61,6 +62,7 @@ export class PathFinder extends Component {
             var graphicRoot = new PrivateNode("FindPathGraphicRoot")
             graphicRoot.parent = this.node
             AstarPath.active.graphicRoot = graphicRoot
+            graphicRoot.setWorldPosition(new Vec3(0, 0, 0))
         }
     }
     /**

@@ -1,4 +1,5 @@
-import { Vec3 } from "cc";
+import { Component } from "cc";
+import { Vec3, Node } from "cc";
 import { vec3Pool } from "./ObjectPool";
 
 declare module "cc" {
@@ -29,6 +30,10 @@ declare module "cc" {
 			tempClone(): this
 			image(v: this): this
 		}
+	}
+
+	interface Node {
+		getOrAddComponent<T extends Component>(cls: new () => T): T
 	}
 }
 
@@ -67,4 +72,12 @@ Vec3.prototype.image = function (v: Vec3): Vec3 {
 Vec3.prototype.autorecycle = function (): Vec3 {
 	vec3Pool.markTemp(this)
 	return this
+}
+
+Node.prototype.getOrAddComponent = function <T extends Component>(cls: new () => T): T {
+	let comp = this.getComponent(cls)
+	if (comp == null) {
+		comp = this.addComponent(cls)
+	}
+	return comp
 }

@@ -1,4 +1,16 @@
 {
   "__version__": "1.0.1",
-  "layer": []
+  "layer": [],
+  "physics": {
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "Obstacle"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 2
+    }
+  }
 }

@@ -167,10 +167,26 @@ export class PathFinderOptions {
 	colliderType: ColliderType = ColliderType.Capsule;
 
 	@property({
+		displayName: "碰撞体高度/长度",
+	})
+	colliderHeight: number = 0
+
+	@property({
+		displayName: "直径",
+	})
+	colliderDiameter: number = 0.1
+
+	@property({
+		displayName: "位置偏移",
+	})
+	collisionOffset: number = 0
+
+	@property({
 		type: BitMask(Layers.BitMask),
+		tooltip: "碰撞测试",
 		displayName: "障碍物层级",
 	})
-	obstacleLayerMask: number = Layers.Enum.ALL
+	mask: number = Layers.Enum.NONE
 
 	@property({
 		displayName: "启用高度测试"
@@ -184,9 +200,10 @@ export class PathFinderOptions {
 
 	@property({
 		type: BitMask(Layers.BitMask),
+		tooltip: "高度测试",
 		displayName: "障碍物层级",
 	})
-	mask: number = Layers.Enum.ALL
+	heightMask: number = Layers.Enum.ALL
 
 	@property({
 		displayName: "使用粗射线检测",
@@ -197,9 +214,6 @@ export class PathFinderOptions {
 		displayName: "没有平台时不可行走",
 	})
 	unwalkableWhenNoGround: boolean = true
-
-	@property
-	diameter: number = 0.1
 
 	@property
 	thickRaycastDiameter: number = 1

@@ -12,7 +12,7 @@ const Vector3 = Vec3;
 
 export class GraphCollision {
 	width: number = 40
-	height: number = 40
+	depth: number = 40
 	center: Vec3 = new Vec3()
 	rotation: Vec3 = new Vec3()
 
@@ -30,15 +30,17 @@ export class GraphCollision {
 
 	colliderType: ColliderType = ColliderType.Capsule;
 
-	obstacleLayerMask: number = 0
+	mask: number = 0
 
 	heightTesting: boolean = true
 
 	rayLength: number = 100
 
-	mask: number = 0
+	heightMask: number = 0
 
-	diameter: number = 0.1
+	colliderDiameter: number = 1
+	colliderHeight: number = 0
+	collisionOffset: number = 0
 
 	thickRaycastDiameter: number = 1
 
@@ -62,14 +64,8 @@ export class GraphCollision {
 		return this.heightTesting
 	}
 
-	get collisionOffset() {
-		return this.center.length()
-	}
 	get fromHeight() {
 		return this.rayLength
-	}
-	get heightMask() {
-		return this.obstacleLayerMask
 	}
 
 	thickRaycast: boolean = false
@@ -85,7 +81,7 @@ export class GraphCollision {
 	/// </summary>
 	public Initialize(options: PathFinderOptions, transform: GraphTransform, scale: number) {
 		this.width = options.width
-		this.height = options.height
+		this.depth = options.height
 		this.center = options.center
 		this.rotation = options.rotation
 		this.nodeSize = options.nodeSize
@@ -95,11 +91,13 @@ export class GraphCollision {
 		this.use2D = options.use2D
 		this.collisionTesting = options.collisionTesting
 		this.colliderType = options.colliderType
-		this.obstacleLayerMask = options.obstacleLayerMask
+		this.mask = options.mask
 		this.heightTesting = options.heightTesting
 		this.rayLength = options.rayLength
-		this.mask = options.mask
-		this.diameter = options.diameter
+		this.heightMask = options.heightMask
+		this.colliderDiameter = options.colliderDiameter
+		this.colliderHeight = options.colliderHeight
+		this.collisionOffset = options.collisionOffset
 		this.thickRaycastDiameter = options.thickRaycastDiameter
 		this.maxNearestNodeDistance = options.maxNearestNodeDistance
 		this.heuristic = options.heuristic
@@ -112,8 +110,8 @@ export class GraphCollision {
 			transform.Transform(_up, Vector3.UP);
 			transform.Transform(_down, Vector3.ZERO);
 			this.up.set(_up.subtract(_down).normalize())
-			this.upheight.set(_up.multiplyScalar(this.height))
-			this.finalRadius = options.diameter * scale * 0.5;
+			this.upheight.set(_up.multiplyScalar(this.colliderHeight))
+			this.finalRadius = options.colliderDiameter * scale * 0.5;
 			this.finalRaycastRadius = options.thickRaycastDiameter * scale * 0.5;
 		})
 	}

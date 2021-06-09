@@ -94,5 +94,13 @@ export class LayerMask {
 		return mask
 	}
 
+	public static ContainsAllLayers(target: number, layerMask: number): boolean {
+		return (target & layerMask) == layerMask
+	}
+
+	public static ContainsAnyLayer(target: number, layerMask: number): boolean {
+		return (target & layerMask) != 0
+	}
+
 
 }

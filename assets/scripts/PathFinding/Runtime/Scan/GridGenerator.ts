@@ -114,6 +114,8 @@ export class GridGraph {
 	}
 
 	public toIndex(x: number, y: number): number {
+		x = Float.Clamp(x, 0, this.width - 1)
+		y = Float.Clamp(y, 0, this.depth - 1)
 		return this.width * y + x
 	}
 
@@ -177,10 +179,10 @@ export class GridGraph {
 		}
 
 		// for (var i = 0; i < this.width * this.depth; i++) {
-		for (var i = 0; i < this.width; i++) {
-			for (var j = 0; j < this.depth; j++) {
-				var index = i * this.width + j;
-				var gridNode = new GridNode(index, j, i)
+		for (var j = 0; j < this.depth; j++) {
+			for (var i = 0; i < this.width; i++) {
+				var index = j * this.width + i;
+				var gridNode = new GridNode(index, i, j)
 				// gridNode.NodeInGridIndex = GridNode.genIndex()
 				gridNode.GraphIndex = this.graphIndex;
 				gridNode.NodeInGridIndex = index;
@@ -336,10 +338,12 @@ export class GridGraph {
 
 		// If the walkable flag has already been set to false, there is no point in checking for it again
 		// Check for obstacles
-		node.Walkable = out.walkable && this.collision.Check(nodePos);
+		node.Walkable = out.walkable && this.collision.Check(position);
 
 		// Store walkability before erosion is applied. Used for graph updates
 		node.WalkableErosion = node.Walkable;
+
+		// console.log(`walkable: ${node.ipos.x},${node.ipos.y}->${node.Walkable}`)
 
 		nodePos.recycle()
 	}
@@ -732,7 +736,7 @@ export class GridGraph {
 					}
 				}
 
-				for (let ia = 1; ia < fm; ia++) {
+				for (let ia = 1; ia <= fm; ia++) {
 					var xl = gposx - ia
 					var xh = gposx + ia
 					var zl = gposz - ia

@@ -48,7 +48,7 @@ export class GraphSeeker {
 		return this
 	}
 
-	protected createSeekResult() {
+	createSeekResult() {
 		var result = new SeekResult()
 		result.graph = this.graph
 		return result
