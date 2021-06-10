@@ -32,7 +32,7 @@ export class PathFinder extends Component {
 
     start() {
         try {
-            PathFinderOptions.start();
+            PathFinderOptions.start(this.options);
         } catch (e) {
             console.error(e)
         }
