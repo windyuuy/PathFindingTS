@@ -144,6 +144,8 @@ export class GridGraph {
 		this.heuristic = options.heuristic
 		this.heuristicScale = options.heuristicScale
 
+		this.cutCorners = options.cutCorners
+
 		this.asyncInterval = options.asyncInterval
 		this.maxNearestNodeDistance = options.maxNearestNodeDistance
 

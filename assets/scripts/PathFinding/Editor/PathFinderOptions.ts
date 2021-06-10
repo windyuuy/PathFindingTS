@@ -108,6 +108,12 @@ export class PathFinderOptions {
 		displayName: "网格高度",
 	})
 	height: number = 40
+
+	@property({
+		displayName: "节点尺寸",
+	})
+	nodeSize: number = 1
+
 	@property({
 		displayName: "中心偏移"
 	})
@@ -116,11 +122,6 @@ export class PathFinderOptions {
 		displayName: "旋转角度"
 	})
 	rotation: Vec3 = new Vec3()
-
-	@property({
-		displayName: "节点尺寸",
-	})
-	nodeSize: number = 1
 
 	@property({
 		type: Enum(_NumNeighbours),
@@ -138,6 +139,11 @@ export class PathFinderOptions {
 			throw new Error("not implement")
 		}
 	}
+
+	@property({
+		tooltip: "cutCorners",
+	})
+	cutCorners: boolean = true
 
 	@property({
 		displayName: "最大爬升高度"
