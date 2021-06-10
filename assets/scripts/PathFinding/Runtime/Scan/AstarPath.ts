@@ -2,6 +2,7 @@ import { Graphics, Node, Vec3 } from "cc";
 import { PathFinderOptions } from "../../Editor/PathFinderOptions";
 import { AStarSeeker } from "../AStar/AStarSeeker";
 import { Float } from "../Basic/Float";
+import { IS_CC_EDITOR } from "../Basic/Macro";
 import { withVec3 } from "../Basic/ObjectPool";
 import { MyProfiler } from "../Basic/Profiler";
 import { Vector3 } from "../Basic/Vector";
@@ -57,6 +58,14 @@ export class AstarPath {
 			var gridMover = new ProceduralGridMover();
 			gridMover.Init(graph);
 			gridMovers.push(gridMover);
+		}
+	}
+
+	update() {
+		if (!IS_CC_EDITOR) {
+			if (this.isWorkDone) {
+				this.workItems.ProcessWorkItemsDone()
+			}
 		}
 	}
 

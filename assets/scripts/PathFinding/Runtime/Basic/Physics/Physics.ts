@@ -94,6 +94,10 @@ export class Physics {
 	}
 }
 
-if (!IS_CC_EDITOR) {
-	Physics["init"]()
+try {
+	if (!IS_CC_EDITOR) {
+		Physics["init"]()
+	}
+} catch (e) {
+	console.error(e)
 }

@@ -31,7 +31,11 @@ export class PathFinder extends Component {
     }
 
     start() {
-        PathFinderOptions.start();
+        try {
+            PathFinderOptions.start();
+        } catch (e) {
+            console.error(e)
+        }
 
         if (!IS_CC_EDITOR) {
             MyNodePool.registerPrefabUrl("PathHint", "PathFinding/Res/PathHint/PathHint")
@@ -40,8 +44,13 @@ export class PathFinder extends Component {
     }
 
     update(deltaTime: number) {
-        // [4]
-        PathFinderOptions.update();
+        try {
+            PathFinderOptions.update();
+
+            AstarPath.active.update();
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     protected _inited: boolean = false
