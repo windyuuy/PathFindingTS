@@ -1,12 +1,16 @@
 
 import * as cc from "cc"
+import { Quat } from "cc"
 import { PhysicsSystem, Vec3 } from "cc"
-import { bool } from "../../Scan/CompatDef"
+import { bool, int } from "../../Scan/CompatDef"
 import { cname } from "../convenient"
 import { LayerMask } from "../LayerMask"
 import { withList, withVec3 } from "../ObjectPool"
 import { CollisionSystemBase, QueryTriggerInteraction } from "./CollisionSystem"
 // import * as CANNON from '@cocos/cannon'
+
+const sharedVec3 = new Vec3()
+const sharedQuat = new Quat()
 
 @cname("CannonCollisionSystem")
 export class CannonCollisionSystem extends CollisionSystemBase {
@@ -133,7 +137,7 @@ export class CannonCollisionSystem extends CollisionSystemBase {
 
 	}
 
-	public CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
+	public CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
 
 		let physicsWorld = PhysicsSystem.instance.physicsWorld
 		let cnWorld = (physicsWorld as any)._world as CANNON.World
@@ -196,7 +200,7 @@ export class CannonCollisionSystem extends CollisionSystemBase {
 
 	}
 
-	public CheckSphere(position: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
+	public CheckSphere(position: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
 
 		let physicsWorld = PhysicsSystem.instance.physicsWorld
 		let cnWorld = (physicsWorld as any)._world as CANNON.World
@@ -217,6 +221,29 @@ export class CannonCollisionSystem extends CollisionSystemBase {
 
 		testNode.active = false
 		return ret
+	}
 
+	public CheckBox(center: Vec3, halfExtents: Vec3, orientation: Quat = Quat.IDENTITY, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): bool {
+
+		let physicsWorld = PhysicsSystem.instance.physicsWorld
+		let cnWorld = (physicsWorld as any)._world as CANNON.World
+
+		let testNode = this.getSharedNode("testBoxNode")
+		testNode.active = true
+		testNode.position = center
+		testNode.rotation = orientation
+
+		let testCollider = testNode.getOrAddComponent(cc.BoxCollider)
+		testCollider.enabled = true
+		testCollider.isTrigger = true
+		testCollider.size = sharedVec3.set(halfExtents).multiplyScalar(2)
+
+		let ret = withList((colliders: cc.Collider[]) => {
+			colliders.push(testCollider)
+			return this.CheckCannonBodies(colliders, cnWorld, layerMask, queryTriggerInteraction)
+		})
+
+		testNode.active = false
+		return ret
 	}
 }

@@ -1,8 +1,8 @@
 
 import * as cc from "cc"
-import { Vec3 } from "cc"
+import { Vec3, Quat, Mat4 } from "cc"
 import { PhysicsSystem } from "cc"
-import { bool } from "../../Scan/CompatDef"
+import { bool, int } from "../../Scan/CompatDef"
 import { cname } from "../convenient"
 import { LayerMask } from "../LayerMask"
 import { withList, withVec3 } from "../ObjectPool"
@@ -31,6 +31,11 @@ export interface ICollisionSystem {
 
 @cname("CollisionSystemBase")
 export abstract class CollisionSystemBase implements ICollisionSystem {
+
+	public static readonly DefaultRaycastLayers: int = -5;
+	public get DefaultRaycastLayers() {
+		return CollisionSystemBase.DefaultRaycastLayers
+	}
 
 	protected static foreachNode(root: cc.Node, call: (node: cc.Node) => void) {
 		if (cc.isValid(root)) {
@@ -63,10 +68,6 @@ export abstract class CollisionSystemBase implements ICollisionSystem {
 		return queriesHitTriggers
 	}
 
-	public CheckCannonBodies(colliders: cc.Collider[], cnWorld: CANNON.World, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): bool {
-		return false
-	}
-
 	protected getSharedNodeRoot(): cc.Node {
 		let rootNode = cc.find("")!
 		let testNode = rootNode.getChildByName("__testCannon")
@@ -95,11 +96,15 @@ export abstract class CollisionSystemBase implements ICollisionSystem {
 
 	}
 
-	public CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
+	public CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
 		return false
 	}
 
-	public CheckSphere(position: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
+	public CheckSphere(position: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
+		return false
+	}
+
+	public CheckBox(center: Vec3, halfExtents: Vec3, orientation: Quat = Quat.IDENTITY, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): bool {
 		return false
 	}
 }

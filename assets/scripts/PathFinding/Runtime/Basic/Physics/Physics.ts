@@ -66,6 +66,10 @@ export class Physics {
 		return this.collisionSystem.CheckSphere(position, radius, layerMask, queryTriggerInteraction)
 	}
 
+	public static CheckBox(center: Vec3, halfExtents: Vec3, orientation: Quat, layerMask: int, queryTriggerInteraction: QueryTriggerInteraction): bool {
+		return this.collisionSystem.CheckBox(center, halfExtents, orientation, layerMask, queryTriggerInteraction)
+	}
+
 	public static Linecast(start: TSVector, end: TSVector, layerMask: int): bool {
 		var direction = sharedVec3.set(end).subtract(start)
 		var maxDistance = direction.length()
