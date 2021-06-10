@@ -42,7 +42,7 @@ Layers.addLayer = (name: string, bitNum: number) => {
 }
 
 export class LayerMask {
-	public static UpdateLayer(cls: new () => any, attr: string, t: string) {
+	public static UpdateAttrLayer(cls: new () => any, attr: string, t: string) {
 		var FinderLayerList = Layers.BitMask as StrNumMap;
 		var attrs = (cls as any)["__attrs__"];
 		var bitMasks = attrs[`${attr}$_$${t}List`] as { name: string, value: number }[];

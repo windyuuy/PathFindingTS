@@ -6,8 +6,8 @@ const { ccclass, property } = _decorator;
 
 /// <summary>Number of threads to use</summary>
 export enum ThreadCount {
-	AutomaticLowLoad = -1,
-	AutomaticHighLoad = -2,
+	AutomaticLowLoad = 2 ** 10 - 1,
+	AutomaticHighLoad = 2 ** 10 - 2,
 	None = 0,
 	One = 1,
 	Two,
@@ -274,7 +274,7 @@ export class PathFinderOptions {
 	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	public static start() {
-		LayerMask.UpdateLayer(PathFinderOptions, "mask", "bitmask");
+		LayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
 	}
 
 	public static update() {
