@@ -213,12 +213,14 @@ export class PathFinderOptions {
 	thickRaycast: boolean = false
 
 	@property({
+		displayName: "粗射线检测直径",
+	})
+	thickRaycastDiameter: number = 1
+
+	@property({
 		displayName: "没有平台时不可行走",
 	})
 	unwalkableWhenNoGround: boolean = true
-
-	@property
-	thickRaycastDiameter: number = 1
 
 	@property({
 		visible: false,

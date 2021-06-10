@@ -16,6 +16,7 @@ const sharedQuat = new Quat()
 
 export class Physics {
 
+
 	public static get DefaultRaycastLayers() {
 		return this.collisionSystem.DefaultRaycastLayers
 	}
@@ -42,15 +43,16 @@ export class Physics {
 		return PhysicsSystem.instance.raycastClosest(worldRay, mask, maxDistance, queryTrigger);
 	}
 
-	public static Raycast(origin: Vec3, direction: Vec3, outs: { hitInfo: RaycastHit }, maxDistance: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
+	public static Raycast(origin: Vec3, direction: Vec3, maxDistance: number, outHitInfo?: RaycastHit, layerMask: number = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
 		var ray = sharedRay
-		// geometry.Ray.fromPoints(ray, origin, direction);
 		ray.o.set(origin)
 		ray.d.set(direction)
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, queryTriggerInteraction != QueryTriggerInteraction.Ignore)
 		if (ret) {
 			var result = PhysicsSystem.instance.raycastClosestResult
-			outs.hitInfo = result
+			if (outHitInfo) {
+				outHitInfo._assign(result.hitPoint, result.distance, result.collider, result.hitNormal)
+			}
 		}
 		return ret
 	}
@@ -86,6 +88,9 @@ export class Physics {
 		return this.collisionSystem.CheckBox(center, halfExtents, orientation, layerMask, queryTriggerInteraction)
 	}
 
+	static SphereCast(ray: geometry.Ray, radius: number, maxDistance: number, hitInfo?: PhysicsRayResult, heightMask: number = this.DefaultRaycastLayers, Ignore: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): bool {
+		throw new Error("Method not implemented.");
+	}
 }
 
 Physics["init"]()

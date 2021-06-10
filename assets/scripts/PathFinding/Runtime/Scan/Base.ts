@@ -1,15 +1,23 @@
+import { geometry } from "cc";
 import { PhysicsRayResult, Vec3 } from "cc"
 import { ColliderType, Heuristic, NumNeighbours, PathFinderOptions } from "../../Editor/PathFinderOptions"
 import { Float } from "../Basic/Float";
-import { withVec3 } from "../Basic/ObjectPool";
+import { vec3Pool, withVec3 } from "../Basic/ObjectPool";
 import { QueryTriggerInteraction } from "../Basic/Physics/CollisionSystem";
 import { Physics } from "../Basic/Physics/Physics";
+import { VectorMath } from "../Basic/VectorMath";
 import { AstarPath } from "./AstarPath";
 import { GraphTransform } from "./GraphTransform";
 import { GridNode } from "./GridNode";
 import { NNConstraint, NNInfoInternal } from "./NNInfo/astarclasses";
 type Vector3 = Vec3;
 const Vector3 = Vec3;
+
+export enum RayDirection {
+	Up,     /// <summary>< Casts the ray from the bottom upwards</summary>
+	Down,   /// <summary>< Casts the ray from the top downwards</summary>
+	Both    /// <summary>< Casts two rays in both directions</summary>
+}
 
 export class GraphCollision {
 	width: number = 40
@@ -41,6 +49,9 @@ export class GraphCollision {
 
 	colliderDiameter: number = 1
 	colliderHeight: number = 0
+	get height() {
+		return this.colliderHeight
+	}
 	collisionOffset: number = 0
 
 	thickRaycastDiameter: number = 1
@@ -72,6 +83,8 @@ export class GraphCollision {
 	thickRaycast: boolean = false
 
 	unwalkableWhenNoGround: boolean = true
+
+	public rayDirection: RayDirection = RayDirection.Both;
 
 	/// <summary>
 	/// Sets up several variables using the specified matrix and scale.
@@ -141,7 +154,9 @@ export class GraphCollision {
 				}
 			}
 
-			withVec3(cv1 => position.add(cv1.set(this.up).multiplyScalar(this.collisionOffset)))
+			withVec3(cv1 => {
+				position.add(cv1.set(this.up).multiplyScalar(this.collisionOffset))
+			})
 			switch (this.colliderType) {
 				case ColliderType.Capsule:
 					var ret1 = withVec3(cv1 => !Physics.CheckCapsule(position, cv1.set(position).add(this.upheight), this.finalRadius, this.mask, QueryTriggerInteraction.Ignore));
@@ -149,15 +164,16 @@ export class GraphCollision {
 				case ColliderType.Sphere:
 					return !Physics.CheckSphere(position, this.finalRadius, this.mask, QueryTriggerInteraction.Ignore);
 				default:
-					// switch (this.rayDirection) {
-					// 	case RayDirection.Both:
-					// 		return !Physics.Raycast(position, this.up, this.height, this.mask, QueryTriggerInteraction.Ignore) && !Physics.Raycast(position.alloc().add(this.upheight), -this.up, this.height, this.mask, QueryTriggerInteraction.Ignore);
-					// 	case RayDirection.Up:
-					// 		return !Physics.Raycast(position, up, height, mask, QueryTriggerInteraction.Ignore);
-					// 	default:
-					// 		return !Physics.Raycast(position + upheight, -up, height, mask, QueryTriggerInteraction.Ignore);
-					// }
-					throw new Error("not implement")
+					return withVec3((cv1, cv2) => {
+						switch (this.rayDirection) {
+							case RayDirection.Both:
+								return !Physics.Raycast(position, this.up, this.height, undefined, this.mask, QueryTriggerInteraction.Ignore) && !Physics.Raycast(position.alloc().add(this.upheight), cv1.set(this.up).negative(), this.height, undefined, this.mask, QueryTriggerInteraction.Ignore);
+							case RayDirection.Up:
+								return !Physics.Raycast(position, this.up, this.height, undefined, this.mask, QueryTriggerInteraction.Ignore);
+							default:
+								return !Physics.Raycast(cv1.set(position).add(this.upheight), cv2.set(this.up).negative(), this.height, undefined, this.mask, QueryTriggerInteraction.Ignore);
+						}
+					})
 			}
 		})
 	}
@@ -170,20 +186,23 @@ export class GraphCollision {
 		}
 
 		if (this.thickRaycast) {
-			// var ray = new Ray(position + up * fromHeight, -up);
-			// if (Physics.SphereCast(ray, finalRaycastRadius, out hit, fromHeight + 0.005F, heightMask, QueryTriggerInteraction.Ignore)) {
-			// 	return VectorMath.ClosestPointOnLine(ray.origin, ray.origin + ray.direction, hit.point);
-			// }
+			withVec3((cv1, cv2, cv3, cv4) => {
+				var ray = new geometry.Ray();
+				ray.o.set(cv1.set(position).add(cv2.set(this.up).multiplyScalar(this.fromHeight)))
+				ray.d.set(cv3.set(this.up).negative())
+				if (Physics.SphereCast(ray, this.finalRaycastRadius, this.fromHeight + 0.005, out.hitInfo, this.heightMask, QueryTriggerInteraction.Ignore)) {
+					return VectorMath.ClosestPointOnLine(ray.o, cv4.set(ray.o).add(ray.d), out.hitInfo.hitPoint);
+				}
 
-			// walkable &= !unwalkableWhenNoGround;
-			throw new Error("not implement")
+				out.walkable &&= !this.unwalkableWhenNoGround;
+			})
 		} else {
 			// Cast a ray from above downwards to try to find the ground
 
 			let ret2 = withVec3((cv1, up) => {
 				var origin = cv1.set(position).add(up.set(this.up).multiplyScalar(this.fromHeight))
 				up.set(this.up).negative()
-				let ret2 = Physics.Raycast(origin, up, out, this.fromHeight + 0.005, this.heightMask, QueryTriggerInteraction.Ignore);
+				let ret2 = Physics.Raycast(origin, up, this.fromHeight + 0.005, out.hitInfo, this.heightMask, QueryTriggerInteraction.Ignore);
 				return ret2;
 			})
 			if (ret2) {
