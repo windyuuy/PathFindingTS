@@ -45,9 +45,17 @@ export class PathFinder extends Component {
 
     update(deltaTime: number) {
         try {
-            PathFinderOptions.update();
+            PathFinderOptions.update(this.options);
 
             AstarPath.active.update();
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    lateUpdate(deltaTime: number) {
+        try {
+            PathFinderOptions.lateUpdate(this.options);
         } catch (e) {
             console.error(e)
         }

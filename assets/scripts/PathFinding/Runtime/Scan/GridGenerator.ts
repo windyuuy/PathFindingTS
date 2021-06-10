@@ -852,6 +852,12 @@ export class GridGraph {
 	protected graphNodes: cc.Node[] = []
 
 	drawNode(gridNode: GridNode, up: Vec3, options: PathFinderDebugDrawOptions) {
+		if (!options.showUnwalkableNodes) {
+			if (!gridNode.Walkable) {
+				return
+			}
+		}
+
 		var drawBatchId = this.drawBatchId
 
 		var pos = gridNode.position.asVec3()
@@ -864,6 +870,7 @@ export class GridGraph {
 				nodePos.add(upOffset)
 			})
 		}
+		const drawNodeSize = options.drawNodeSize
 
 		MyNodePool.load("GridHint", (node) => {
 			nodePos.autorecycle()
@@ -878,6 +885,7 @@ export class GridGraph {
 
 			node.position = nodePos
 			node.parent = this.graphicRoot
+			node.setScale(drawNodeSize, drawNodeSize, drawNodeSize)
 
 			node.getChildByName("CubeGreen")!.active = !gridNode.Walkable
 			node.getChildByName("CubeRed")!.active = gridNode.Walkable

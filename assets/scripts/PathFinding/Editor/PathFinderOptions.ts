@@ -1,6 +1,7 @@
 
 import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { EditorUtils } from "./EditorUtils";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
 
@@ -158,7 +159,9 @@ export class PathFinderOptions {
 	maxSlope: number = 90
 
 	// PhysicsOptions
-	@property
+	@property({
+		visible: false,
+	})
 	use2D: boolean = false
 
 	@property({
@@ -173,14 +176,14 @@ export class PathFinderOptions {
 	colliderType: ColliderType = ColliderType.Capsule;
 
 	@property({
-		displayName: "碰撞体高度/长度",
-	})
-	colliderHeight: number = 0
-
-	@property({
 		displayName: "直径",
 	})
 	colliderDiameter: number = 0.1
+
+	@property({
+		displayName: "碰撞体高度/长度",
+	})
+	colliderHeight: number = 0
 
 	@property({
 		displayName: "位置偏移",
@@ -220,6 +223,7 @@ export class PathFinderOptions {
 
 	@property({
 		displayName: "粗射线检测直径",
+		visible: false,
 	})
 	thickRaycastDiameter: number = 1
 
@@ -248,10 +252,14 @@ export class PathFinderOptions {
 	})
 	heuristicScale: number = 1
 
-	@property
+	@property({
+		visible: true,
+	})
 	penaltyAngle: boolean = false
 
-	@property
+	@property({
+		visible: true,
+	})
 	penaltyAngleFactor: number = 100
 	@property({
 		slide: true,
@@ -259,14 +267,23 @@ export class PathFinderOptions {
 	})
 	penaltyAnglePower: number = 1
 
-	@property
+	@property({
+		visible: true,
+	})
 	penaltyPosition: boolean = false
-	@property
+
+	@property({
+		visible: true,
+	})
 	penaltyPositionFactor: number = 0
-	@property
+	@property({
+		visible: true,
+	})
 	penaltyPositionOffset: number = 1
 
-	@property
+	@property({
+		visible: true,
+	})
 	initialPenalty: number = 0
 
 	@property({
@@ -283,7 +300,18 @@ export class PathFinderOptions {
 		LayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
 	}
 
-	public static update() {
+	public static update(options: PathFinderOptions[]) {
+		for (let option of options) {
+			let penaltyAngle = option.penaltyAngle;
+			EditorUtils.setAttrVisible(option, "penaltyAngleFactor", penaltyAngle);
+			EditorUtils.setAttrVisible(option, "penaltyAnglePower", penaltyAngle);
 
+			let penaltyPosition = option.penaltyPosition;
+			EditorUtils.setAttrVisible(option, "penaltyPositionFactor", penaltyPosition);
+			EditorUtils.setAttrVisible(option, "penaltyPositionOffset", penaltyPosition);
+		}
+	}
+
+	public static lateUpdate(options: PathFinderOptions[]) {
 	}
 }

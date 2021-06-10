@@ -23,4 +23,15 @@ export class PathFinderDebugDrawOptions {
 		displayName: "图层上移偏移",
 	})
 	upOffset: number = 0
+
+	@property({
+		displayName: "绘制不可行走节点",
+	})
+	showUnwalkableNodes: boolean = true
+
+	@property({
+		displayName: "节点尺寸",
+	})
+	drawNodeSize: number = 0.3
+
 }
