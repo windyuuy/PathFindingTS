@@ -207,6 +207,8 @@ export class PathFinderOptions {
 
 	@property({
 		displayName: "使用粗射线检测",
+		// TODO: 支持swipe检测
+		visible: false,
 	})
 	thickRaycast: boolean = false
 
@@ -220,6 +222,7 @@ export class PathFinderOptions {
 
 	@property({
 		visible: false,
+		displayName: "线程数",
 		type: Enum(ThreadCount),
 	})
 	threadCount: ThreadCount = ThreadCount.One
