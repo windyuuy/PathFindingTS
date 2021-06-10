@@ -16,6 +16,10 @@ const sharedQuat = new Quat()
 
 export class Physics {
 
+	public static get DefaultRaycastLayers() {
+		return this.collisionSystem.DefaultRaycastLayers
+	}
+
 	protected static collisionSystem: CollisionSystemBase
 	protected static init() {
 		const physicSelectorId = cc.physics.selector.id
@@ -34,7 +38,7 @@ export class Physics {
 		}
 	}
 
-	public static RaycastRaw(worldRay: geometry.Ray, mask?: number, maxDistance?: number, queryTrigger?: boolean): boolean {
+	protected static RaycastRaw(worldRay: geometry.Ray, mask?: number, maxDistance?: number, queryTrigger?: boolean): boolean {
 		return PhysicsSystem.instance.raycastClosest(worldRay, mask, maxDistance, queryTrigger);
 	}
 
@@ -51,25 +55,6 @@ export class Physics {
 		return ret
 	}
 
-	public static get queriesHitTriggers(): bool {
-		return this.collisionSystem.queriesHitTriggers
-	}
-	public static set queriesHitTriggers(value: bool) {
-		this.collisionSystem.queriesHitTriggers = value
-	}
-
-	public static CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction): boolean {
-		return this.collisionSystem.CheckCapsule(start, end, radius, layerMask, queryTriggerInteraction)
-	}
-
-	public static CheckSphere(position: Vec3, radius: number, layerMask: number, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
-		return this.collisionSystem.CheckSphere(position, radius, layerMask, queryTriggerInteraction)
-	}
-
-	public static CheckBox(center: Vec3, halfExtents: Vec3, orientation: Quat, layerMask: int, queryTriggerInteraction: QueryTriggerInteraction): bool {
-		return this.collisionSystem.CheckBox(center, halfExtents, orientation, layerMask, queryTriggerInteraction)
-	}
-
 	public static Linecast(start: TSVector, end: TSVector, layerMask: int): bool {
 		var direction = sharedVec3.set(end).subtract(start)
 		var maxDistance = direction.length()
@@ -81,6 +66,26 @@ export class Physics {
 		var ret = this.RaycastRaw(ray, layerMask, maxDistance, false)
 		return ret
 	}
+
+	public static get queriesHitTriggers(): bool {
+		return this.collisionSystem.queriesHitTriggers
+	}
+	public static set queriesHitTriggers(value: bool) {
+		this.collisionSystem.queriesHitTriggers = value
+	}
+
+	public static CheckCapsule(start: Vec3, end: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
+		return this.collisionSystem.CheckCapsule(start, end, radius, layerMask, queryTriggerInteraction)
+	}
+
+	public static CheckSphere(position: Vec3, radius: number, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): boolean {
+		return this.collisionSystem.CheckSphere(position, radius, layerMask, queryTriggerInteraction)
+	}
+
+	public static CheckBox(center: Vec3, halfExtents: Vec3, orientation: Quat = Quat.IDENTITY, layerMask: int = this.DefaultRaycastLayers, queryTriggerInteraction: QueryTriggerInteraction = QueryTriggerInteraction.Ignore): bool {
+		return this.collisionSystem.CheckBox(center, halfExtents, orientation, layerMask, queryTriggerInteraction)
+	}
+
 }
 
 Physics["init"]()
