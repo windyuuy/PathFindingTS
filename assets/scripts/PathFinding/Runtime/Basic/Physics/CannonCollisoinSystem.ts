@@ -165,8 +165,8 @@ export class CannonCollisionSystem extends CollisionSystemBase {
 			if (forwardUp.equals(Vec3.ZERO)) {
 				forwardUp.set(Vec3.UP)
 			}
-			// 默认朝向 z:-1
-			axisA.set(0, 0, -1)
+
+			axisA.set(Vec3.FORWARD)
 			Vec3.cross(axisY, axisA, forwardUp)
 			// 求出目标朝向
 			let forwardA = Vec3.cross(axisA, forwardUp, axisY)

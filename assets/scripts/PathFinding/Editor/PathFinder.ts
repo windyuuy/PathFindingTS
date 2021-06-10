@@ -71,7 +71,7 @@ export class PathFinder extends Component {
             var graphicRoot = new PrivateNode("FindPathGraphicRoot")
             graphicRoot.parent = this.node
             AstarPath.active.graphicRoot = graphicRoot
-            graphicRoot.setWorldPosition(new Vec3(0, 0, 0))
+            graphicRoot.setWorldPosition(Vec3.ZERO)
         }
     }
     /**

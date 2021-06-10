@@ -30,13 +30,7 @@ export class Vector3 extends Vec3 {
 	// 	Quat.fromAxes(sharedQuat, axis, axis1, axis2)
 	// }
 	public static rotate(out: Vec3, quat: Quaternion, vec3: Vec3) {
-		sharedMat4.fromQuat(quat)
-		this.transformMat4Normal(sharedVec3, vec3, sharedMat4)
-		out.x = sharedVec3.x
-		out.y = sharedVec3.y
-		out.z = sharedVec3.z
-
-		return out
+		Vector3.transformQuat(out, vec3, quat)
 	}
 }
 
@@ -47,7 +41,8 @@ export class Quaternion extends Quat {
 
 	public static RotateByAxis(out: Vector3, angle: FP, axis: Vector3, direct: Vector3): Vector3 {
 		this.AngleAxis(sharedQuat, angle, axis)
-		Vector3.rotate(out, sharedQuat, direct)
+		// Vector3.rotate(out, sharedQuat, direct)
+		Vector3.transformQuat(out, direct, sharedQuat)
 		return out
 	}
 }

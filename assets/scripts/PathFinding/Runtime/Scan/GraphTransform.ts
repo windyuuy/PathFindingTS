@@ -4,7 +4,7 @@ import { Matrix4 } from "../Basic/Matrix";
 export class GraphTransform {
 
 	constructor(m: Mat4) {
-		this.matrix = m;
+		this.matrix.set(m);
 		Mat4.invert(this.inverseMatrix, this.matrix)
 
 		Matrix4.MultiplyVector(this.up, m, Vec3.UP);

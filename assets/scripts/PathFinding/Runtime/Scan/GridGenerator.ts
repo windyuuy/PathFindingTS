@@ -587,10 +587,10 @@ export class GridGraph {
 		// Generate a matrix which shrinks the graph along one of the diagonals
 		// corresponding to the isometricAngle
 
-		return withMat4((isometricMatrix, boundsMatrix, m) => {
+		return withVec3((cv1, cv2, cv3, cv4) => withMat4((isometricMatrix, boundsMatrix, m) => {
 			Mat4.fromRTS(isometricMatrix, Quat.fromEuler(sharedQuat, 0, 45, 0), Vec3.ZERO, Vec3.ONE);
 			Mat4.identity(sharedMat4);
-			Mat4.scale(sharedMat4, sharedMat4, new Vec3(Math.cos(Float.Deg2Rad * this.isometricAngle), 1, 1));
+			Mat4.scale(sharedMat4, sharedMat4, cv1.set(Math.cos(Float.Deg2Rad * this.isometricAngle), 1, 1));
 			Mat4.multiply(isometricMatrix, sharedMat4, isometricMatrix);
 
 			Mat4.multiply(isometricMatrix, Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, 0, -45, 0), Vec3.ZERO, Vec3.ONE), isometricMatrix);
@@ -598,21 +598,21 @@ export class GridGraph {
 			// Generate a matrix for the bounds of the graph
 			// This moves a point to the correct offset in the world and the correct rotation and the aspect ratio and isometric angle is taken into account
 			// The unit is still world units however
-			Mat4.fromRTS(boundsMatrix, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, new Vec3(this.aspectRatio, 1, 1));
+			Mat4.fromRTS(boundsMatrix, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), this.center, cv2.set(this.aspectRatio, 1, 1));
 			Mat4.multiply(isometricMatrix, boundsMatrix, isometricMatrix);
 
 			// Generate a matrix where Vector3.zero is the corner of the graph instead of the center
 			// The unit is nodes here (so (0.5,0,0.5) is the position of the first node and (1.5,0,0.5) is the position of the second node)
 			// 0.5 is added since this is the node center, not its corner. In graph space a node has a size of 1
-			sharedVec = new Vec3(out.width * out.nodeSize, 0, out.depth * out.nodeSize)
+			sharedVec = cv3.set(out.width * out.nodeSize, 0, out.depth * out.nodeSize)
 			sharedVec.negative().multiplyScalar(0.5)
-			Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), new Vec3(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
+			Mat4.fromRTS(sharedMat4, Quat.fromEuler(sharedQuat, this.rotation.x, this.rotation.y, this.rotation.z), sharedVec.transformMat4(boundsMatrix), cv4.set(out.nodeSize * this.aspectRatio, 1, out.nodeSize))
 			Mat4.multiply(m, sharedMat4, isometricMatrix);
 
 			// Set the matrix of the graph
 			// This will also set inverseMatrix
 			return new GraphTransform(m);
-		})
+		}))
 	}
 
 	// TODO: 需要结合终点改进索引顺序
