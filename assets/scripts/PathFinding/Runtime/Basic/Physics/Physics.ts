@@ -6,6 +6,7 @@ import { withList, withVec3 } from "../ObjectPool";
 import { Quat } from "cc";
 import { CollisionSystemBase, QueryTriggerInteraction } from "./CollisionSystem";
 import { CannonCollisionSystem } from "./CannonCollisoinSystem";
+import { IS_CC_EDITOR } from "../Macro";
 
 export type RaycastHit = PhysicsRayResult
 export const RaycastHit = PhysicsRayResult
@@ -93,4 +94,6 @@ export class Physics {
 	}
 }
 
-Physics["init"]()
+if (!IS_CC_EDITOR) {
+	Physics["init"]()
+}
