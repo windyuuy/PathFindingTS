@@ -300,7 +300,9 @@ declare namespace gcc.respool {
         static put(node: cc.Node): void;
         static get(prefabId: string): cc.Node;
         static load(prefabId: string, call: (node: cc.Node, err?: Error) => void): void;
+        static loadAsync(prefabId: string): Promise<unknown>;
         static loadPrefab(prefabId: string, call: (prefab: cc.Prefab, err?: Error) => void): void;
+        static loadPrefabAsync(prefabId: string): Promise<unknown>;
     }
 }
 declare namespace gcc.transform {
