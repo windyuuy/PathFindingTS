@@ -296,11 +296,19 @@ export class PathFinderOptions {
 	})
 	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
-	public static start() {
+	public static start(options: PathFinderOptions[]) {
 		LayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		this.updateOptionsView(options)
 	}
 
 	public static update(options: PathFinderOptions[]) {
+		this.updateOptionsView(options)
+	}
+
+	public static lateUpdate(options: PathFinderOptions[]) {
+	}
+
+	protected static updateOptionsView(options: PathFinderOptions[]) {
 		for (let option of options) {
 			let penaltyAngle = option.penaltyAngle;
 			EditorUtils.setAttrVisible(option, "penaltyAngleFactor", penaltyAngle);
@@ -310,8 +318,5 @@ export class PathFinderOptions {
 			EditorUtils.setAttrVisible(option, "penaltyPositionFactor", penaltyPosition);
 			EditorUtils.setAttrVisible(option, "penaltyPositionOffset", penaltyPosition);
 		}
-	}
-
-	public static lateUpdate(options: PathFinderOptions[]) {
 	}
 }
