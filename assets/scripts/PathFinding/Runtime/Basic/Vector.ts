@@ -18,6 +18,7 @@ const sharedQuat = new Quat()
 export class Vector3 extends Vec3 {
 	public static rotate(out: Vec3, quat: Quaternion, vec3: Vec3) {
 		Vector3.transformQuat(out, vec3, quat)
+		return out
 	}
 
 	protected static readonly VECTORMATH_SLERP_TOL = 0.999
@@ -44,20 +45,39 @@ export class Vector3 extends Vec3 {
 		})
 	}
 
-	public static rotateTowards(out: Vec3, from: Vec3, to: Vec3, maxRadiansDelta: number, maxMagnitudeDelta: number): Vec3 {
-		let magFrom = from.length()
-		let magTo = to.length()
-		let magDiff = magTo - magFrom
-		let magDelta = Math.sign(magDiff) * Math.min(maxMagnitudeDelta, Math.abs(magDiff))
-		let mag = magFrom + magDelta
+	public static normalizeR(out: Vec3, a: Vec3): number {
+		const x = a.x;
+		const y = a.y;
+		const z = a.z;
 
-		let delta = Vec3.angle(from, to) * Float.Deg2Rad
-		let radDiff = Math.min(1, maxRadiansDelta / delta)
+		let len = x * x + y * y + z * z;
+		if (len > 0) {
+			let rlen = 1 / Math.sqrt(len);
+			out.x = x * rlen;
+			out.y = y * rlen;
+			out.z = z * rlen;
+		} else {
+			out.set(a)
+		}
+		return len;
+	}
+
+	public static rotateTowards(out: Vec3, from: Vec3, to: Vec3, maxRadiansDelta: number, maxMagnitudeDelta: number): Vec3 {
 		withVec3((cv1, cv2) => {
-			Vector3.slerpUnclamped(out, Vec3.normalize(cv1, from), Vec3.normalize(cv2, to), radDiff)
+			let magFrom = this.normalizeR(cv1, from)
+			let magTo = this.normalizeR(cv2, to)
+
+			let delta = Vec3.angle(from, to) * Float.Deg2Rad
+			let radDiff = Math.min(1, maxRadiansDelta / delta)
+			Vector3.slerpUnclamped(out, cv1, cv2, radDiff)
+
+			let magDiff = magTo - magFrom
+			let magDelta = Math.sign(magDiff) * Math.min(maxMagnitudeDelta, Math.abs(magDiff))
+			let mag = magFrom + magDelta
+
+			out.multiplyScalar(mag)
 		})
 
-		out.multiplyScalar(mag)
 		return out
 	}
 
@@ -145,7 +165,7 @@ export class Quaternion extends Quat {
 		if (num == 0) {
 			return out.set(to)
 		}
-		let rate = Math.min(1.0, maxDegreeDelta / num)
+		let rate = Math.min(1.0, maxDegreeDelta * Float.Deg2Rad / num)
 		return this.slerpUnclamped(out, from, to, rate)
 	}
 }
