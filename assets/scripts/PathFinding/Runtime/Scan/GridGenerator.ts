@@ -780,6 +780,8 @@ export class GridGraph {
 					if (nearNode != null) {
 						return nearNode
 					}
+
+					nearList.clear()
 				}
 
 			}
