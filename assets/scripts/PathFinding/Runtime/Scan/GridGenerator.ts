@@ -896,8 +896,8 @@ export class GridGraph {
 			node.parent = this.graphicRoot
 			node.setScale(drawNodeSize, drawNodeSize, drawNodeSize)
 
-			node.getChildByName("CubeGreen")!.active = !gridNode.Walkable
-			node.getChildByName("CubeRed")!.active = gridNode.Walkable
+			node.getChildByName("CubeGreen")!.active = gridNode.Walkable
+			node.getChildByName("CubeRed")!.active = !gridNode.Walkable
 		})
 	}
 
