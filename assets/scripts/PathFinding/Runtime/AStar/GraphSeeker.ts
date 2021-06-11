@@ -3,6 +3,7 @@ import { Heuristic } from "../../Editor/PathFinderOptions";
 import { GridGraph } from "../Scan/GridGenerator";
 import { NNConstraint } from "../Scan/NNInfo/astarclasses";
 import { AStarFinder } from "./AStarLib/astar";
+import { FindPathResult } from "./AStarLib/finders/astar-finder";
 import { SeekResult } from "./SeekResult";
 
 type Vector3 = Vec3
@@ -35,6 +36,7 @@ export class GraphSeeker {
 				nodes: graph.nodes,
 				width: graph.width,
 				height: graph.depth,
+				refGraph: graph,
 			},
 			diagonalAllowed: true,
 			heuristic: heuristic as any,
@@ -48,16 +50,20 @@ export class GraphSeeker {
 		return this
 	}
 
-	createSeekResult() {
+	static createSeekResult(start: Vector3, end: Vector3) {
 		var result = new SeekResult()
-		result.graph = this.graph
+		result.start.set(start)
+		result.end.set(end)
 		return result
 	}
-	public StartPath(start: Vector3, end: Vector3): SeekResult {
+
+	public StartPath(result: SeekResult, start: Vector3, end: Vector3): SeekResult {
+		// var result = this.createSeekResult(start, end)
+		result.reset()
+		result.graph = this.graph
 
 		if (start.equals(end)) {
-			var result = this.createSeekResult()
-			result.isOk = true
+			result.ok = true
 			result.vectorPath = [start.alloc()]
 			return result
 		}
@@ -83,41 +89,22 @@ export class GraphSeeker {
 		var endNode = GetNearestNode(end, start)
 
 		if (startNode == null || endNode == null) {
-			var result = this.createSeekResult()
-			result.isOk = false
+			result.ok = false
 			result.vectorPath = []
 			return result
 		}
 
-		var result1 = this.graphFinder.findPath({
-			x: startNode.ipos.x,
-			y: startNode.ipos.y,
-		}, {
-			x: endNode.ipos.x,
-			y: endNode.ipos.y,
-		})
-
-		var result = this.createSeekResult()
-		result.isOk = result1.ok
-		var grid = this.graphFinder.getGrid()
-		for (var pn of result1.paths) {
-			// var index = pn[1] * this.graph.width + pn[0]
-			// var index = this.graph.toIndex(pn[0], pn[1])
-			// var node = this.graph.nodes[index]
-			var node = grid.getNodeAt({ x: pn[0], y: pn[1] })
-			result.nodes.push(node)
-			result.vectorPathRaw.push(node.position.asVec3().alloc())
-		}
-		result.vectorPath = result.vectorPathRaw.slice()
-		// 处理起点终点不在网格中心的细节
-		if (result.vectorPath.length > 0) {
-			if (!result.vectorPath[0].equals(start)) {
-				result.vectorPath.unshift(start)
+		this.graphFinder.findPath(
+			result,
+			{
+				x: startNode.ipos.x,
+				y: startNode.ipos.y,
+			},
+			{
+				x: endNode.ipos.x,
+				y: endNode.ipos.y,
 			}
-			if (!result.vectorPath[result.vectorPath.length - 1].equals(end)) {
-				result.vectorPath.push(end)
-			}
-		}
+		)
 
 		return result
 

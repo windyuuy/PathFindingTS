@@ -34,9 +34,10 @@ export class AStarSeeker {
 		return ret
 	}
 	protected _StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult {
+		let result = GraphSeeker.createSeekResult(start, end)
 		for (var seek of this.graphSeekers) {
-			result = seek.StartPath(start, end)
-			if (result.isOk) {
+			seek.StartPath(result, start, end)
+			if (result.ok) {
 				if (call != null) {
 					call(result)
 				}
@@ -44,7 +45,6 @@ export class AStarSeeker {
 			}
 		}
 
-		var result: SeekResult = new SeekResult()
 		return result
 	}
 }

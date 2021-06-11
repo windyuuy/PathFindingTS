@@ -231,6 +231,16 @@ export class NNConstraint {
 		graphMask: new GraphMask(-1),
 	});
 
+	public static readonly SharedWalkable: NNConstraint = new NNConstraint({
+		preferWalkability: true,
+		constrainWalkability: true,
+		walkable: true,
+		constrainArea: false,
+		constrainTags: false,
+		constrainDistance: false,
+		graphMask: new GraphMask(-1),
+	});
+
 	/// <summary>Default constructor. Equals to the property <see cref="Default"/></summary>
 	public constructor(n?: {
 		preferWalkability?: bool,

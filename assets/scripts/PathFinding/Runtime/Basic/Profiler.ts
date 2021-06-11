@@ -9,7 +9,6 @@ export class _TMyProfiler {
 
 	protected curName?: string
 	public EndSample(): void {
-		let t2 = Date.now()
 		let sample = this.sampleStack.pop()
 		if (sample != null) {
 			this.curName = sample.name
@@ -22,6 +21,7 @@ export class _TMyProfiler {
 			}
 
 			let o = this.overviews[sample.name]
+			let t2 = Date.now()
 			o.curCost = (t2 - sample.start)
 			o.duration += o.curCost
 			o.count++

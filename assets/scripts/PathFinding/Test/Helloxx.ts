@@ -60,14 +60,14 @@ export class Helloxx extends Component {
                 // new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -60)),
-                // new TestCase(new Vec3(40, 0, 40), new Vec3(-40, 0, -10)),
+                new TestCase(new Vec3(40, 0, 40), new Vec3(-40, 0, -10)),
                 new TestCase(new Vec3(60, 0, 60), new Vec3(-60, 0, -10)),
             ]
             for (var c of poses) {
                 var result = await seek.startPath(c.start, c.end, (path) => {
-                    console.log("result:", path.isOk, path.vectorPath);
+                    console.log("result:", path.ok, path.vectorPath);
                 });
-                if (result.isOk) {
+                if (result.ok) {
                     c.paths = result!.vectorPath
                     if (!c.check()) {
                         console.error("unmatched result")
@@ -75,6 +75,7 @@ export class Helloxx extends Component {
                 } else {
                     throw new Error("find path failed")
                 }
+                await MyWaitForSeconds(1)
             }
         })()
         console.log("start")

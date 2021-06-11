@@ -19,9 +19,9 @@ export class Int3 {
 	 */
 	z: number = 0;
 
-	public static Precision: number = 1000;
-	public static FloatPrecision: number = 1000;
-	public static PrecisionFactor: number = 0.001;
+	public static readonly Precision: number = 1000;
+	public static readonly FloatPrecision: number = 1000;
+	public static readonly PrecisionFactor: number = 0.001;
 
 	public static fromVec3(ob: Vec3): Int3 {
 		// var int3 = new Int3()
@@ -53,13 +53,22 @@ export class Int3 {
 		return this
 	}
 
-	public asVec3() {
+	public asVec3(vec3?: Vec3) {
 		// var vec3 = new Vec3()
-		var vec3 = vec3Pool.tempNow()
+		if (vec3 == null) {
+			vec3 = vec3Pool.tempNow()
+		}
 		vec3.x = this.x * Int3.PrecisionFactor
 		vec3.y = this.y * Int3.PrecisionFactor
 		vec3.z = this.z * Int3.PrecisionFactor
 		return vec3
+	}
+
+	public distance(vec3: Int3) {
+		let dx = this.x - vec3.x
+		let dy = this.y - vec3.y
+		let dz = this.z - vec3.z
+		return Math.sqrt((dx * dx + dy * dy * dz * dz)) * Int3.PrecisionFactor
 	}
 
 	public get magnitude(): number {

@@ -1,22 +1,68 @@
 import * as cc from "cc";
+import { Vec3 } from "cc";
 import { PathFinderDebugDrawOptions } from "../../Editor/PathFinderDebugDrawOptions";
 import { MyNodePool } from "../Basic/NodePool/MyNodePool";
-import { withQuat, withVec3 } from "../Basic/ObjectPool";
+import { vec3Pool, withQuat, withVec3 } from "../Basic/ObjectPool";
 import { AstarPath } from "../Scan/AstarPath";
 import { GridGraph } from "../Scan/GridGenerator";
 import { ANode } from "./AStarLib/core/node";
+import { FindPathResult } from "./AStarLib/finders/astar-finder";
+import { IPoint } from "./AStarLib/interfaces/astar.interfaces";
 
 type Vector3 = cc.Vec3
 
-export class SeekResult {
+export class SeekResult extends FindPathResult {
 	/**
 	 * 是否存在路径
 	 */
-	public isOk: boolean = false
-	public vectorPath: Vector3[] = []
-	public vectorPathRaw: Vector3[] = []
+	public ok: boolean = false
+
+	start: Vec3 = new Vec3()
+	end: Vec3 = new Vec3()
+
+	protected _vectorPath?: Vector3[]
+	public get vectorPath(): Vector3[] {
+		if (this._vectorPath == null) {
+			let vectorPath = this._vectorPath = this.vectorPathRaw.slice()
+			// 处理起点终点不在网格中心的细节
+			if (vectorPath.length > 0) {
+				let start = this.start
+				let end = this.end
+				if (!vectorPath[0].equals(start)) {
+					vectorPath.unshift(start)
+				}
+				if (!vectorPath[vectorPath.length - 1].equals(end)) {
+					vectorPath.push(end)
+				}
+			}
+		}
+		return this._vectorPath
+	}
+	public set vectorPath(path: Vector3[]) {
+		this._vectorPath = path
+	}
+
+	private _vectorPathRaw?: Vector3[]
+	public get vectorPathRaw(): Vector3[] {
+		if (this._vectorPathRaw == null) {
+			this._vectorPathRaw = this.nodes.map(node => node.position.asVec3(vec3Pool.obtain()))
+		}
+		return this._vectorPathRaw;
+	}
+
+	protected _path?: IPoint[]
+	public get paths(): IPoint[] {
+		if (this._path == null) {
+			this._path = this.nodes.map(node => ({ x: node.ipos.x, y: node.ipos.y }))
+		}
+		return this._path
+	}
 	public nodes: ANode[] = []
 	public graph!: GridGraph
+
+	reset() {
+		this.nodes.clear()
+	}
 
 	public graphNodes: cc.Node[] = []
 	public drawBatchId: number = 0

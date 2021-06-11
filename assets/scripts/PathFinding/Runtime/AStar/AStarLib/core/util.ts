@@ -1,3 +1,4 @@
+import { FindPathResult } from "../finders/astar-finder";
 import { ANode } from './node';
 
 /**
@@ -6,12 +7,14 @@ import { ANode } from './node';
  * @param includeStartingNode
  */
 export function backtrace(
+  out: FindPathResult,
   node: ANode,
   includeStartNode: boolean,
   includeEndNode: boolean
-): number[][] {
+): void {
   // Init empty path
-  const path: number[][] = [];
+  // const path: number[][] = [];
+  const nodes = out.nodes
 
   let currentNode: ANode | undefined;
   if (includeEndNode) {
@@ -23,14 +26,17 @@ export function backtrace(
 
   // Loop as long the current node has a parent
   while (currentNode != undefined && currentNode.getParent()) {
-    path.push([currentNode.ipos.x, currentNode.ipos.y]);
+    // path.push([currentNode.ipos.x, currentNode.ipos.y]);
+    nodes.push(currentNode)
     currentNode = currentNode.getParent();
   }
 
   // If true we will also include the starting node
   if (currentNode != undefined && includeStartNode) {
-    path.push([currentNode.ipos.x, currentNode.ipos.y]);
+    nodes.push(currentNode)
+    // path.push([currentNode.ipos.x, currentNode.ipos.y]);
   }
 
-  return path.reverse();
+  // return path.reverse();
+  nodes.reverse()
 }

@@ -1,3 +1,4 @@
+import { GridGraph } from "../../../Scan/GridGenerator";
 import { ANode } from "../core/node";
 import { Heuristic } from '../types/astar.types';
 
@@ -36,6 +37,7 @@ export interface IGridConstructorFromGraph {
   height: number;
   nodes: ANode[];
   densityOfObstacles?: number;
+  refGraph: GridGraph
 }
 
 export interface INodeConstructor {

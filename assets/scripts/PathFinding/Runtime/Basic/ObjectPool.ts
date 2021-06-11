@@ -21,7 +21,8 @@ class ObjectPool<T>{
 		if ((v as any)["__$tmp"]) {
 			(v as any)["__$tmp"] = false;
 		}
-		if (typeof ((v as any)["clear"]) == "function") {
+		// if (typeof ((v as any)["clear"]) == "function") {
+		if ((v as any)["clear"]) {
 			(v as any).clear();
 		}
 		this.pool.push(v)
@@ -47,7 +48,7 @@ class ObjectPool<T>{
 		}
 		var ret = handle.apply(this, paras)
 		paras.forEach(v => this.recycle(v))
-		paras.clear()
+		// paras.clear()
 		listPool.recycle(paras)
 		return ret
 	}

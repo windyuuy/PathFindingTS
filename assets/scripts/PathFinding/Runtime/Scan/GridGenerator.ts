@@ -269,12 +269,14 @@ export class GridGraph {
 		return withVec3((out, pos) => Int3.fromVec3(this.transform.Transform(out, pos.set(x + 0.5, height, z + 0.5))))
 	}
 
-	public WorldPointToGraph(position: Vec3): Vec3 {
-		var gpos = this.transform.InverseTransform(vec3Pool.tempNow(), position)
-		gpos.x -= 0.5
-		gpos.z -= 0.5
-		gpos.x = Math.floor(gpos.x)
-		gpos.z = Math.floor(gpos.z)
+	public WorldPointToGraph(gpos: Vec3, position: Vec3): Vec3 {
+		var gpos = this.transform.InverseTransform(gpos, position)
+		// gpos.x -= 0.5
+		// gpos.z -= 0.5
+		// gpos.x = Math.floor(gpos.x)
+		// gpos.z = Math.floor(gpos.z)
+		gpos.x = Math.round(gpos.x)
+		gpos.z = Math.round(gpos.z)
 		return gpos
 	}
 
@@ -641,7 +643,7 @@ export class GridGraph {
 				}
 			}
 
-			var minDistSq!: number
+			var minDistSq: number = Float.PositiveInfinity
 			var nearNode: GridNode | null = null
 			var nearTh = -10
 			if ((!constraint.constrainWalkability) && constraint.preferWalkability) {
@@ -651,7 +653,7 @@ export class GridGraph {
 						var dist = Vector.distanceSQ(targetPos, position)
 						var th: number | null = null
 
-						if (nearNode == null || dist < minDistSq || (node.Walkable && !nearNode.Walkable) || (node.Walkable == nearNode.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+						if (dist < minDistSq || (node.Walkable && !nearNode!.Walkable) || (node.Walkable == nearNode!.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
 							nearNode = node
 							minDistSq = dist
 							nearTh = th != null ? th : calcTh(position, targetPos)
@@ -666,7 +668,7 @@ export class GridGraph {
 						var dist = Vector.distanceSQ(targetPos, position)
 						var th: number | null = null
 
-						if (nearNode == null || dist < minDistSq || (dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+						if (dist < minDistSq || (dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
 							nearNode = node
 							minDistSq = dist
 							nearTh = th != null ? th : calcTh(position, targetPos)
@@ -681,10 +683,15 @@ export class GridGraph {
 	}
 
 	public GetNearestNode(position: Vec3, end?: Vec3, constraint?: NNConstraint): GridNode | null {
+		return withVec3((gpos) => {
+			this.WorldPointToGraph(gpos, position)
+			return this.GetNearestNodeByIPos(gpos, position, end, constraint)
+		})
+	}
+	public GetNearestNodeByIPos(gpos: Vec3, position: Vec3, end?: Vec3, constraint?: NNConstraint): GridNode | null {
 		return withVec3((offset, offsetStart) => {
 			constraint = constraint ?? NNConstraint.SharedNone
 
-			var gpos = this.WorldPointToGraph(position)
 			var index = this.toIndex(gpos.x, gpos.z)
 
 			var nodes: GridNode[] = this.nodes;

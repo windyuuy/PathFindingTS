@@ -1,5 +1,13 @@
 import { ANode } from './node';
 import { IGridConstructorFromGraph, IGridConstructorFromMatrix, IPoint } from '../interfaces/astar.interfaces';
+import { withVec3 } from "../../../Basic/ObjectPool";
+import { Vec3 } from "cc";
+import { Float } from "../../../Basic/Float";
+import { GridGraph } from "../../../Scan/GridGenerator";
+import { NNConstraint } from "../../../Scan/NNInfo/astarclasses";
+
+const sharedVec1 = new Vec3()
+const sharedVec2 = new Vec3()
 
 export class Grid {
 	// General properties
@@ -12,6 +20,10 @@ export class Grid {
 
 	// The node grid
 	private gridNodes!: ANode[][];
+	private gridNodesLinear!: ANode[];
+
+	constructor() {
+	}
 
 	loadFromMatrix(aParams: IGridConstructorFromMatrix) {
 		// Set the general properties
@@ -106,6 +118,7 @@ export class Grid {
 		this.width = aParams.width;
 		this.height = aParams.height;
 		this.numberOfFields = this.width * this.height;
+		this.refGraph = aParams.refGraph
 
 		// Create and generate the matrix
 		this.gridNodes = this.buildGridWithNodesFromGraph(
@@ -115,7 +128,25 @@ export class Grid {
 			aParams.densityOfObstacles || 0
 		);
 
+		this.initConsts()
+
 		return this;
+	}
+
+	protected initConsts() {
+
+		const width = this.width
+		var neighbourOffsets = this.neighbourOffsets
+
+		neighbourOffsets[0] = -width;
+		neighbourOffsets[1] = 1;
+		neighbourOffsets[2] = width;
+		neighbourOffsets[3] = -1;
+		neighbourOffsets[4] = -width + 1;
+		neighbourOffsets[5] = width + 1;
+		neighbourOffsets[6] = width - 1;
+		neighbourOffsets[7] = -width - 1;
+
 	}
 
 	/**
@@ -131,6 +162,8 @@ export class Grid {
 		height: number,
 		densityOfObstacles: number
 	): ANode[][] {
+		nodes = this.gridNodesLinear = nodes.map(node => node.clone())
+
 		const newGrid: ANode[][] = [];
 		let id: number = 0;
 
@@ -140,7 +173,7 @@ export class Grid {
 			newGrid[y] = [];
 			for (let x = 0; x < width; x++) {
 				var index = pz + x
-				var node = nodes[index].clone()
+				var node = nodes[index]
 				newGrid[y][x] = node
 
 				id++;
@@ -172,12 +205,25 @@ export class Grid {
 		return this.gridNodes[position.y][position.x];
 	}
 
+
+	public getNodeAtXY(x: number, y: number): ANode {
+		return this.gridNodes[y][x];
+	}
+
+	public getNodes(): ANode[][] {
+		return this.gridNodes
+	}
+
 	/**
 	 * Check if specific node walkable.
 	 * @param position [position on the grid]
 	 */
 	public isWalkableAt(position: IPoint): boolean {
 		return this.gridNodes[position.y][position.x].getIsWalkable();
+	}
+
+	public isWalkableAtXY(x: number, y: number): boolean {
+		return this.gridNodes[y][x].getIsWalkable();
 	}
 
 	/**
@@ -207,14 +253,26 @@ export class Grid {
 		}
 		return direction
 	}
+	private connectionToDirectionXY(x: number, y: number): number {
+		var index = 4 + x + y * 3
+		// 3+x: 2,3,4 -> 6,7,8
+		// 0+x: -1,0,1 -> 3,4,5
+		// -3+x: -4,-3,-2 -> 0,1,2
+		var direction = this.connectionToDirectionMap[index]
+		if (direction > 7) {
+			console.error("invalid direction")
+		}
+		return direction
+	}
 
 	private hasConnectionToNode(pos1: IPoint, pos2: IPoint): boolean {
-		var direction = this.connectionToDirection({ x: pos2.x - pos1.x, y: pos2.y - pos1.y })
+		var direction = this.connectionToDirectionXY(pos2.x - pos1.x, pos2.y - pos1.y)
 		var node1 = this.gridNodes[pos1.y][pos1.x]
 		var isConnected = node1.HasConnectionInDirection(direction)
 		return isConnected
 	}
 
+	protected sharedTarget: IPoint = { x: 0, y: 0 }
 	/**
 	 * Get surrounding nodes.
 	 * @param currentXPos [x-position on the grid]
@@ -222,18 +280,24 @@ export class Grid {
 	 * @param diagnonalMovementAllowed [is diagnonal movement allowed?]
 	 */
 	public getSurroundingNodes(
+		out: ANode[],
 		currentPosition: IPoint,
 		diagnonalMovementAllowed: boolean
 	): ANode[] {
-		const surroundingNodes: ANode[] = [];
+		// const surroundingNodes: ANode[] = [];
+		const surroundingNodes: ANode[] = out
 
+		let target = this.sharedTarget
 		for (var y = currentPosition.y - 1; y <= currentPosition.y + 1; y++) {
 			for (var x = currentPosition.x - 1; x <= currentPosition.x + 1; x++) {
 				if (x == currentPosition.x && y == currentPosition.y) {
 					// 排除自身节点
 					continue;
 				}
-				var target = { x, y }
+				// var target = { x, y }
+				target.x = x
+				target.y = y
+
 				if (this.isOnTheGrid(target)) {
 					// TODO: 增加通路判断
 					if (this.isWalkableAt(target)) {
@@ -259,6 +323,45 @@ export class Grid {
 		return surroundingNodes;
 	}
 
+	readonly neighbourOffsets: number[] = []
+	public GetNeighbourAlongDirectionRaw(node: ANode, direction: number): ANode | null {
+		return this.gridNodesLinear[node.NodeInGridIndex + this.neighbourOffsets[direction]];
+	}
+
+	/**
+	 * Get surrounding nodes.
+	 * @param currentXPos [x-position on the grid]
+	 * @param currentYPos [y-position on the grid]
+	 * @param diagnonalMovementAllowed [is diagnonal movement allowed?]
+	 */
+	public getOpenableSurroundingNodes(
+		out: ANode[],
+		curNode: ANode,
+		diagnonalMovementAllowed: boolean
+	): ANode[] {
+		// const surroundingNodes: ANode[] = [];
+		const surroundingNodes: ANode[] = out
+		let neighborsCount: number
+		if (diagnonalMovementAllowed) {
+			neighborsCount = 8
+		} else {
+			neighborsCount = 4
+		}
+		for (var i = 0; i < neighborsCount; i++) {
+			// 判断是否有通路
+			if (curNode.HasConnectionInDirection(i)) {
+				// let other = curNode.GetNeighbourAlongDirection(i)!
+				// other = this.gridNodes[other.ipos.y][other.ipos.x]
+				let other = this.GetNeighbourAlongDirectionRaw(curNode, i)!
+				if (!(other.getIsOnClosedList())) {
+					surroundingNodes.push(other);
+				}
+			}
+		}
+
+		return surroundingNodes;
+	}
+
 	public setGrid(newGrid: ANode[][]): void {
 		this.gridNodes = newGrid;
 	}
@@ -267,12 +370,15 @@ export class Grid {
 	 * Reset the grid
 	 */
 	public resetGrid(): void {
-		for (let y = 0; y < this.gridNodes.length; y++) {
-			for (let x = 0; x < this.gridNodes[y].length; x++) {
-				this.gridNodes[y][x].setIsOnClosedList(false);
-				this.gridNodes[y][x].setIsOnOpenList(false);
-				this.gridNodes[y][x].setParent(undefined);
-				this.gridNodes[y][x].setFGHValuesToZero();
+		// let grids = this.gridNodes
+		// for (let sl of grids) {
+		// 	for (let x = 0; x < sl.length; x++) {
+		// 		sl[x].reset()
+		// 	}
+		// }
+		for (let node of this.gridNodesLinear) {
+			if (node.isWalkable) {
+				node.reset()
 			}
 		}
 	}
@@ -306,39 +412,47 @@ export class Grid {
 		return cloneGrid;
 	}
 
+	refGraph!: GridGraph
 	// TODO: 需要结合终点改进索引顺序
 	public findClosestWalkableNode(start: ANode, endNode: ANode): ANode | null {
-		var minDist = null;
-		var nearNode: ANode | null = null
-		var nearThStart = 0
-
-		var offset = new fsync.Vector3(endNode.ipos.x - start.ipos.x, endNode.ipos.y - start.ipos.y)
-		var offsetStart = new fsync.Vector3()
-		var calcTh = (start2: IPoint, end2: IPoint) => {
-			offsetStart.x = end2.x - start2.x
-			offsetStart.y = end2.y - start2.y
-			offsetStart.normalizeSelf()
-			var th = fsync.Vector.dot(offset, offsetStart)
-			return th
+		let node = this.refGraph.GetNearestNodeByIPos(new Vec3(start.ipos.x, 0, start.ipos.y), start.position.asVec3(), new Vec3(endNode.ipos.x, 0, endNode.ipos.y), NNConstraint.SharedWalkable)
+		if (node != null) {
+			return this.getNodeAt(node.ipos)
 		}
+		return null
+		// const cv1 = sharedVec1
+		// const cv2 = sharedVec2
+		// var minDist = Float.PositiveInfinity;
+		// var nearNode: ANode | null = null
+		// var nearThStart = 0
 
-		offset.normalizeSelf()
-		for (var x = 0; x < this.width; x++) {
-			for (var y = 0; y < this.height; y++) {
-				var node = this.getNodeAt({ x, y })
-				if (node.getIsWalkable()) {
-					var dist = start.idistance(node)
+		// var offset = cv1.set(endNode.ipos.x - start.ipos.x, endNode.ipos.y - start.ipos.y)
+		// offset.normalize()
+		// var offsetStart = cv2.reset()
+		// var calcTh = (start2: IPoint, end2: IPoint) => {
+		// 	offsetStart.x = end2.x - start2.x
+		// 	offsetStart.y = end2.y - start2.y
+		// 	offsetStart.normalize()
+		// 	var th = Vec3.dot(offset, offsetStart)
+		// 	return th
+		// }
 
-					var th: number | null = null
-					if (minDist == null || minDist > dist || (minDist == dist && (th = calcTh(start.ipos, endNode.ipos)) >= nearThStart)) {
-						minDist = dist
-						nearNode = node
-						nearThStart = th != null ? th : calcTh(start.ipos, endNode.ipos)
-					}
-				}
-			}
-		}
-		return nearNode
+		// for (var x = 0; x < this.width; x++) {
+		// 	for (var y = 0; y < this.height; y++) {
+		// 		var node = this.getNodeAtXY(x, y)
+		// 		if (node.getIsWalkable()) {
+		// 			var dist = start.idistance(node)
+
+		// 			var th: number | null = null
+		// 			if (minDist > dist || (minDist == dist && (th = calcTh(start.ipos, endNode.ipos)) >= nearThStart)) {
+		// 				minDist = dist
+		// 				nearNode = node
+		// 				nearThStart = th != null ? th : calcTh(start.ipos, endNode.ipos)
+		// 			}
+		// 		}
+		// 	}
+		// }
+		// return nearNode
 	}
 
 	public seekDirectTo(start: ANode, target: ANode) {
@@ -355,7 +469,7 @@ export class Grid {
 			// mov x
 			for (var x = 1; x <= amovx; x++) {
 				movx += signx
-				var node = this.getNodeAt({ x: startx + x * signx, y: starty })
+				var node = this.getNodeAtXY(startx + x * signx, starty)
 				node.setParent(startNode)
 				startNode = node
 			}
@@ -364,7 +478,7 @@ export class Grid {
 			// mov y
 			for (var y = 1; y <= -amovx; y++) {
 				movx += signy
-				var node = this.getNodeAt({ x: startx, y: starty + y * signy })
+				var node = this.getNodeAtXY(startx, starty + y * signy)
 				node.setParent(startNode)
 				startNode = node
 			}
@@ -373,7 +487,7 @@ export class Grid {
 
 		amovx = Math.abs(target.ipos.x - startx)
 		for (var i = 1; i <= amovx; i++) {
-			var node = this.getNodeAt({ x: startx + i * signx, y: starty + i * signy })
+			var node = this.getNodeAtXY(startx + i * signx, starty + i * signy)
 			node.setParent(startNode)
 			startNode = node
 		}

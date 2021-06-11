@@ -10,6 +10,13 @@ export class ANode {
     this._id = value;
   }
 
+  public get NodeInGridIndex(): number {
+    throw new Error("not implement")
+  }
+  public set NodeInGridIndex(value: number) {
+    throw new Error("not implement")
+  }
+
   readonly ipos: IPoint;
 
   private fValue: number;
@@ -141,6 +148,17 @@ export class ANode {
 
   public HasConnectionInDirection(dir: number): boolean {
     throw new Error("not implement")
+  }
+
+  public GetNeighbourAlongDirection(direction: number): ANode | null {
+    throw new Error("not implement")
+  }
+
+  public reset() {
+    this.isOnClosedList = false
+    this.isOnOpenList = false
+    this.parentNode = undefined
+    this.setFGHValuesToZero();
   }
 
   public idistance(target: ANode): number {

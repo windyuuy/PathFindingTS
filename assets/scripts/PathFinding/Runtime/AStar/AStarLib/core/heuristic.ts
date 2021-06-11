@@ -23,15 +23,10 @@ import { ANode } from "./node";
  */
 export function calculateHeuristic(
 	heuristicFunction: Heuristic,
-	// pos0: IPoint,
-	// pos1: IPoint,
 	node0: ANode,
 	node1: ANode,
-	// weight: number,
-	finder: AStarFinder,
-	grid: Grid,
+	weight: number,
 ): number {
-	var weight = finder.getWeight()
 	var pos0 = node0.position
 	var pos1 = node1.position
 
