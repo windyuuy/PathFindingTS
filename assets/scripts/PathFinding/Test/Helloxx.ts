@@ -59,7 +59,7 @@ export class Helloxx extends Component {
                 // new TestCase(new Vec3(4, 0, 4), new Vec3(10, 0, 15)),
                 // new TestCase(new Vec3(40, 0, 40), new Vec3(-10, 0, -10)),
                 // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -10)),
-                // new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -60)),
+                new TestCase(new Vec3(60, 0, 60), new Vec3(-10, 0, -60)),
                 new TestCase(new Vec3(40, 0, 40), new Vec3(-40, 0, -10)),
                 new TestCase(new Vec3(60, 0, 60), new Vec3(-60, 0, -10)),
             ]
