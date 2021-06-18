@@ -1,6 +1,7 @@
 
 import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
 import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
 import { EditorUtils } from "./EditorUtils";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
@@ -309,14 +310,16 @@ export class PathFinderOptions {
 	}
 
 	protected static updateOptionsView(options: PathFinderOptions[]) {
-		for (let option of options) {
-			let penaltyAngle = option.penaltyAngle;
-			EditorUtils.setAttrVisible(option, "penaltyAngleFactor", penaltyAngle);
-			EditorUtils.setAttrVisible(option, "penaltyAnglePower", penaltyAngle);
+		if (IS_CC_EDITOR) {
+			for (let option of options) {
+				let penaltyAngle = option.penaltyAngle;
+				EditorUtils.setAttrVisible(option, "penaltyAngleFactor", penaltyAngle);
+				EditorUtils.setAttrVisible(option, "penaltyAnglePower", penaltyAngle);
 
-			let penaltyPosition = option.penaltyPosition;
-			EditorUtils.setAttrVisible(option, "penaltyPositionFactor", penaltyPosition);
-			EditorUtils.setAttrVisible(option, "penaltyPositionOffset", penaltyPosition);
+				let penaltyPosition = option.penaltyPosition;
+				EditorUtils.setAttrVisible(option, "penaltyPositionFactor", penaltyPosition);
+				EditorUtils.setAttrVisible(option, "penaltyPositionOffset", penaltyPosition);
+			}
 		}
 	}
 }

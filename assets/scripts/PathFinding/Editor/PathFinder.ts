@@ -30,6 +30,12 @@ export class PathFinder extends Component {
         return AstarPath.active
     }
 
+    onLoad() {
+        if (!IS_CC_EDITOR) {
+            this.init();
+        }
+    }
+
     start() {
         try {
             PathFinderOptions.start(this.options);
@@ -73,7 +79,7 @@ export class PathFinder extends Component {
 
         AstarPath.active.options = this.options;
         AstarPath.active.init()
-        AstarPath.active.graphic = this.addComponent(Graphics)
+        // AstarPath.active.graphic = this.addComponent(Graphics)
 
         if (AstarPath.active.graphicRoot == null || AstarPath.active.graphicRoot.parent != this.node) {
             var graphicRoot = new PrivateNode("FindPathGraphicRoot")
@@ -87,7 +93,6 @@ export class PathFinder extends Component {
      */
     scanGraph() {
         AstarPath.active.scanGraph()
-        AstarPath.active.drawDebug()
     }
 
     /**
@@ -95,7 +100,6 @@ export class PathFinder extends Component {
      */
     async scanGraphAsync() {
         await AstarPath.active.scanGraphAsync()
-        AstarPath.active.drawDebug()
     }
 
 }

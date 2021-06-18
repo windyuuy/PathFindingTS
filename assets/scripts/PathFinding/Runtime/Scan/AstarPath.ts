@@ -228,7 +228,11 @@ export class AstarPath {
 	/**
 	 * 扫描地图
 	 */
-	scanGraph() {
+	protected _scanGraph() {
+		if (this.scanGraphAsyncTask != null) {
+			return
+		}
+
 		MyProfiler.BeginSample("scanGraph")
 		var gridMovers = this.gridMovers
 		for (var gridMover of gridMovers) {
@@ -236,21 +240,43 @@ export class AstarPath {
 		}
 
 		this.seeker.UpdateGraph(this.graphs)
-
-		this.onWorkDone()
 		MyProfiler.EndSample()
 		MyProfiler.TypeCurCost()
+
+		this.onWorkDone()
+	}
+
+	/**
+	 * 扫描地图
+	 */
+	scanGraph() {
+		this._scanGraph();
+		AstarPath.active.drawDebug()
 	}
 
 	protected onWorkDone() {
 		this.workDoneCount++
 
 		this.workItems.ProcessWorkItemsDone()
+		if (this.workDoneCount == 1) {
+			if (this._scanGraphOnInitTask != null) {
+				this._scanGraphOnInitTask.success(undefined);
+				this._scanGraphOnInitTask = undefined;
+			}
+		}
 	}
 
+	protected _scanGraphOnInitTask: fsync.RPromise<unknown, any> | undefined = new fsync.RPromise()
+	public get scanGraphOnInitTask() {
+		return this._scanGraphOnInitTask?.promise
+	}
 	protected workDoneCount = 0
 	protected scanGraphAsyncTask?: Promise<any>
 	public get awaitScanGraphTask() {
+		let task = this.scanGraphOnInitTask
+		if (task != null) {
+			return task;
+		}
 		return this.scanGraphAsyncTask
 	}
 	public get isWorkDone() {
@@ -259,7 +285,7 @@ export class AstarPath {
 	/**
 	 * 扫描地图
 	 */
-	async scanGraphAsync() {
+	async _scanGraphAsync() {
 		if (this.scanGraphAsyncTask != null) {
 			return
 		}
@@ -278,16 +304,22 @@ export class AstarPath {
 			this.seeker.UpdateGraph(this.graphs)
 			this.scanGraphAsyncTask = undefined
 
+			MyProfiler.EndSample()
+			MyProfiler.TypeCurCost()
+
 			this.onWorkDone()
 		})()
 
 		this.scanGraphAsyncTask = task2
 		await task2
 
-
-		MyProfiler.EndSample()
-		MyProfiler.TypeCurCost()
-
+	}
+	/**
+	 * 扫描地图
+	 */
+	async scanGraphAsync() {
+		await this._scanGraphAsync();
+		AstarPath.active.drawDebug()
 	}
 
 	/**
