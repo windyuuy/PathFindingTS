@@ -25,6 +25,11 @@ export class AstarPath {
 		return this._active;
 	}
 
+	/**
+	 * 启用性能日志
+	 */
+	public enablePerformaceLog: bool = false
+
 	public readonly hierarchicalGraph: HierarchicalGraph = new HierarchicalGraph();
 
 	readonly workItems: WorkItemProcessor = new WorkItemProcessor();
@@ -241,7 +246,9 @@ export class AstarPath {
 
 		this.seeker.UpdateGraph(this.graphs)
 		MyProfiler.EndSample()
-		MyProfiler.TypeCurCost()
+		if (AstarPath.active.enablePerformaceLog) {
+			MyProfiler.TypeCurCost()
+		}
 
 		this.onWorkDone()
 	}
@@ -305,7 +312,9 @@ export class AstarPath {
 			this.scanGraphAsyncTask = undefined
 
 			MyProfiler.EndSample()
-			MyProfiler.TypeCurCost()
+			if (AstarPath.active.enablePerformaceLog) {
+				MyProfiler.TypeCurCost()
+			}
 
 			this.onWorkDone()
 		})()

@@ -25,25 +25,33 @@ export class Seeker extends Component {
 
 	pathCallback?: OnPathDelegate
 
+	onDisable() {
+		this.clearDebug();
+	}
+
 	public async startPath(start: Vector3, end: Vector3, call?: OnPathDelegate): Promise<SeekResult> {
 		var task = AstarPath.active.awaitScanGraphTask
 		if (task != null) {
 			await task
 		}
 
-		if (this.result != null) {
-			this.result.clearDebug()
-			this.result = undefined
-		}
+		this.clearDebug();
 
 		var result = AstarPath.active.seeker.StartPath(start, end, (path) => {
-			this.pathCallback ?? (path)
-			call ?? (path)
+			this.pathCallback && this.pathCallback(path);
+			call && call(path);
 		})
 		if (this.needDrawDebug) {
 			result?.drawDebug(this.lineWidth)
 		}
 		this.result = result
 		return result
+	}
+
+	private clearDebug() {
+		if (this.result != null) {
+			this.result.clearDebug();
+			this.result = undefined;
+		}
 	}
 }

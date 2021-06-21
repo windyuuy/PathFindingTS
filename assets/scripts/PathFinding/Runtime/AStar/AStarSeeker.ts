@@ -30,7 +30,9 @@ export class AStarSeeker {
 		MyProfiler.BeginSample("StartPath")
 		let ret = this._StartPath(start, end, call)
 		MyProfiler.EndSample()
-		MyProfiler.TypeCurCost()
+		if (AstarPath.active.enablePerformaceLog) {
+			MyProfiler.TypeCurCost()
+		}
 		return ret
 	}
 	protected _StartPath(start: Vector3, end: Vector3, call?: OnPathDelegate): SeekResult {
@@ -38,6 +40,10 @@ export class AStarSeeker {
 		for (var seek of this.graphSeekers) {
 			seek.StartPath(result, start, end)
 			if (result.ok) {
+				// var vec1 = new Vec3().set(end).subtract(start).normalize();
+				// var vec2 = new Vec3().set(result.vectorPath[1]).subtract(start).normalize();
+				// var th = vec1.dot(vec2);
+				// console.log(start, end, vec1, vec2, result.vectorPath[0], result.vectorPath[1], th);
 				if (call != null) {
 					call(result)
 				}

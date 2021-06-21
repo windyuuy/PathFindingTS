@@ -17,6 +17,12 @@ export class PathFinder extends Component {
         type: [PathFinderOptions],
     })
     options: PathFinderOptions[] = [new PathFinderOptions()]
+
+    @property({
+        displayName: "启用性能日志",
+    })
+    enablePerformaceLog: boolean = false
+
     // get graphs(): PathFinderOptions[] {
     //     // return AstarPath.active.graphs;
     //     return this._graphs;
@@ -78,6 +84,7 @@ export class PathFinder extends Component {
         this._inited = true
 
         AstarPath.active.options = this.options;
+        AstarPath.active.enablePerformaceLog = this.enablePerformaceLog;
         AstarPath.active.init()
         // AstarPath.active.graphic = this.addComponent(Graphics)
 

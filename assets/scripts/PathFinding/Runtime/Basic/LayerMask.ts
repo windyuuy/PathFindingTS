@@ -3,9 +3,8 @@ import * as cc from "cc"
 import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
 import { int } from "../Scan/CompatDef";
 import { IS_CC_EDITOR } from "./Macro";
+import { StrNumMap } from "./MapTypes";
 const { ccclass, property } = _decorator;
-
-export type StrNumMap = { [key: string]: number }
 
 /**
  * Layer.addLayer-fixbug

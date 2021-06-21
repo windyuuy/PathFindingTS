@@ -22,7 +22,7 @@ export class Nullable<T extends ISetable<T>> {
 	}
 
 	get HasValue(): boolean {
-		return typeof (this.member) == "undefined"
+		return typeof (this.member) != "undefined"
 	}
 
 	set(value?: T) {
@@ -30,9 +30,10 @@ export class Nullable<T extends ISetable<T>> {
 			if (this.member == null) {
 				this.member = new this.cls()
 			}
+			// console.warn("moveV:", value);
 			this.member.set(value)
 		} else {
-			this.member = value
+			this.member = undefined
 		}
 	}
 }

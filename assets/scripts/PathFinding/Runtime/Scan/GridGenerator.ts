@@ -271,8 +271,8 @@ export class GridGraph {
 
 	public WorldPointToGraph(gpos: Vec3, position: Vec3): Vec3 {
 		var gpos = this.transform.InverseTransform(gpos, position)
-		// gpos.x -= 0.5
-		// gpos.z -= 0.5
+		gpos.x -= 0.5
+		gpos.z -= 0.5
 		// gpos.x = Math.floor(gpos.x)
 		// gpos.z = Math.floor(gpos.z)
 		gpos.x = Math.round(gpos.x)
@@ -653,7 +653,16 @@ export class GridGraph {
 						var dist = Vector.distanceSQ(targetPos, position)
 						var th: number | null = null
 
-						if (dist < minDistSq || (node.Walkable && !nearNode!.Walkable) || (node.Walkable == nearNode!.Walkable && dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+						var isThBigger = nearTh < (th = calcTh(position, targetPos))
+						var isThBigger0 = nearTh <= th
+						var needThBigger = isThBigger
+						if (minDistSq - dist > this.nodeSize * 2) {
+							needThBigger = false;
+						}
+						if (needThBigger || (
+							(isThBigger0) &&
+							(dist < minDistSq || (node.Walkable && !nearNode!.Walkable) || (node.Walkable == nearNode!.Walkable && dist == minDistSq && isThBigger))
+						)) {
 							nearNode = node
 							minDistSq = dist
 							nearTh = th != null ? th : calcTh(position, targetPos)
@@ -661,6 +670,7 @@ export class GridGraph {
 					}
 				}
 			} else {
+				// console.log("batch")
 				for (var node of nearList) {
 					// 需要约束可见性
 					if (constraint == NNConstraint.SharedNone || constraint.Suitable(node)) {
@@ -668,7 +678,18 @@ export class GridGraph {
 						var dist = Vector.distanceSQ(targetPos, position)
 						var th: number | null = null
 
-						if (dist < minDistSq || (dist == minDistSq && nearTh < (th = calcTh(position, targetPos)))) {
+						// TODO: 需要优化性能
+						var isThBigger = nearTh < (th = calcTh(position, targetPos))
+						var isThBigger0 = nearTh <= th
+						var needThBigger = isThBigger
+						if (minDistSq - dist > this.nodeSize * 2) {
+							needThBigger = false;
+						}
+						// console.log("fff", position, end, targetPos, th)
+						if (needThBigger ||
+							((isThBigger0)
+								&& (dist < minDistSq || (dist == minDistSq && isThBigger)))
+						) {
 							nearNode = node
 							minDistSq = dist
 							nearTh = th != null ? th : calcTh(position, targetPos)

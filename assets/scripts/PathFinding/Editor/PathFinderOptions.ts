@@ -1,10 +1,11 @@
 
-import { _decorator, Component, Node, Vec3, Quat, Enum, Layers, BitMask, pipeline } from 'cc';
-import { LayerMask } from "../Runtime/Basic/LayerMask";
+import { _decorator, Component, Node, Vec3, Quat, Enum, BitMask, pipeline, PhysicsSystem, physics } from 'cc';
 import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
 import { EditorUtils } from "./EditorUtils";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
+import "../Runtime/Basic/PhysicsLayerMask"
+import { PhysicsLayerMask } from "../Runtime/Basic/PhysicsLayerMask";
 
 /// <summary>Number of threads to use</summary>
 export enum ThreadCount {
@@ -92,7 +93,7 @@ export enum Heuristic {
 	None
 }
 
-LayerMask.addLayer("Obstacle", 1)
+PhysicsLayerMask.addLayer("Obstacle", 2)
 
 @ccclass('PathFinderOptions')
 export class PathFinderOptions {
@@ -192,11 +193,11 @@ export class PathFinderOptions {
 	collisionOffset: number = 0
 
 	@property({
-		type: BitMask(Layers.BitMask),
+		type: BitMask(physics.PhysicsLayers.BitMask),
 		tooltip: "碰撞测试",
 		displayName: "障碍物层级",
 	})
-	mask: number = Layers.Enum.NONE
+	mask: number = 0
 
 	@property({
 		displayName: "启用高度测试"
@@ -209,11 +210,11 @@ export class PathFinderOptions {
 	rayLength: number = 100
 
 	@property({
-		type: BitMask(Layers.BitMask),
+		type: BitMask(physics.PhysicsLayers.BitMask),
 		tooltip: "高度测试",
 		displayName: "障碍物层级",
 	})
-	heightMask: number = Layers.Enum.ALL
+	heightMask: number = 1
 
 	@property({
 		displayName: "使用粗射线检测",
@@ -298,7 +299,7 @@ export class PathFinderOptions {
 	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	public static start(options: PathFinderOptions[]) {
-		LayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
 		this.updateOptionsView(options)
 	}
 
