@@ -92,8 +92,6 @@ export enum Heuristic {
 	None
 }
 
-PhysicsLayerMask.addLayer("Obstacle", 2)
-
 @ccclass('PathFinderOptions')
 export class PathFinderOptions {
 	@property({
@@ -298,7 +296,7 @@ export class PathFinderOptions {
 	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	public static start(options: PathFinderOptions[]) {
-		PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		// PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
 		this.updateOptionsView(options)
 	}
 
