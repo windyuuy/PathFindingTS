@@ -296,11 +296,16 @@ export class PathFinderOptions {
 	debugDrawOptions: PathFinderDebugDrawOptions = new PathFinderDebugDrawOptions()
 
 	public static start(options: PathFinderOptions[]) {
-		PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		if (IS_CC_EDITOR) {
+			PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		}
 		this.updateOptionsView(options)
 	}
 
 	public static update(options: PathFinderOptions[]) {
+		if (IS_CC_EDITOR) {
+			PhysicsLayerMask.UpdateAttrLayer(PathFinderOptions, "mask", "bitmask");
+		}
 		this.updateOptionsView(options)
 	}
 
