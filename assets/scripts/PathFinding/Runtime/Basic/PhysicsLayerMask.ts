@@ -1,21 +1,33 @@
-import { BitMask, Enum, physics, PhysicsSystem } from "cc";
+import * as cc from "cc"
+import { BitMask, Enum, Layers, physics, PhysicsSystem } from "cc";
 import { int } from "../Scan/CompatDef";
 import { StrNumMap } from "./MapTypes";
+
+export const myLayerList = {
+	NONE: 0,
+	DEFAULT: 1,
+	ALL: 0xffffffff,
+};
 
 declare module "cc" {
 	export namespace physics {
 		export namespace PhysicsLayers {
-			export let BitMask: any;
-			export let Enum: any;
+			export let BitMask: typeof myLayerList;
+			export let Enum: typeof myLayerList;
 		}
 	}
+}
+
+for (let key in myLayerList) {
+	(PhysicsSystem.PhysicsGroup as any)[key] = (myLayerList as any)[key]
 }
 
 physics.PhysicsLayers = physics.PhysicsLayers || {
 
 }
-physics.PhysicsLayers.BitMask = BitMask({ ...PhysicsSystem.PhysicsGroup })
-physics.PhysicsLayers.Enum = PhysicsSystem.PhysicsGroup
+
+physics.PhysicsLayers.BitMask = BitMask({ ...PhysicsSystem.PhysicsGroup }) as any
+physics.PhysicsLayers.Enum = PhysicsSystem.PhysicsGroup as any
 
 export const PhysicsLayers = physics.PhysicsLayers
 
@@ -44,10 +56,10 @@ export class PhysicsLayerMask {
 
 		this.deleteLayer(name);
 
-		PhysicsLayers.Enum[name] = 1 << bitNum;
-		PhysicsLayers.Enum[bitNum] = name;
-		PhysicsLayers.BitMask[name] = 1 << bitNum;
-		PhysicsLayers.BitMask[bitNum] = name;
+		(PhysicsLayers.Enum as any)[name] = 1 << bitNum;
+		(PhysicsLayers.Enum as any)[bitNum] = name;
+		(PhysicsLayers.BitMask as any)[name] = 1 << bitNum;
+		(PhysicsLayers.BitMask as any)[bitNum] = name;
 	}
 
 	public static addLayers(names: { [key: string]: number }) {
@@ -61,10 +73,10 @@ export class PhysicsLayerMask {
 			console.warn('do not change buildin layers.');
 			return;
 		}
-		delete PhysicsLayers.Enum[PhysicsLayers.Enum[bitNum]];
-		delete PhysicsLayers.Enum[bitNum];
-		delete PhysicsLayers.BitMask[PhysicsLayers.BitMask[bitNum]];
-		delete PhysicsLayers.BitMask[bitNum];
+		delete (PhysicsLayers.Enum as any)[(PhysicsLayers.Enum as any)[bitNum]];
+		delete (PhysicsLayers.Enum as any)[bitNum];
+		delete (PhysicsLayers.BitMask as any)[(PhysicsLayers.BitMask as any)[bitNum]];
+		delete (PhysicsLayers.BitMask as any)[bitNum];
 	}
 
 	public static deleteLayer(name: string) {

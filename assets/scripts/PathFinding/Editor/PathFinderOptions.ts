@@ -4,8 +4,7 @@ import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
 import { EditorUtils } from "./EditorUtils";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
 const { ccclass, property } = _decorator;
-import "../Runtime/Basic/PhysicsLayerMask"
-import { PhysicsLayerMask } from "../Runtime/Basic/PhysicsLayerMask";
+import { PhysicsLayerMask, PhysicsLayers } from "../Runtime/Basic/PhysicsLayerMask";
 
 /// <summary>Number of threads to use</summary>
 export enum ThreadCount {
@@ -193,11 +192,11 @@ export class PathFinderOptions {
 	collisionOffset: number = 0
 
 	@property({
-		type: BitMask(physics.PhysicsLayers.BitMask),
+		type: BitMask(PhysicsLayers.BitMask),
 		tooltip: "碰撞测试",
 		displayName: "障碍物层级",
 	})
-	mask: number = 0
+	mask: number = PhysicsLayers.BitMask.NONE
 
 	@property({
 		displayName: "启用高度测试"
@@ -210,11 +209,11 @@ export class PathFinderOptions {
 	rayLength: number = 100
 
 	@property({
-		type: BitMask(physics.PhysicsLayers.BitMask),
+		type: BitMask(PhysicsLayers.BitMask),
 		tooltip: "高度测试",
 		displayName: "障碍物层级",
 	})
-	heightMask: number = 1
+	heightMask: number = PhysicsLayers.BitMask.ALL
 
 	@property({
 		displayName: "使用粗射线检测",
