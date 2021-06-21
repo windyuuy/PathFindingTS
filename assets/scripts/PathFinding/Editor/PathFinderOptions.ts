@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, Vec3, Quat, Enum, BitMask, pipeline, PhysicsSystem, physics } from 'cc';
+import { _decorator, Component, Node, Vec3, Quat, Enum, BitMask, PhysicsSystem, physics } from 'cc';
 import { IS_CC_EDITOR } from "../Runtime/Basic/Macro";
 import { EditorUtils } from "./EditorUtils";
 import { PathFinderDebugDrawOptions } from "./PathFinderDebugDrawOptions";
