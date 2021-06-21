@@ -54,9 +54,7 @@ export class CannonCollisionSystem extends CollisionSystemBase {
 
 			let allBodies = cnWorld.bodies.concat()
 			allBodies = allBodies.filter(body => {
-				// let node = (body as any).__cc_wrapper__.node as cc.Node
-				// if (LayerMask.ContainsAnyLayer(node.layer, layerMask)) {
-				if (LayerMask.ContainsAnyLayer((1 << body.collisionFilterMask), layerMask)) {
+				if (LayerMask.ContainsAnyLayer(layerMask, body.collisionFilterGroup)) {
 					return true
 				}
 				return false

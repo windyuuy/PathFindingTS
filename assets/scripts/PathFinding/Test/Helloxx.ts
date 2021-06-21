@@ -1,6 +1,5 @@
 
 import { _decorator, Component, Node, find, Vec3, path, SphereCollider } from 'cc';
-import { AA } from "../../test/AA";
 import { PathFinder } from "../Editor/PathFinder";
 import { Seeker } from "../Runtime/AStar/Seeker";
 import { LayerMask } from "../Runtime/Basic/LayerMask";

@@ -33,7 +33,7 @@ export const PhysicsLayers = physics.PhysicsLayers
 
 export class PhysicsLayerMask {
 	public static UpdateAttrLayer(cls: new () => any, attr: string, t: string) {
-		var FinderLayerList = PhysicsLayers.BitMask as StrNumMap;
+		var FinderLayerList = PhysicsSystem.PhysicsGroup as any as StrNumMap;
 		var attrs = (cls as any)["__attrs__"];
 		var bitMasks = attrs[`${attr}$_$${t}List`] as { name: string, value: number }[];
 		bitMasks.length = 0;
@@ -56,10 +56,11 @@ export class PhysicsLayerMask {
 
 		this.deleteLayer(name);
 
-		(PhysicsLayers.Enum as any)[name] = 1 << bitNum;
-		(PhysicsLayers.Enum as any)[bitNum] = name;
-		(PhysicsLayers.BitMask as any)[name] = 1 << bitNum;
-		(PhysicsLayers.BitMask as any)[bitNum] = name;
+		const num = 1 << bitNum;
+		(PhysicsLayers.Enum as any)[name] = num;
+		(PhysicsLayers.Enum as any)[num] = name;
+		(PhysicsLayers.BitMask as any)[name] = num;
+		(PhysicsLayers.BitMask as any)[num] = name;
 	}
 
 	public static addLayers(names: { [key: string]: number }) {
